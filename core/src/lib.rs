@@ -14,5 +14,12 @@ pub mod health;
 pub mod local;
 pub mod shell;
 pub mod ssh;
+#[cfg(unix)]
+pub mod terminal;
+// Windows: interactive pty terminals aren't supported yet (forkpty is
+// Unix); everything else — actions, crons, health, kubectl pod listing —
+// works. The stub keeps the API identical so the shells compile as-is.
+#[cfg(not(unix))]
+#[path = "terminal_win.rs"]
 pub mod terminal;
 pub mod watcher;

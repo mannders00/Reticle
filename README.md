@@ -1,124 +1,113 @@
+<div align="center">
+
+<img src="assets/icon/reticle-256.png" width="90" alt="Reticle" />
+
 # Reticle
 
-**An infrastructure diagram you can operate.** Reticle is an infinite-canvas
-editor for network & infra topology — servers, VMs, pods, databases, load
-balancers, VPCs — where the diagram is also the operational surface: open a
-real SSH shell from a node, run scripts on it, watch health glow on the
-canvas, and export the whole thing as a print-quality vector PDF. Everything
-persists to one human-editable, git-diffable YAML file. No accounts, no
-cloud, no lock-in.
+**The infrastructure diagram you can operate.**
 
-Two shells, one UI:
+Draw your real topology on an infinite canvas — then watch it breathe.
+Live health on every node, a real SSH terminal one keypress away,
+and print-quality PDF export. Everything is one git-diffable YAML file.
 
-- **Desktop** (`src-tauri/`, Tauri) — local-first app; SSH/kubectl run as
-  you, with your own keys and kubeconfig.
-- **Daemon** (`daemon/`, ~3 MB single static binary, UI embedded) — serve
-  the same canvas over HTTP to your whole team; credentials stay on the
-  daemon host; token-based editor/viewer roles. See [DAEMON.md](DAEMON.md).
+No accounts. No cloud. No lock-in.
 
-Product site: **https://reticle.live** — the desktop app is free and MIT;
-the team daemon is the commercial product for orgs (per-daemon licensing,
-unlimited editors & viewers).
+[**⬇ Download**](https://github.com/mannders00/reticle/releases/latest) · [**Live demo**](https://demo.reticle.live) · [**Team daemon →**](https://reticle.live)
+
+MIT-licensed desktop app · macOS / Linux / Windows
+
+<br/>
+
+<img src="assets/demo-overview.png" alt="A live infrastructure map in Reticle — real health, real topology" width="100%" />
+
+</div>
 
 ---
 
-## The map is alive — actions & crons
+## Your diagram, but it does something
 
-The core idea: a topology diagram shouldn't just *describe* your systems, it
-should *watch* them and let you *act* on them. Every node carries two lists,
-edited right in the inspector and stored in the same YAML as the diagram:
+Every box on that map is a real machine. The health pills are live checks,
+not decoration. And when something goes red:
 
-### Actions — run on demand
+<img src="assets/demo-shell.png" alt="Select a server, press Enter — a real SSH shell with htop, right in the sidebar" width="100%" />
 
-Named bash snippets executed over SSH when you press ▶. Output (exit code,
-stdout/stderr) renders inline under the action. Think `df -h`,
-`journalctl -u nginx -n 50`, `systemctl restart myapp` — your predefined
-runbook, one click away, right on the node it belongs to.
+Select the node, hit <kbd>⌘⏎</kbd> — a **real SSH shell** opens right there.
+No copy-pasting hostnames into another terminal. The diagram *is* the
+operational surface:
 
-### Crons — scheduled, they drive health
+- **Actions** — named scripts on any node, one click, output on the map
+  (`df -h`, `journalctl -u api -n 80`, `kubectl rollout status`, yours)
+- **Checks** — scheduled crons per node: SSH scripts, local CLI calls
+  (`aws`, `dig`, anything), or HTTP probes with status + `jq` assertions.
+  A failing check turns its node red and tells you *which* check, on the card
+- **Terminals** — full xterm over SSH or `kubectl exec`, docked next to the map
+- **Everything in one YAML** — positions, edges, checks, notes. Commit it
+  next to your infra code; review topology changes in pull requests
 
-Scripts that run automatically on an interval (`30s` / `5m` / `1h`):
+Reticle uses **your** `ssh`, **your** `kubectl`, **your** keys and
+kubeconfig — exactly like your terminal does. No credentials are ever
+stored, asked for, or sent anywhere.
 
-- **Desktop**: the scheduler runs while the app is open.
-- **Daemon**: the scheduler runs **as long as the daemon runs** — 24/7,
-  headless, with nobody watching. Results stream live to every connected
-  browser the moment they open the page.
+## Hand the map to anyone
 
-Cron results feed node health directly, combined with a cheap TCP
-reachability probe (worst wins):
+Export the whole canvas as a **vector PDF** — kind icons, health states,
+edge styles, legend, wrapped notes. Attach it to the postmortem, drop it
+in the customer deck, print it:
 
-```
-health(node) = err      if TCP probe fails OR any cron is failing
-               ok       if the signals we have are green
-               unknown  if there's no signal at all
-```
+<div align="center">
+<a href="assets/demo-pdf.pdf"><img src="assets/demo-pdf-preview.png" alt="Print-quality vector PDF export" width="88%" /></a>
 
-So `systemctl is-active nginx` failing turns the node **red on the canvas**
-even though port 22 still answers — and the inspector shows which cron
-failed, its exit code, and when. When it recovers, the node goes green
-again. Nobody has to be looking at a dashboard; the map itself is the
-dashboard.
+<sub>That's a real export — <a href="assets/demo-pdf.pdf">open the PDF</a>.</sub>
+</div>
 
-### It's all just YAML
+## Get it
 
-```yaml
-nodes:
-  web-01:
-    kind: server
-    title: web-01
-    spec: { host: 10.0.1.4, port: 22, user: deploy }
-    actions:
-      - { name: disk usage,  script: df -h }
-      - { name: recent logs, script: journalctl -u nginx -n 50 }
-    crons:
-      - { name: nginx alive, interval: 30s, script: systemctl is-active nginx }
-      - { name: disk watch,  interval: 5m,  script: "[ $(df / --output=pcent | tail -1 | tr -d ' %') -lt 90 ]" }
-```
+**[Download the latest release](https://github.com/mannders00/reticle/releases/latest)** — .dmg (macOS, Apple Silicon + Intel), .AppImage/.deb/.rpm (Linux), .msi/.exe (Windows).
 
-Edit it in the inspector or in vim — the file watcher live-updates the
-canvas either way (and every connected browser, in daemon mode).
+> macOS builds are unsigned for now: right-click → Open the first time.
+> Windows: interactive terminals aren't supported yet — actions, checks,
+> health, and PDF export all work.
 
----
-
-## Quick start
+Or build from source (Rust + [Bun](https://bun.sh)):
 
 ```sh
-make desktop-dev     # desktop app, live frontend
-make daemon          # single-binary daemon (UI embedded) → target/release/
-make daemon-all      # cross-compile linux arm64/armv7/x64 + macOS → dist/
-make deploy-pi PI=pi@host   # ship the arm64 binary to a Raspberry Pi
-make serve           # static demo (no backend, mock data)
+git clone https://github.com/mannders00/reticle
+cd reticle
+bun install
+bun run tauri build   # or: bun run tauri dev
 ```
 
-Daemon on a LAN box:
+Try it with a sample: the app ships five worked topologies (homelab →
+enterprise) in the workspace switcher, or start from
+[`topology.yaml.example`](topology.yaml.example).
 
-```sh
-./reticle-daemon --config /etc/reticle/prod.yaml \
-  --edit-token $(openssl rand -hex 16) \
-  --view-token $(openssl rand -hex 16) \
-  --enable-terminal
-# editors: http://host:8788/?token=<edit-token>   (change, run, shell)
-# viewers: http://host:8788/?token=<view-token>   (watch the live map)
-```
+## Share it live with your whole team
+
+The desktop app is yours, free, forever. When the *team* needs the map,
+there's the **[Reticle team daemon](https://reticle.live)** — a single
+~4 MB binary that serves this exact app to every browser on your network:
+
+- Nothing to install for teammates — a browser and a link
+- Checks run 24/7 on the daemon; **everyone sees live health**, even viewers
+- **Read-only by default** — strict editor/viewer tokens, enforced server-side
+- Credentials stay on one host; nobody distributes SSH keys
+- Optional JSONL audit log of who ran what
+
+The live demo at **[demo.reticle.live](https://demo.reticle.live)** is the
+daemon serving its own real infrastructure, read-only. Go poke it.
 
 ## Repo layout
 
 ```
-src/          the frontend (vanilla ESM + SVG, no framework, no build step)
-core/         reticle-core — shared Rust domain modules (config, ssh,
-              health, cron scheduler, pty terminal, file watcher)
+src/          the frontend (vanilla ESM + SVG — no framework, no build step)
+core/         reticle-core: shared Rust domain modules (config, ssh, health,
+              cron scheduler, pty terminals, file watcher)
 src-tauri/    desktop shell (Tauri 2)
-web/          the reticle.live marketing site (static)
-DAEMON.md     team-daemon design: sharing model, roles, protocol, phases
-              (the daemon binary itself is the commercial component)
+web/          the reticle.live site (static)
+DAEMON.md     team-daemon design: sharing model, roles, wire protocol
 ```
-
----
 
 ## License
 
-Everything in this repository is **MIT-licensed** (see [LICENSE](LICENSE)).
-
-The **team daemon** (shared always-on server with token roles, daemon-side
-health, audit log) is a separate commercial component distributed as a
-binary — it is not in this repository. Get it at https://reticle.live.
+Everything in this repository is **[MIT](LICENSE)**. The team daemon is a
+separate commercial binary — see [reticle.live](https://reticle.live).

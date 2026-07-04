@@ -26,7 +26,7 @@ name-armv7-unknown-linux-musleabihf  := linux-armv7
 name-aarch64-apple-darwin            := macos-arm64
 name-x86_64-apple-darwin             := macos-x64
 
-.PHONY: desktop desktop-dev daemon daemon-dev daemon-all deploy-pi serve check toolchain clean publish-oss \
+.PHONY: desktop desktop-dev daemon daemon-dev daemon-all deploy-pi serve check toolchain clean publish-oss release-oss \
         $(addprefix daemon-,$(foreach t,$(LINUX_TARGETS) $(MACOS_TARGETS),$(name-$(t))))
 
 # ---- desktop (Tauri) ----
@@ -87,6 +87,17 @@ serve:
 # docs) into ../reticle-oss and push it to the public GitHub mirror.
 publish-oss:
 	bash scripts/publish-oss.sh
+
+# Cut a public desktop release: sync the mirror, tag it, push tag →
+# GitHub Actions builds mac/linux/windows bundles onto the release.
+#   make release-oss VERSION=0.1.0
+VERSION ?=
+release-oss: publish-oss
+	@test -n "$(VERSION)" || (echo "usage: make release-oss VERSION=x.y.z" && exit 2)
+	@grep -q '"version": "$(VERSION)"' src-tauri/tauri.conf.json || \
+	  (echo "tauri.conf.json version != $(VERSION) — bump it first" && exit 2)
+	cd ../reticle-oss && git tag v$(VERSION) && git push origin main --tags
+	@echo "→ watch the build: https://github.com/mannders00/reticle/actions"
 
 check:
 	cargo check --workspace
