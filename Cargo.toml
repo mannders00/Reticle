@@ -1,0 +1,9 @@
+# Workspace for the OPEN-SOURCE tree (core + desktop). The commercial
+# daemon lives in daemon/ as a STANDALONE package (own [workspace]),
+# excluded here so the public GitHub mirror — which omits daemon/ —
+# builds this workspace untouched. Locally everything still shares one
+# folder and one target/ (daemon/.cargo/config.toml points it here).
+[workspace]
+members = ["core", "src-tauri"]
+exclude = ["daemon"]
+resolver = "2"

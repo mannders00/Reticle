@@ -1,0 +1,222 @@
+# Reticle sample — k3s homelab cluster
+# Three mini-PCs running k3s inside a generic "box" container, MetalLB
+# handing out the LAN VIP, Traefik ingress routing to app deployments,
+# and a TrueNAS box serving NFS persistent volumes.
+version: 1
+nodes:
+  edge-router:
+    id: edge-router
+    kind: router
+    title: edge-router
+    subtitle: "openwrt · 10.0.0.1"
+    x: 60
+    y: 300
+    w: 180
+    h: 120
+    spec: { host: 10.0.0.1, port: 22, user: root }
+    actions:
+      - { name: dhcp leases, script: "cat /tmp/dhcp.leases" }
+
+  lab-lan:
+    id: lab-lan
+    kind: lan
+    title: lab-lan
+    subtitle: "10.0.0.0/24"
+    x: 320
+    y: 40
+    w: 1120
+    h: 620
+    notes: "MetalLB owns 10.0.0.200-220. Keep DHCP out of that range."
+
+  metallb-vip:
+    id: metallb-vip
+    kind: load-balancer
+    title: metallb-vip
+    subtitle: "L2 VIP · 10.0.0.200"
+    x: 380
+    y: 140
+    w: 220
+    h: 120
+    parentId: lab-lan
+    spec: { host: 10.0.0.200, port: 22, user: k3s }
+    notes: "Not a real box — the VIP floats between workers via ARP. TCP probe still tells the truth."
+
+  nas-01:
+    id: nas-01
+    kind: object-store
+    title: nas-01
+    subtitle: "TrueNAS · NFS PVs"
+    x: 380
+    y: 440
+    w: 180
+    h: 140
+    parentId: lab-lan
+    spec: { host: 10.0.0.20, port: 22, user: admin }
+    addons:
+      - { kind: disk, label: "2×8TB ZFS" }
+      - { kind: ups, label: "1500VA" }
+    notes: |
+      All PersistentVolumes are NFS exports from tank/k8s.
+      If pods hang in ContainerCreating, check this box first.
+    actions:
+      - { name: pool health, script: "zpool status -x" }
+      - { name: active NFS clients, script: "showmount -a" }
+    crons:
+      - { name: pool ok, interval: 5m, script: "zpool status -x | grep -q healthy" }
+
+  k3s-box:
+    id: k3s-box
+    kind: box
+    title: k3s cluster
+    subtitle: "v1.30 · 3 nodes"
+    x: 660
+    y: 120
+    w: 740
+    h: 480
+    notes: |
+      kubeconfig lives on cp-01 at /etc/rancher/k3s/k3s.yaml.
+      Upgrades: cordon+drain one worker at a time, cp-01 last.
+
+  cp-01:
+    id: cp-01
+    kind: knode
+    title: cp-01
+    subtitle: "control plane · NUC i5"
+    x: 700
+    y: 200
+    w: 200
+    h: 120
+    parentId: k3s-box
+    spec: { host: 10.0.0.11, port: 22, user: k3s, kubeContext: k3s, name: cp-01 }
+    notes: "etcd snapshots hourly to the NAS. Single control plane — this box IS the cluster."
+    actions:
+      - { name: node status, script: "kubectl get nodes -o wide" }
+      - { name: etcd snapshots, script: "ls -lh /var/lib/rancher/k3s/server/db/snapshots | tail -5" }
+    crons:
+      - { name: all nodes ready, interval: 60s, script: "! kubectl get nodes --no-headers | grep -v ' Ready'" }
+      - { name: k3s alive, interval: 30s, script: "systemctl is-active k3s" }
+
+  wk-01:
+    id: wk-01
+    kind: knode
+    title: wk-01
+    subtitle: "worker · NUC i7"
+    x: 940
+    y: 200
+    w: 200
+    h: 120
+    parentId: k3s-box
+    spec: { host: 10.0.0.12, port: 22, user: k3s, kubeContext: k3s, name: wk-01 }
+    addons:
+      - { kind: gpu, label: "RTX 4090 24G" }
+      - { kind: ram, label: "64G" }
+    actions:
+      - { name: pods here, script: "kubectl get pods -A --field-selector spec.nodeName=wk-01" }
+    crons:
+      - { name: agent alive, interval: 60s, script: "systemctl is-active k3s-agent" }
+
+  wk-02:
+    id: wk-02
+    kind: knode
+    title: wk-02
+    subtitle: "worker · NUC i7"
+    x: 1180
+    y: 200
+    w: 200
+    h: 120
+    parentId: k3s-box
+    spec: { host: 10.0.0.13, port: 22, user: k3s, kubeContext: k3s, name: wk-02 }
+    actions:
+      - { name: pods here, script: "kubectl get pods -A --field-selector spec.nodeName=wk-02" }
+    crons:
+      - { name: agent alive, interval: 60s, script: "systemctl is-active k3s-agent" }
+
+  ingress-traefik:
+    id: ingress-traefik
+    kind: ingress
+    title: traefik
+    subtitle: "ingress · websecure"
+    x: 700
+    y: 420
+    w: 160
+    h: 100
+    parentId: k3s-box
+    spec: { kubeContext: k3s, namespace: kube-system, name: traefik }
+
+  dep-media:
+    id: dep-media
+    kind: deployment
+    title: media-stack
+    subtitle: "jellyfin · 2 pods"
+    x: 940
+    y: 420
+    w: 180
+    h: 120
+    parentId: k3s-box
+    spec: { kubeContext: k3s, namespace: media, name: jellyfin }
+    notes: "Transcoding pins a whole core — keep replicas ≤ 2 or the NUCs thermal-throttle."
+
+  dep-apps:
+    id: dep-apps
+    kind: deployment
+    title: home-apps
+    subtitle: "grafana · vaultwarden"
+    x: 1180
+    y: 420
+    w: 180
+    h: 120
+    parentId: k3s-box
+    spec: { kubeContext: k3s, namespace: apps, name: home-apps }
+
+edges:
+  e-router-lb:
+    id: e-router-lb
+    kind: ethernet
+    label: "uplink"
+    from: edge-router
+    to: metallb-vip
+  e-lb-ingress:
+    id: e-lb-ingress
+    kind: fanout
+    label: ":443"
+    from: metallb-vip
+    to: ingress-traefik
+  e-ing-media:
+    id: e-ing-media
+    kind: routes-to
+    label: "media.lab"
+    from: ingress-traefik
+    to: dep-media
+  e-ing-apps:
+    id: e-ing-apps
+    kind: routes-to
+    label: "*.lab"
+    from: ingress-traefik
+    to: dep-apps
+  e-media-nas:
+    id: e-media-nas
+    kind: tcp
+    label: "nfs/2049"
+    from: dep-media
+    to: nas-01
+  e-apps-nas:
+    id: e-apps-nas
+    kind: tcp
+    label: "nfs/2049"
+    from: dep-apps
+    to: nas-01
+  e-cp-wk1:
+    id: e-cp-wk1
+    kind: mgmt
+    label: "kubelet"
+    from: cp-01
+    to: wk-01
+  e-cp-wk2:
+    id: e-cp-wk2
+    kind: mgmt
+    label: "kubelet"
+    from: cp-01
+    to: wk-02
+
+groups: []
+layers: []

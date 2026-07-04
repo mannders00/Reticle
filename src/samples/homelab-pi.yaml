@@ -1,0 +1,168 @@
+# Reticle sample — Raspberry Pi homelab
+# A consumer router fronting a small home LAN: Caddy reverse proxy,
+# Pi-hole DNS, TrueNAS storage, Home Assistant. Everything SSH-reachable,
+# with crons that keep the map's health live.
+version: 1
+nodes:
+  isp-router:
+    id: isp-router
+    kind: router
+    title: isp-router
+    subtitle: "fritzbox · 192.168.1.1"
+    x: 60
+    y: 260
+    w: 180
+    h: 120
+    spec: { host: 192.168.1.1, port: 22, user: root }
+    notes: |
+      ISP-provided box, admin UI on http://192.168.1.1.
+      Port forwards: 443 → pi-caddy. Everything else stays inside.
+    actions:
+      - { name: ping WAN, script: "ping -c 3 1.1.1.1" }
+
+  home-lan:
+    id: home-lan
+    kind: lan
+    title: home-lan
+    subtitle: "192.168.1.0/24"
+    x: 340
+    y: 40
+    w: 760
+    h: 580
+    notes: "Flat home network. Everything trusts everything — the perimeter is the router."
+
+  sw-01:
+    id: sw-01
+    kind: switch
+    title: sw-01
+    subtitle: "8-port PoE"
+    x: 400
+    y: 120
+    w: 180
+    h: 120
+    parentId: home-lan
+    spec: { host: 192.168.1.2, port: 22, user: admin }
+    notes: "PoE budget is nearly maxed — don't add another camera without checking."
+    actions:
+      - { name: port status, script: "swconfig dev switch0 show | head -40" }
+
+  pi-caddy:
+    id: pi-caddy
+    kind: server
+    title: pi-caddy
+    subtitle: "Pi 4 · reverse proxy"
+    x: 760
+    y: 120
+    w: 220
+    h: 120
+    parentId: home-lan
+    spec: { host: 192.168.1.10, port: 22, user: pi }
+    notes: |
+      The front door: Caddy terminates TLS for *.home.example and proxies
+      to Home Assistant and the NAS UI. Certs via DNS challenge.
+    actions:
+      - { name: caddy logs, script: "journalctl -u caddy -n 50 --no-pager" }
+      - { name: reload caddy, script: "sudo systemctl reload caddy" }
+      - { name: temperature, script: "vcgencmd measure_temp" }
+    crons:
+      - { name: caddy alive, interval: 30s, script: "systemctl is-active caddy" }
+      - { name: not throttled, interval: 5m, script: "test $(vcgencmd get_throttled | cut -d= -f2) = 0x0" }
+
+  pi-hole:
+    id: pi-hole
+    kind: server
+    title: pi-hole
+    subtitle: "Pi 3B+ · DNS sinkhole"
+    x: 760
+    y: 300
+    w: 220
+    h: 120
+    parentId: home-lan
+    spec: { host: 192.168.1.11, port: 22, user: pi }
+    notes: "Router hands this out via DHCP as the only DNS. If it dies, 'the internet is down'."
+    actions:
+      - { name: status, script: "pihole status" }
+      - { name: blocklist update, script: "pihole -g" }
+    crons:
+      - { name: FTL alive, interval: 30s, script: "systemctl is-active pihole-FTL" }
+
+  nas-01:
+    id: nas-01
+    kind: object-store
+    title: nas-01
+    subtitle: "TrueNAS · 2×8TB mirror"
+    x: 400
+    y: 300
+    w: 180
+    h: 140
+    parentId: home-lan
+    spec: { host: 192.168.1.20, port: 22, user: admin }
+    notes: |
+      ZFS mirror, snapshots hourly, scrub monthly.
+      Backups: restic → B2 nightly (see cron).
+    actions:
+      - { name: pool health, script: "zpool status -x" }
+      - { name: disk usage, script: "zfs list -o name,used,avail" }
+      - { name: last backup, script: "systemctl status restic-backup --no-pager | head -12" }
+    crons:
+      - { name: pool ok, interval: 5m, script: "zpool status -x | grep -q 'all pools are healthy'" }
+      - { name: smart errors, interval: 1h, script: "! smartctl -a /dev/ada0 | grep -qi FAILING_NOW" }
+
+  home-assistant:
+    id: home-assistant
+    kind: generic
+    title: home-assistant
+    subtitle: "HA OS · lights & heating"
+    x: 760
+    y: 480
+    w: 220
+    h: 100
+    parentId: home-lan
+    spec: { host: 192.168.1.30, port: 22, user: root }
+    notes: "Zigbee stick lives here. Restarting drops automations for ~1 min — do it during the day."
+    actions:
+      - { name: core check, script: "ha core check" }
+      - { name: restart core, script: "ha core restart" }
+    crons:
+      - { name: api up, interval: 60s, script: "curl -sf -o /dev/null http://localhost:8123/manifest.json" }
+
+edges:
+  e-wan-sw:
+    id: e-wan-sw
+    kind: ethernet
+    label: "uplink"
+    from: isp-router
+    to: sw-01
+  e-sw-caddy:
+    id: e-sw-caddy
+    kind: ethernet
+    label: ""
+    from: sw-01
+    to: pi-caddy
+  e-sw-nas:
+    id: e-sw-nas
+    kind: ethernet
+    label: ""
+    from: sw-01
+    to: nas-01
+  e-dns:
+    id: e-dns
+    kind: udp
+    label: "udp/53"
+    from: isp-router
+    to: pi-hole
+  e-caddy-ha:
+    id: e-caddy-ha
+    kind: https
+    label: ":8123"
+    from: pi-caddy
+    to: home-assistant
+  e-caddy-nas:
+    id: e-caddy-nas
+    kind: https
+    label: "nas ui"
+    from: pi-caddy
+    to: nas-01
+
+groups: []
+layers: []

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reticle</title>
+    <link rel="icon" href="./reticle.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles/base.css" />
+    <link rel="stylesheet" href="./styles/chrome.css" />
+    <link rel="stylesheet" href="./styles/canvas.css" />
+    <link rel="stylesheet" href="./styles/palette.css" />
+    <link rel="stylesheet" href="./styles/node.css" />
+    <link rel="stylesheet" href="./styles/inspector.css" />
+    <link rel="stylesheet" href="./styles/terminal.css" />
+    <link rel="stylesheet" href="./vendor/xterm/xterm.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "@xterm/xterm": "/vendor/xterm/xterm.mjs",
+          "@xterm/addon-fit": "/vendor/xterm/addon-fit.mjs",
+          "@tauri-apps/plugin-dialog": "/vendor/xterm/plugin-dialog.mjs",
+          "js-yaml": "/vendor/js-yaml.mjs"
+        }
+      }
+    </script>
+    <script type="module" src="./main.js" defer></script>
+  </head>
+  <body>
+    <div id="app" class="app-shell is-panel-hidden">
+      <header class="toolbar" id="toolbar"></header>
+      <aside id="palette"></aside>
+      <main class="canvas-host" id="canvas-host"></main>
+      <aside id="right-panel" class="right-panel" hidden>
+        <div class="panel-resize-handle" id="panel-resize-handle"></div>
+        <div class="panel-tabs" id="panel-tabs"></div>
+        <div class="panel-body" id="panel-body"></div>
+      </aside>
+      <footer class="statusbar" id="statusbar"></footer>
+    </div>
+  </body>
+</html>

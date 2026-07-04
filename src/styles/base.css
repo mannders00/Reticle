@@ -1,0 +1,394 @@
+/* Reticle — base styles & design tokens
+ * Hand-tuned dark theme. No Tailwind: we want precise control over the
+ * premium aesthetic, and avoid a build pipeline.
+ */
+
+:root,
+:root[data-theme="dark"] {
+  /* Surfaces */
+  --bg-0: #0b0d12;            /* app shell背景 */
+  --bg-1: #11141b;            /* panels */
+  --bg-2: #161a23;            /* elevated cards */
+  --bg-3: #1d222d;            /* hover / inputs */
+  --bg-elev: #1a1f2b;         /* popovers */
+
+  /* Strokes */
+  --stroke-1: #232936;
+  --stroke-2: #2d3447;
+  --stroke-strong: #3a4357;
+
+  /* Text */
+  --text-1: #e6e9f0;          /* primary */
+  --text-2: #aab2c5;          /* secondary */
+  --text-3: #6b7589;          /* muted */
+  --text-faint: #4a5366;
+
+  /* Accents */
+  --accent: #5b8cff;          /* primary blue — selection, focus */
+  --accent-soft: rgba(91, 140, 255, 0.14);
+  --accent-strong: #7aa1ff;
+
+  /* Status (used by health pills) */
+  --ok: #2ec27e;
+  --ok-soft: rgba(46, 194, 126, 0.16);
+  --warn: #f5c144;
+  --warn-soft: rgba(245, 193, 68, 0.16);
+  --err: #e5484d;
+  --err-soft: rgba(229, 72, 77, 0.16);
+  --unknown: #6b7589;
+  --unknown-soft: rgba(107, 117, 137, 0.16);
+
+  /* Shape */
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+
+  /* Elevation */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 4px 14px rgba(0, 0, 0, 0.45);
+  --shadow-3: 0 12px 32px rgba(0, 0, 0, 0.55);
+  --shadow-focus: 0 0 0 2px var(--accent-soft);
+
+  /* Motion */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --dur-fast: 90ms;
+  --dur: 160ms;
+  --dur-slow: 280ms;
+
+  /* Typography */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", "Fira Code", ui-monospace,
+    Menlo, Consolas, monospace;
+
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-1);
+  background-color: var(--bg-0);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+
+  /* Disallow native text selection except where we opt in (inputs, cards) */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;       /* the canvas owns scrolling */
+}
+
+#app { /* grid container; direct children must not push it past viewport */
+  min-height: 0;
+  min-width: 0;
+}
+.app-shell > * {
+  min-height: 0;
+  min-width: 0;
+}
+
+body {
+  overscroll-behavior: none;
+  touch-action: none;     /* we handle all gestures on the canvas */
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  user-select: none;
+}
+button:focus-visible {
+  box-shadow: var(--shadow-focus);
+  outline: none;
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+input,
+textarea {
+  font: inherit;
+  color: var(--text-1);
+  background: var(--bg-2);
+  border: 1px solid var(--stroke-1);
+  border-radius: var(--radius-sm);
+  padding: 0.4em 0.6em;
+  user-select: text;
+}
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--shadow-focus);
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--text-1);
+}
+
+/* Scrollbars (subtle) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--stroke-2);
+  border-radius: var(--radius-pill);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--stroke-strong);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+/* App shell layout ----------------------------------------------- */
+
+.app-shell {
+  display: grid;
+  grid-template-areas:
+    "toolbar      toolbar      toolbar"
+    "palette      canvas       rightpanel"
+    "statusbar    statusbar    statusbar";
+  grid-template-columns: auto 1fr var(--panel-w, 340px);
+  grid-template-rows: 44px 1fr 26px;
+  height: 100vh;
+  width: 100vw;
+  min-height: 100vh;
+  gap: 0;
+  overflow: hidden;
+}
+.app-shell.is-panel-fullscreen {
+  grid-template-areas:
+    "rightpanel"
+    "rightpanel"
+    "rightpanel";
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+.app-shell.is-panel-fullscreen > .toolbar,
+.app-shell.is-panel-fullscreen > #palette,
+.app-shell.is-panel-fullscreen > .statusbar {
+  display: none;
+}
+.app-shell.is-panel-hidden {
+  grid-template-columns: auto 1fr 0px;
+}
+/* When palette is collapsed, its grid column collapses to 0 */
+#palette.palette-collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  border: none !important;
+  overflow: hidden;
+}
+
+.toolbar {
+  grid-area: toolbar;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--stroke-1);
+  z-index: 30;
+}
+
+.canvas-host {
+  grid-area: canvas;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-0);
+  min-height: 0;
+  min-width: 0;
+  touch-action: none;
+}
+
+/* Right panel — holds the inspector + terminal with tabs.
+   Resizable via a drag handle on its left edge. */
+.right-panel {
+  grid-area: rightpanel;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-1);
+  border-left: 1px solid var(--stroke-1);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+.right-panel[hidden] { display: none; }
+
+/* Drag resize handle on the left edge of the right panel */
+.panel-resize-handle {
+  position: absolute;
+  left: -5px;
+  top: 0;
+  bottom: 0;
+  width: 10px; /* generous grab target; the visual line is drawn inside */
+  cursor: ew-resize;
+  z-index: 10;
+  touch-action: none;
+}
+.panel-resize-handle::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: transparent;
+  transition: background var(--dur) var(--ease);
+}
+.panel-resize-handle:hover::after { background: var(--accent); opacity: 0.6; }
+/* While dragging: no text selection, no iframe/terminal stealing events,
+   keep the col-resize cursor everywhere. */
+.is-panel-resizing, .is-panel-resizing * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  cursor: ew-resize !important;
+}
+.is-panel-resizing .panel-resize-handle::after { background: var(--accent); opacity: 0.9; }
+
+.statusbar {
+  grid-area: statusbar;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  background: var(--bg-1);
+  border-top: 1px solid var(--stroke-1);
+  font-size: 11px;
+  color: var(--text-3);
+  z-index: 30;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* Make the inspector + terminal collapse gracefully when empty
+   so the canvas can take the whole right side. */
+.app-shell.is-inspector-hidden {
+  grid-template-columns: auto 1fr 0fr;
+}
+.app-shell.is-terminal-hidden {
+  --term-h: 0fr;
+}
+/* ---- Viewer role (daemon read-only) — phase 3b lockout ----
+ * The store refuses topology mutations and the daemon rejects writes;
+ * these rules remove the edit affordances so the read-only canvas looks
+ * intentional, not broken. Pan/zoom/select/inspect/export stay live. */
+.app-shell.is-viewer #palette,
+.app-shell.is-viewer #palette-expand-slot { display: none; }
+.app-shell.is-viewer .node-ports,
+.app-shell.is-viewer .node-resize-handles,
+.app-shell.is-viewer .group-resize-handle { display: none !important; }
+/* inspector: fields become a fact sheet — no adding, deleting, running */
+.app-shell.is-viewer .inspector-content .add-btn,
+.app-shell.is-viewer .inspector-content .insp-add-choices,
+.app-shell.is-viewer .inspector-content .insp-icon-btn,
+.app-shell.is-viewer .inspector-content .del-icon-btn { display: none !important; }
+.app-shell.is-viewer .inspector-content input,
+.app-shell.is-viewer .inspector-content select,
+.app-shell.is-viewer .inspector-content textarea,
+.app-shell.is-viewer .inspector-content [contenteditable] {
+  pointer-events: none;
+  opacity: 0.8;
+}
+.statusbar .sb-role { color: var(--warn); font-weight: 600; }
+/* viewer: header buttons — Check (read-only probe) stays, the rest go */
+.app-shell.is-viewer .inspector-actions .shell-btn,
+.app-shell.is-viewer .inspector-actions .edit-btn,
+.app-shell.is-viewer .inspector-actions .del-btn { display: none !important; }
+
+/* ---- Access gate (daemon refused the connection) ---- */
+.access-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-0);
+}
+.gate-card {
+  width: min(400px, 88vw);
+  padding: 34px 34px 28px;
+  background: var(--bg-1);
+  border: 1px solid var(--stroke-1);
+  border-radius: 12px;
+  text-align: center;
+}
+.gate-mark {
+  width: 40px; height: 40px;
+  margin: 0 auto 16px;
+  border-radius: 11px;
+  background: radial-gradient(circle at 30% 30%, var(--accent), var(--accent-strong));
+  position: relative;
+}
+.gate-mark::after {
+  content: "";
+  position: absolute;
+  inset: 11px;
+  border: 2.5px solid rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+}
+.gate-card h1 { font: 700 19px var(--font-sans); margin: 0 0 10px; color: var(--text-0); }
+.gate-reason { color: var(--text-2); font-size: 13px; margin: 0 0 6px; }
+.gate-hint { color: var(--text-3); font-size: 12px; margin: 0 0 18px; }
+.gate-row { display: flex; gap: 8px; }
+.gate-input {
+  flex: 1;
+  height: 34px;
+  padding: 0 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--stroke-1);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font: 13px var(--font-mono);
+}
+.gate-input:focus { outline: none; border-color: var(--accent); }
+.gate-btn {
+  height: 34px;
+  padding: 0 16px;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font: 600 13px var(--font-sans);
+  cursor: pointer;
+}
+.gate-btn:hover { background: var(--accent-strong); }
+.gate-clear {
+  margin-top: 14px;
+  background: none;
+  border: none;
+  color: var(--text-3);
+  font: 11px var(--font-sans);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.gate-clear:hover { color: var(--text-1); }
+
+/* role badge variants */
+.statusbar .sb-role.is-editor { color: var(--ok, #2ec27e); }
+.statusbar .sb-role.is-disconnected { color: var(--err); font-weight: 700; }

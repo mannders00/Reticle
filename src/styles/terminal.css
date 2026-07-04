@@ -1,0 +1,91 @@
+/* terminal.css — xterm.js + right panel tab styling */
+
+/* Panel tabs */
+.panel-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  border-bottom: 1px solid var(--stroke-1);
+  background: var(--bg-1);
+  padding: 0 6px;
+  height: 32px;
+  flex: 0 0 32px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.panel-tabs::-webkit-scrollbar { display: none; }
+
+.panel-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  font: 12px var(--font-sans);
+  color: var(--text-3);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+.panel-tab.is-active {
+  color: var(--text-1);
+  border-bottom-color: var(--accent);
+}
+.panel-tab:hover { color: var(--text-2); }
+
+.panel-tab-close {
+  background: none;
+  border: none;
+  color: var(--text-3);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0;
+  line-height: 1;
+}
+.panel-tab-close:hover { color: var(--err); }
+
+/* Fullscreen button — always at the right end of the tab bar */
+.panel-fullscreen-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-3);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0 8px;
+  flex: 0 0 auto;
+}
+.panel-fullscreen-btn:hover { color: var(--accent); }
+
+/* Panel body */
+.panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Inspector content inside the panel */
+.inspector-content {
+  height: 100%;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Terminal instance inside the panel */
+.terminal-instance {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-0);
+  padding: 6px 8px;
+  overflow: hidden;
+}
+.terminal-instance .xterm {
+  height: 100%;
+}
+.terminal-instance .xterm .xterm-viewport {
+  background: var(--bg-0) !important;
+}

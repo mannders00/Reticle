@@ -1,0 +1,264 @@
+/* chrome.css — top toolbar and bottom statusbar visuals.
+ * Brand mark and zoom pill belong to global chrome along with the
+ * panel-toggle buttons. Inspector/palette/terminal visuals live in
+ * their own files.
+ */
+
+/* ----- Workspace switcher ----- */
+.workspace-switcher {
+  position: relative;
+}
+.ws-btn {
+  height: 28px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-2);
+  border: 1px solid var(--stroke-1);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font: 12px var(--font-sans);
+  font-weight: 600;
+  cursor: pointer;
+}
+.ws-btn:hover { border-color: var(--stroke-strong); background: var(--bg-3); }
+
+.ws-dropdown {
+  position: absolute;
+  top: 30px;
+  left: 0;
+  min-width: 260px;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: var(--bg-elev);
+  border: 1px solid var(--stroke-2);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-3);
+  padding: 4px;
+  z-index: 100;
+  display: none;
+}
+.workspace-switcher.is-open .ws-dropdown { display: block; }
+
+.ws-group-label {
+  font: 700 9.5px var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: 8px 10px 3px;
+}
+.ws-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font: 12px var(--font-sans);
+  color: var(--text-2);
+  cursor: pointer;
+  user-select: none;
+}
+.ws-item:hover { background: var(--bg-3); color: var(--text-1); }
+.ws-item.is-active { color: var(--accent); font-weight: 600; }
+.ws-name { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ws-path {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: right;
+  font: 10px var(--font-mono);
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ws-item.is-missing { opacity: 0.5; cursor: default; }
+.ws-item.is-missing:hover { background: none; }
+.ws-missing-tag { font: 9px var(--font-mono); color: var(--warn); flex: 0 0 auto; }
+.ws-action { color: var(--text-2); font-weight: 500; }
+.ws-action:hover { color: var(--accent); }
+.ws-check { color: var(--accent); flex: 0 0 auto; }
+.ws-delete {
+  background: none;
+  border: none;
+  color: var(--text-3);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.ws-item:hover .ws-delete { opacity: 1; }
+.ws-delete:hover { color: var(--err); }
+.ws-empty { padding: 8px 10px; color: var(--text-3); font-size: 12px; }
+.ws-divider { height: 1px; background: var(--stroke-1); margin: 4px 0; }
+.ws-open-file { color: var(--text-3); }
+.ws-open-file:hover { color: var(--accent); }
+
+/* ----- Toolbar ----- */
+.toolbar { display: flex; align-items: stretch; }
+.toolbar-inner {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.toolbar .spacer { flex: 1 1 auto; }
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding-right: 6px;
+}
+.brand-name {
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
+.brand-dot {
+  display: inline-block;
+  width: 10px; height: 10px;
+  border-radius: 3px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+  box-shadow: 0 0 10px -2px var(--accent);
+}
+
+.tool-btn {
+  height: 28px;
+  min-width: 28px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-2);
+  border: 1px solid var(--stroke-1);
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+}
+.tool-btn:hover {
+  color: var(--text-1);
+  border-color: var(--stroke-strong);
+  background: var(--bg-3);
+}
+.tool-btn:active { transform: translateY(0.5px); }
+
+.zoom-cluster {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  height: 28px;
+  background: var(--bg-2);
+  border: 1px solid var(--stroke-1);
+  border-radius: var(--radius-sm);
+  color: var(--text-2);
+}
+.zoom-label {
+  font: 12px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  min-width: 44px;
+  text-align: center;
+}
+
+.brand-tag {
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-2);
+  border: 1px solid var(--stroke-1);
+  color: var(--text-3);
+  font: 11px var(--font-mono);
+  letter-spacing: 0.02em;
+}
+
+/* ----- Statusbar ----- */
+.statusbar .sb-brand {
+  color: var(--text-2);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.statusbar .sb-brand:hover { color: var(--accent); }
+.statusbar .sb-spacer { flex: 1 1 auto; }
+.statusbar .sb-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-3);
+  font: 11px var(--font-mono);
+}
+.statusbar .sb-dirty {
+  color: var(--warn);
+}
+/* Clickable statusbar toggles (snap, scroll direction) */
+.statusbar .sb-toggle {
+  cursor: pointer;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.statusbar .sb-toggle:hover {
+  background: var(--bg-3);
+  color: var(--text-1);
+}
+.statusbar .sb-toggle.is-active {
+  color: var(--text-2);
+}
+/* ----- Toolbar overflow ("⋯") — only lives on narrow screens ----- */
+.tb-overflow { position: relative; display: none; }
+.tb-more-btn { font-weight: 700; letter-spacing: 1px; }
+.tb-menu {
+  position: absolute;
+  top: 34px;
+  right: 0;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 160px;
+  padding: 6px;
+  background: var(--bg-elev);
+  border: 1px solid var(--stroke-2);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-3);
+  z-index: 120;
+}
+.tb-overflow.is-open .tb-menu { display: flex; }
+.tb-menu-item {
+  padding: 9px 12px;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-2);
+  font: 13px var(--font-sans);
+  cursor: pointer;
+}
+.tb-menu-item:hover { background: var(--bg-3); color: var(--text-1); }
+
+/* ----- Narrow screens: the chrome sheds, the map keeps the room -----
+ * Toolbar keeps brand · workspace · Fit · Inspector · ⋯ (zoom/PDF/theme
+ * move into the ⋯ menu — pinch/scroll still zooms the canvas itself).
+ * Statusbar keeps brand · role badge · dirty; desk-only toggles, counts,
+ * and the config path go. */
+@media (max-width: 640px) {
+  .toolbar-inner { gap: 6px; }
+  .toolbar-inner .zoom-cluster,
+  .toolbar-inner .theme-toggle { display: none; }
+  /* every bare tool-btn hides; the tagged keepers (Fit, Inspector) stay */
+  .toolbar-inner > .tool-btn { display: none; }
+  .toolbar-inner > .tool-btn.tb-keep { display: inline-flex; }
+  .tb-overflow { display: block; }
+  .ws-btn { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .statusbar .sb-snap,
+  .statusbar .sb-scroll,
+  .statusbar .sb-path { display: none; }
+}
+@media (max-width: 460px) {
+  .statusbar .sb-item:not(.sb-role):not(.sb-dirty) { display: none; } /* node/edge counts */
+}

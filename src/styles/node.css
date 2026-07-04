@@ -1,0 +1,470 @@
+/* node.css — per-kind card visuals for NodeView and GroupView.
+ * Layout-independent tokens (colours, sizes) live in base.css; this file
+ * only handles the node body and its per-category accents.
+ */
+
+/* NodeView renders as an HTML div.node-wrapper > div.node-card.
+ * No foreignObject — plain HTML positioned via CSS left/top. */
+.node-wrapper { overflow: visible; }
+
+.node-card {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+
+  background: var(--bg-2);
+  border: 1px solid var(--stroke-1);
+  border-left: 3px solid var(--cat, var(--accent));
+  border-radius: var(--radius);
+
+  color: var(--text-1);
+  font: 13px var(--font-sans);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  pointer-events: auto;
+  cursor: default;
+  transition: border-color var(--dur) var(--ease),
+              box-shadow var(--dur) var(--ease),
+              transform var(--dur-fast) var(--ease);
+}
+.node-card:hover { border-color: var(--stroke-strong); }
+.node-card.is-selected {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-2), 0 0 0 1px var(--accent), 0 0 18px -4px var(--accent);
+}
+.node-wrapper:has(.is-selected) { z-index: 10; }
+.node-card.is-dragging { box-shadow: var(--shadow-3); cursor: grabbing; }
+
+/* Per-category accent stripe + tint */
+.node-card[data-category="compute"]     { --cat: #5b8cff; }
+.node-card[data-category="data"]        { --cat: #a78bfa; }
+.node-card[data-category="network"]    { --cat: #2ec27e; }
+.node-card[data-category="composite"]   { --cat: #3aa0ff; }
+.node-card[data-category="cloud-group"] { --cat: #f5a623; }
+.node-card[data-category="network-group"]{ --cat: #7aa2f7; }
+.node-card[data-category="misc"]        { --cat: var(--text-3); }
+
+/* Note kind: a paragraph card — flat warm tint, theme-consistent, the
+   whole body is wrapped prose (dblclick to edit in place). */
+.node-card[data-kind="note"] {
+  background: color-mix(in srgb, var(--warn) 9%, var(--bg-2));
+  border-color: color-mix(in srgb, var(--warn) 35%, var(--stroke-1));
+  border-left-color: var(--warn);
+  box-shadow: var(--shadow-1);
+}
+.node-card[data-kind="note"] .note-head {
+  min-height: 0;
+  align-items: center;
+  gap: 7px;
+  color: var(--warn);
+}
+.node-card[data-kind="note"] .note-head .node-icon {
+  flex-basis: 15px;
+  width: 15px;
+  height: 15px;
+  color: var(--warn);
+  margin-top: 0;
+}
+.node-card[data-kind="note"] .note-head .node-title {
+  font-size: 12px;
+  color: var(--text-1);
+}
+.note-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font: 12px/1.55 var(--font-sans);
+  color: var(--text-1);
+}
+.note-body:empty::before {
+  content: "Double-click to write…";
+  color: var(--text-3);
+}
+.note-body[contenteditable]:not([contenteditable="false"]) {
+  outline: none;
+  cursor: text;
+}
+
+.node-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  min-height: 22px;
+}
+.node-icon {
+  display: inline-flex;
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  color: var(--cat, var(--text-2));
+  margin-top: 1px;
+}
+.node-title-wrap { flex: 1 1 auto; min-width: 0; }
+.node-title {
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.node-sub {
+  color: var(--text-3);
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+
+/* Health pill — top-right */
+.health-pill {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  font: 10px var(--font-mono);
+  letter-spacing: 0.02em;
+  color: var(--unknown);
+  background: var(--unknown-soft);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+}
+.health-pill[data-state="ok"]   { color: var(--ok);   background: var(--ok-soft);   border-color: rgba(46,194,126,0.35); }
+.health-pill[data-state="warn"] { color: var(--warn); background: var(--warn-soft); border-color: rgba(245,193,68,0.35); }
+.health-pill[data-state="err"]  { color: var(--err);  background: var(--err-soft);  border-color: rgba(229,72,77,0.45); }
+.health-pill .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+}
+
+/* Per-check status strip — which checks pass/fail, on the card itself */
+.node-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: auto;
+}
+.check-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  font: 9.5px var(--font-mono);
+  letter-spacing: 0.01em;
+  padding: 1.5px 7px 1.5px 6px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--stroke-1);
+  background: var(--bg-3);
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.check-chip .dot {
+  flex: 0 0 5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.check-chip[data-state="ok"]  { color: var(--ok);  border-color: rgba(46,194,126,0.3); }
+.check-chip[data-state="err"] {
+  color: var(--err);
+  border-color: rgba(229,72,77,0.45);
+  background: var(--err-soft);
+}
+.check-chip[data-state="err"] .dot { box-shadow: 0 0 5px currentColor; }
+.check-chip[data-state="unknown"] { color: var(--text-3); }
+.check-chip[data-state="more"] { color: var(--text-3); }
+
+/* Attached resources (GPU, disk, IP…) — tiny icon chips */
+.node-addons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.addon-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: 9px var(--font-mono);
+  padding: 1.5px 6px 1.5px 5px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--stroke-1);
+  background: var(--bg-2);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.addon-chip .kind-icon { flex: 0 0 auto; opacity: 0.9; }
+.addon-label { max-width: 90px; overflow: hidden; text-overflow: ellipsis; }
+.node-checks + .node-addons, .node-addons + .node-meta { margin-top: 4px; }
+/* addons start the bottom stack when there's no checks strip */
+.node-card > .node-head + .node-addons { margin-top: auto; }
+
+.node-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+/* meta hugs the bottom when alone; sits 4px under the checks otherwise */
+.node-card > .node-meta:last-child { margin-top: auto; }
+.node-card > .node-checks + .node-meta { margin-top: 4px; }
+.meta-bit {
+  font: 10px var(--font-mono);
+  color: var(--text-2);
+  padding: 1px 6px;
+  background: var(--bg-3);
+  border: 1px solid var(--stroke-1);
+  border-radius: var(--radius-pill);
+}
+
+/* Resize handles — 8 handles (4 corners + 4 edges), visible on selection */
+.node-resize-handles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.node-resize-handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--bg-elev);
+  border: 1.5px solid var(--accent);
+  border-radius: 2px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease);
+  z-index: 7;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+/* Only the individual handles get pointer-events, not the container */
+.node-resize-handles.is-visible .node-resize-handle {
+  opacity: 1;
+  pointer-events: auto;
+}
+/* Corners — inside the bounds so foreignObject doesn't clip them */
+.node-resize-handle[data-edge="nw"] { top: 2px; left: 2px; cursor: nwse-resize; }
+.node-resize-handle[data-edge="ne"] { top: 2px; right: 2px; cursor: nesw-resize; }
+.node-resize-handle[data-edge="se"] { bottom: 2px; right: 2px; cursor: nwse-resize; }
+.node-resize-handle[data-edge="sw"] { bottom: 2px; left: 2px; cursor: nesw-resize; }
+/* Edges — flush inside */
+.node-resize-handle[data-edge="n"]  { top: 1px; left: 50%; transform: translateX(-50%); width: 24px; height: 5px; cursor: ns-resize; border-radius: 3px; }
+.node-resize-handle[data-edge="s"]  { bottom: 1px; left: 50%; transform: translateX(-50%); width: 24px; height: 5px; cursor: ns-resize; border-radius: 3px; }
+.node-resize-handle[data-edge="e"]  { right: 1px; top: 50%; transform: translateY(-50%); width: 5px; height: 24px; cursor: ew-resize; border-radius: 3px; }
+.node-resize-handle[data-edge="w"]  { left: 1px; top: 50%; transform: translateY(-50%); width: 5px; height: 24px; cursor: ew-resize; border-radius: 3px; }
+.node-resize-handle:hover {
+  background: var(--accent);
+  transform: scale(1.3);
+}
+.node-resize-handle[data-edge="n"]:hover,
+.node-resize-handle[data-edge="s"]:hover {
+  transform: translateX(-50%) scale(1.3);
+}
+.node-resize-handle[data-edge="e"]:hover,
+.node-resize-handle[data-edge="w"]:hover {
+  transform: translateY(-50%) scale(1.3);
+}
+
+/* Connection ports — visible on hover and on selected nodes.
+   The container must stay pointer-events: none — it spans the whole card
+   at z-index 9, so giving it pointer-events would swallow every click on
+   a selected node's body (dead zone: no drag, no re-select). Only the
+   dots themselves are interactive, same pattern as the resize handles. */
+.node-ports {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9;
+}
+.node-port {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg-0);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
+  transform: scale(0.5);
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  box-shadow: 0 0 6px rgba(0,0,0,0.4);
+}
+.node-ports.is-visible .node-port,
+.node-wrapper:hover .node-port {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+  cursor: crosshair;
+}
+.node-port:hover {
+  transform: scale(1.3);
+  background: var(--accent-strong);
+}
+/* Ports sit centered on the card's edges */
+.node-port[data-side="n"] { top:    -8px; left: calc(50% - 8px); }
+.node-port[data-side="e"] { right:  -8px; top:  calc(50% - 8px); }
+.node-port[data-side="s"] { bottom: -8px; left: calc(50% - 8px); }
+.node-port[data-side="w"] { left:   -8px; top:  calc(50% - 8px); }
+
+/* Drop target highlight when about to connect to this node */
+.node-card.is-drop-target {
+  border-color: var(--accent-strong);
+  box-shadow: var(--shadow-2), 0 0 0 2px var(--accent-strong), 0 0 20px -2px var(--accent);
+}
+.group-wrapper.is-drop-target {
+  border-color: var(--accent-strong);
+  border-style: solid;
+  box-shadow: 0 0 0 1px var(--accent-strong), 0 0 20px -4px var(--accent);
+}
+
+/* Rubber-band connection preview */
+.rubber-band {
+  stroke: var(--accent);
+  opacity: 0.85;
+}
+
+/* ----- GroupView (HTML div) ----- */
+.group-wrapper {
+  box-sizing: border-box;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  overflow: visible;
+}
+.group-wrapper[data-kind="vpc"]            { --group-stroke: rgba(122,162,247,0.4); --group-fill: rgba(122,162,247,0.04); }
+.group-wrapper[data-kind="region"]         { --group-stroke: rgba(245,166,35,0.35); --group-fill: rgba(245,166,35,0.03); }
+.group-wrapper[data-kind="zone"]           { --group-stroke: rgba(245,166,35,0.3); --group-fill: rgba(245,166,35,0.025); }
+.group-wrapper[data-kind="subnet"]         { --group-stroke: rgba(122,162,247,0.3); --group-fill: rgba(122,162,247,0.02); }
+.group-wrapper[data-kind="security-group"] { --group-stroke: rgba(229,72,77,0.32); --group-fill: rgba(229,72,77,0.025); }
+.group-wrapper[data-kind="lan"]            { --group-stroke: rgba(46,194,126,0.3); --group-fill: rgba(46,194,126,0.02); }
+.group-wrapper[data-kind="wan"]            { --group-stroke: rgba(122,162,247,0.32); --group-fill: rgba(122,162,247,0.025); }
+.group-wrapper[data-kind="box"]            { --group-stroke: rgba(138,147,166,0.42); --group-fill: rgba(138,147,166,0.035); }
+.group-wrapper.is-selected {
+  border-width: 2px;
+  z-index: 5;
+}
+
+.group-title-bar {
+  pointer-events: auto; /* the wrapper is click-through; grab groups here */
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 8px;
+  background: var(--group-stroke, rgba(91,140,255,0.35));
+  border-radius: 11px 11px 0 0;
+  color: var(--fg-on-accent);
+  font: 12px var(--font-sans);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  margin: -1.5px -1.5px 0 -1.5px;
+  border: 1.5px solid var(--group-stroke, rgba(91,140,255,0.35));
+  border-bottom: none;
+}
+.group-icon { color: var(--fg-on-accent); display: inline-flex; }
+.group-name { text-transform: uppercase; letter-spacing: 0.04em; }
+.group-sub {
+  color: var(--fg-on-accent);
+  opacity: 0.75;
+  font-weight: 500;
+  letter-spacing: 0;
+  font-size: 11px;
+}
+
+/* Group resize handles (HTML divs, same as node handles) */
+.group-resize-handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--bg-elev);
+  border: 1.5px solid var(--accent);
+  border-radius: 2px;
+  z-index: 7;
+  display: none;
+  pointer-events: auto;
+}
+.group-wrapper.is-selected .group-resize-handle { display: block; }
+.group-resize-handle[data-edge="nw"] { top: 2px; left: 2px; cursor: nwse-resize; }
+.group-resize-handle[data-edge="ne"] { top: 2px; right: 2px; cursor: nesw-resize; }
+.group-resize-handle[data-edge="se"] { bottom: 2px; right: 2px; cursor: nwse-resize; }
+.group-resize-handle[data-edge="sw"] { bottom: 2px; left: 2px; cursor: nesw-resize; }
+.group-resize-handle[data-edge="n"]  { top: 1px; left: 50%; transform: translateX(-50%); width: 24px; height: 5px; cursor: ns-resize; border-radius: 3px; }
+.group-resize-handle[data-edge="s"]  { bottom: 1px; left: 50%; transform: translateX(-50%); width: 24px; height: 5px; cursor: ns-resize; border-radius: 3px; }
+.group-resize-handle[data-edge="e"]  { right: 1px; top: 50%; transform: translateY(-50%); width: 5px; height: 24px; cursor: ew-resize; border-radius: 3px; }
+.group-resize-handle[data-edge="w"]  { left: 1px; top: 50%; transform: translateY(-50%); width: 5px; height: 24px; cursor: ew-resize; border-radius: 3px; }
+
+/* ----- edges ----- */
+.edge {
+  transition: stroke var(--dur) var(--ease);
+  pointer-events: none;
+}
+.edge.is-selected {
+  stroke: var(--accent);
+  filter: drop-shadow(0 0 4px var(--accent));
+}
+
+/* Inline edge-label editor — HTML input inside the world layer, placed
+   at the curve midpoint so it pans/zooms with the canvas. */
+.edge-label-input {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 110px;
+  padding: 3px 8px;
+  font: 11px var(--font-mono);
+  text-align: center;
+  color: var(--text-1);
+  background: var(--bg-elev);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-pill);
+  outline: none;
+  box-shadow: var(--shadow-2);
+  z-index: 20;
+}
+.edge-hit {
+  pointer-events: stroke;
+  cursor: pointer;
+}
+.edge-arrow {
+  pointer-events: none;
+}
+.edge-label {
+  fill: var(--text-2);
+  font: 11px var(--font-mono);
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: var(--canvas-bg);
+  stroke-width: 4px;
+}
+.edge-label-bg {
+  fill: var(--bg-1);
+  stroke: var(--stroke-1);
+  stroke-width: 1;
+  pointer-events: none;
+}
+.edge[data-kind="mgmt"] { opacity: 0.6; }

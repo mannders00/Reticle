@@ -1,0 +1,136 @@
+/* canvas.css — the infinite SVG world
+ * Visual layer for World, Camera, Grid, Renderer.
+ * Interaction (pan/zoom) is JS-driven; CSS only handles the visuals.
+ */
+
+.canvas-host {
+  cursor: grab;
+}
+.canvas-host.is-panning {
+  cursor: grabbing;
+}
+.canvas-host.is-connecting {
+  cursor: crosshair;
+}
+
+.world-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  z-index: 1;
+}
+
+/* Grid SVG — fixed behind everything */
+.grid-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+/* The single transformed layer — nodes, edges, and groups all live
+   inside this. One CSS transform = zero drift between layers.
+   will-change only while actively panning/zooming: a permanently
+   composited layer keeps a cached raster and rescales it, which is what
+   made card text blurry. At rest the layer drops back to normal
+   rendering and the browser re-rasterizes text crisply at the current
+   zoom (World.applyTransform also pixel-snaps the resting transform). */
+.world-layer {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+  z-index: 2;
+}
+.world-layer.is-interacting {
+  will-change: transform;
+}
+
+/* Edge SVG inside the world layer — large enough that paths aren't
+   clipped. Uses overflow:visible as a safety net. */
+.edge-svg {
+  position: absolute;
+  left: -100000px;
+  top: -100000px;
+  width: 200000px;
+  height: 200000px;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 1;
+}
+.edge-svg path { pointer-events: stroke; }
+
+/* HTML node wrapper — positioned via left/top in world coords.
+   overflow: visible so port dots (positioned outside the card) show. */
+.node-wrapper {
+  position: absolute;
+  pointer-events: auto;
+  z-index: 3;
+  overflow: visible;
+}
+
+/* HTML group wrapper — dashed border, like a VPC/region boundary.
+   The interior is click-through (pointer-events: none) so nodes inside
+   the group and the canvas beneath stay reachable; only the title bar
+   and resize handles are interactive. */
+.group-wrapper {
+  position: absolute;
+  pointer-events: none;
+  border: 1.5px dashed var(--group-stroke, rgba(91,140,255,0.35));
+  border-radius: 12px;
+  background: var(--group-fill, rgba(91,140,255,0.04));
+  z-index: 1;
+}
+
+/* The transform target. JS sets `transform` via attribute on <g.world>.
+ * We add will-change only while actively interacting to spare GPU mem. */
+.world-svg .world {
+  transform-box: fill-box;
+}
+.world-svg.is-animating .world {
+  will-change: transform;
+}
+
+/* Grid layer — drawn behind the world group so it never reroutes on pan.
+ * We use a Cartesian-feeling dotted grid that scales with zoom.
+ * Grid pattern itself is rendered by JS (Grid.js); here we keep stroke only. */
+.world-svg .grid-layer {
+  pointer-events: none;
+}
+
+/* Overlay: transient HUD (zoom badge, coordinates, marquee rect) */
+.canvas-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.zoom-badge {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  background: var(--bg-elev);
+  color: var(--text-2);
+  border: 1px solid var(--stroke-1);
+  border-radius: var(--radius-pill);
+  padding: 3px 9px;
+  font: 12px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  box-shadow: var(--shadow-1);
+  user-select: none;
+}
+
+.marquee {
+  position: absolute;
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 4;
+}

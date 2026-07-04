@@ -1,0 +1,182 @@
+/* palette.css — left rail of node kinds.
+ * Collapsible to an icon-only strip; filterable by typing.
+ */
+
+.palette {
+  grid-area: palette;
+  display: flex;
+  flex-direction: column;
+  width: 220px;
+  min-width: 220px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg-1);
+  border-right: 1px solid var(--stroke-1);
+  z-index: 25;
+  transition: width var(--dur) var(--ease), min-width var(--dur) var(--ease);
+}
+.palette.is-collapsed {
+  width: 0;
+  min-width: 0;
+  border-right: none;
+  overflow: hidden;
+}
+.palette.is-collapsed {
+  width: 44px;
+  min-width: 44px;
+}
+.palette.is-collapsed .palette-search,
+.palette.is-collapsed .palette-cat-label,
+.palette.is-collapsed .palette-tile-label,
+.palette.is-collapsed .palette-cat-head .palette-cat-dot {
+  display: none;
+}
+.palette.is-collapsed .palette-cat-head {
+  justify-content: center;
+  padding: 4px 0;
+}
+
+.palette-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--stroke-1);
+}
+.palette-collapse {
+  flex: 0 0 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--stroke-1);
+  background: var(--bg-2);
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1;
+}
+/* Expand button lives in the toolbar via #palette-expand-slot.
+   It uses .tool-btn for base styling; display is toggled by JS. */
+.palette-expand { display: none; }
+.palette-search {
+  flex: 1 1 auto;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+.palette-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px 0 24px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--stroke-2) transparent;
+}
+.palette-body::-webkit-scrollbar {
+  width: 6px;
+}
+.palette-body::-webkit-scrollbar-thumb {
+  background: var(--stroke-2);
+  border-radius: 3px;
+  border: none;
+}
+.palette-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.palette-cat-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px 4px;
+  font: 11px var(--font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-3);
+  cursor: pointer;
+  user-select: none;
+}
+.palette-cat-head:hover { color: var(--text-2); }
+.palette-cat-head.is-collapsed-h + .palette-cat-body { display: none; }
+.palette-cat-head::after {
+  content: "▾";
+  margin-left: auto;
+  font-size: 10px;
+  opacity: 0.5;
+}
+.palette-cat-head.is-collapsed-h::after { content: "▸"; }
+.palette-cat-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex: 0 0 8px;
+}
+.palette-cat-label { font-weight: 600; }
+
+.palette-cat-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 6px 8px;
+}
+
+.palette-tile {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  color: var(--text-2);
+  cursor: grab;
+  user-select: none;
+  border: 1px solid transparent;
+  transition: background var(--dur-fast) var(--ease),
+              color var(--dur-fast) var(--ease),
+              border-color var(--dur-fast) var(--ease);
+}
+.palette-tile:hover {
+  background: var(--bg-2);
+  color: var(--text-1);
+  border-color: var(--stroke-1);
+}
+.palette-tile:active { cursor: grabbing; }
+.palette-tile .kind-icon {
+  color: var(--cat, var(--text-2));
+  flex: 0 0 18px;
+  width: 18px; height: 18px;
+  display: inline-flex;
+}
+/* per-category icon tint */
+.palette-tile[data-kind="server"] .kind-icon,
+.palette-tile[data-kind="vm"] .kind-icon,
+.palette-tile[data-kind="app"] .kind-icon,
+.palette-tile[data-kind="host"] .kind-icon,
+.palette-tile[data-kind="container"] .kind-icon { color: #5b8cff; }
+.palette-tile[data-kind="database"] .kind-icon,
+.palette-tile[data-kind="cache"] .kind-icon,
+.palette-tile[data-kind="queue"] .kind-icon,
+.palette-tile[data-kind="object-store"] .kind-icon { color: #a78bfa; }
+.palette-tile[data-kind="load-balancer"] .kind-icon,
+.palette-tile[data-kind="switch"] .kind-icon,
+.palette-tile[data-kind="router"] .kind-icon,
+.palette-tile[data-kind="firewall"] .kind-icon,
+.palette-tile[data-kind="vpn"] .kind-icon,
+.palette-tile[data-kind="bastion"] .kind-icon,
+.palette-tile[data-kind="dns"] .kind-icon,
+.palette-tile[data-kind="cdn"] .kind-icon { color: #2ec27e; }
+.palette-tile[data-kind="cluster"] .kind-icon,
+.palette-tile[data-kind="knode"] .kind-icon,
+.palette-tile[data-kind="pod"] .kind-icon,
+.palette-tile[data-kind="daemonset"] .kind-icon,
+.palette-tile[data-kind="statefulset"] .kind-icon,
+.palette-tile[data-kind="deployment"] .kind-icon,
+.palette-tile[data-kind="service"] .kind-icon,
+.palette-tile[data-kind="ingress"] .kind-icon,
+.palette-tile[data-kind="gateway"] .kind-icon { color: #3aa0ff; }
+
+.palette-tile-label {
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

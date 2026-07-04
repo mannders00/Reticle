@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reticle — the infrastructure diagram you can operate</title>
+  <meta name="description" content="Draw your real topology, watch it breathe, fix it from the map, and share it live with your whole team. Free MIT desktop app; single-binary team daemon." />
+  <link rel="icon" href="favicon.ico" sizes="48x48" />
+  <link rel="icon" href="reticle.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    // Resolve theme before first paint (no flash). Manual toggle wins,
+    // otherwise follow the system.
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem("reticle-site-theme"); } catch (e) {}
+      var dark = saved ? saved === "dark"
+        : window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (dark) document.documentElement.dataset.theme = "dark";
+    })();
+  </script>
+</head>
+<body>
+
+  <!-- ================= nav ================= -->
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="#"><img class="brand-mark" src="reticle.svg" alt="" width="22" height="22" />Reticle</a>
+      <nav class="nav-links">
+        <a href="#live">Live demo</a>
+        <a href="#alive">The map</a>
+        <a href="#product">Product</a>
+        <a href="#teams">For teams</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <span class="nav-spacer"></span>
+      <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark" aria-label="Toggle theme">☾</button>
+      <a class="btn btn-primary btn-small nav-cta" href="#teams">Get Reticle</a>
+      <button class="nav-menu-btn" id="nav-menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="nav-menu">☰</button>
+      <nav class="nav-menu" id="nav-menu" hidden>
+        <a href="#live">Live demo</a>
+        <a href="#alive">The map</a>
+        <a href="#product">Product</a>
+        <a href="#teams">For teams</a>
+        <a href="#faq">FAQ</a>
+        <a class="btn btn-primary btn-small" href="#teams">Get Reticle</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ================= hero ================= -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <div class="hero-badges">
+          <span class="pill accent">Free desktop · MIT</span>
+          <span class="pill">team daemon for orgs</span>
+        </div>
+        <h1>The infrastructure diagram you can operate.</h1>
+        <p class="lede">
+          Draw your real systems on a beautiful canvas. Then watch them breathe —
+          live health on every node, a real terminal one keypress away, and the
+          whole map shared with your team in real time.
+        </p>
+        <div class="hero-ctas">
+          <!-- TODO: real download link -->
+          <a class="btn btn-primary" href="#teams">Download free</a>
+          <a class="btn btn-ghost" href="#live">See it live ↓</a>
+        </div>
+        <p class="hero-note">No account. No cloud. Your map is one <code>topology.yaml</code> you own.</p>
+      </div>
+
+      <!-- ▓▓ MEDIA SLOT: HERO ▓▓
+           Best asset: a 5–8s looping screen recording (muted, autoplay) of
+           the app — pan across a topology, a node pulses red, a shell opens.
+           Fallback: a crisp dark-theme screenshot, 16:10, ~2400px wide.
+           Replace the inner .canvas-mock with <video autoplay muted loop
+           playsinline> or <img>, and add class "is-live" to the slot. -->
+      <div class="media-slot ar-app is-live" id="hero-media">
+        <div class="canvas-mock" style="border:0;box-shadow:none;width:100%;padding:0;">
+          <svg viewBox="0 0 560 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Reticle canvas: a VPC with web servers and a database; one node glows red; a terminal is docked below.">
+            <rect width="560" height="400" fill="#0d1017"/>
+            <rect x="34" y="26" width="342" height="252" rx="12" fill="rgba(122,162,247,0.05)" stroke="rgba(122,162,247,0.4)" stroke-dasharray="5 4" stroke-width="1.4"/>
+            <rect x="34" y="26" width="342" height="22" rx="10" fill="rgba(122,162,247,0.28)"/>
+            <text x="48" y="41" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="700" fill="#dbe4ff" letter-spacing="1.5">PROD-VPC · 10.0.0.0/16</text>
+            <path d="M 216 110 C 246 110 246 180 276 180" fill="none" stroke="#5b8cff" stroke-width="1.8"/>
+            <path d="M 468 120 C 430 120 420 96 388 96 L 220 96" fill="none" stroke="#2ec27e" stroke-width="1.8"/>
+            <path d="M 330 232 C 380 240 420 300 452 306" fill="none" stroke="#f5a623" stroke-width="1.6" stroke-dasharray="6 5"/>
+            <g>
+              <rect x="70" y="76" width="146" height="68" rx="9" fill="#141925" stroke="#2c3444"/>
+              <rect x="70" y="85" width="3" height="50" fill="#5b8cff"/>
+              <text x="86" y="98" font-family="-apple-system,sans-serif" font-size="12" font-weight="650" fill="#e8ecf5">web-01</text>
+              <text x="86" y="112" font-family="-apple-system,sans-serif" font-size="9.5" fill="#79839c">nginx · 10.0.1.4</text>
+              <circle cx="196" cy="92" r="4" fill="#2ec27e"><animate attributeName="opacity" values="1;0.5;1" dur="2.4s" repeatCount="indefinite"/></circle>
+            </g>
+            <g>
+              <rect x="150" y="180" width="146" height="72" rx="9" fill="#141925" stroke="#e5484d" stroke-width="1.4"/>
+              <rect x="150" y="190" width="3" height="52" fill="#a78bfa"/>
+              <text x="166" y="203" font-family="-apple-system,sans-serif" font-size="12" font-weight="650" fill="#e8ecf5">db-primary</text>
+              <text x="166" y="217" font-family="-apple-system,sans-serif" font-size="9.5" fill="#79839c">postgres</text>
+              <text x="166" y="240" font-family="ui-monospace,Menlo,monospace" font-size="8.5" fill="#ff8085">check 'pg ready' failing</text>
+              <circle cx="276" cy="196" r="4" fill="#e5484d"><animate attributeName="opacity" values="1;0.35;1" dur="1.1s" repeatCount="indefinite"/></circle>
+            </g>
+            <g>
+              <rect x="404" y="66" width="128" height="60" rx="9" fill="#141925" stroke="#2c3444"/>
+              <rect x="404" y="75" width="3" height="42" fill="#2ec27e"/>
+              <text x="420" y="88" font-family="-apple-system,sans-serif" font-size="12" font-weight="650" fill="#e8ecf5">lb-01</text>
+              <text x="420" y="102" font-family="-apple-system,sans-serif" font-size="9.5" fill="#79839c">443 → 80</text>
+              <circle cx="512" cy="82" r="4" fill="#2ec27e"/>
+            </g>
+            <g>
+              <rect x="70" y="300" width="300" height="76" rx="9" fill="#0b0e15" stroke="#232936"/>
+              <circle cx="86" cy="315" r="3" fill="#e5484d"/><circle cx="97" cy="315" r="3" fill="#dfa412"/><circle cx="108" cy="315" r="3" fill="#2ec27e"/>
+              <text x="122" y="318" font-family="ui-monospace,Menlo,monospace" font-size="8.5" fill="#5c667c">deploy@web-01 — ssh</text>
+              <text x="84" y="338" font-family="ui-monospace,Menlo,monospace" font-size="9.5" fill="#9aa5bd">$ systemctl restart nginx</text>
+              <text x="84" y="352" font-family="ui-monospace,Menlo,monospace" font-size="9.5" fill="#2ec27e">● nginx.service — active (running)</text>
+              <text x="84" y="366" font-family="ui-monospace,Menlo,monospace" font-size="9.5" fill="#9aa5bd">$ <tspan fill="#e8ecf5">▊</tspan></text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= live demo ================= -->
+  <section id="live">
+    <div class="wrap">
+      <div class="section-head" style="text-align:center;max-width:none;">
+        <span class="kicker">SEE FOR YOURSELF</span>
+        <h2>This one is real. Go ahead — poke it.</h2>
+        <p class="lede" style="margin-left:auto;margin-right:auto;">A live daemon, a live topology, read-only access. What you're seeing is the actual health of the machines, right now.</p>
+      </div>
+
+      <!-- ▓▓ MEDIA SLOT: LIVE DEMO EMBED ▓▓
+           Your killer asset. The daemon is READ-ONLY BY DEFAULT — run it
+           with no tokens at all and embed it, no token in the URL:
+             <iframe src="https://demo.yourdomain.com/"
+                     title="Reticle live demo" loading="lazy"></iframe>
+           Never --enable-terminal or --open on a public daemon
+           (see web/DEPLOY.md). Add class "is-live" when wired. -->
+      <div class="media-slot ar-video" id="live-embed">
+        <div class="slot-label">
+          <b>LIVE EMBED</b>
+          read-only daemon iframe — a real map, real health, safe by default<br/>
+          (setup: web/DEPLOY.md)
+        </div>
+      </div>
+      <p class="media-caption">Viewers can pan, inspect, and export — they can't change or run anything.</p>
+    </div>
+  </section>
+
+  <!-- ================= the living map ================= -->
+  <section id="alive">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="kicker">THE LIVING MAP</span>
+        <h2>Diagrams go stale. This one has a pulse.</h2>
+      </div>
+      <div class="cards-3">
+        <div class="card">
+          <span class="card-icon">▶</span>
+          <h3>Your runbook, on the node</h3>
+          <p>Named scripts run with one click — output right there on the map.</p>
+          <div class="mini-mock">
+            <div>disk usage&nbsp;&nbsp;<span class="cm">df -h</span>&nbsp;&nbsp;▶</div>
+            <div><span class="ok">exit 0</span></div>
+            <div><span class="cm">/dev/root&nbsp; 39G&nbsp; 21G&nbsp; 57% /</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <span class="card-icon">⏱</span>
+          <h3>Checks that never sleep</h3>
+          <p>SSH scripts, local CLI calls, or HTTP endpoints — on a schedule, around the clock.</p>
+          <div class="mini-mock">
+            <div><span class="k">- name:</span> <span class="s">nginx alive</span></div>
+            <div>&nbsp;&nbsp;<span class="k">interval:</span> <span class="s">30s</span></div>
+            <div>&nbsp;&nbsp;<span class="k">script:</span> <span class="s">systemctl is-active nginx</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <span class="card-icon">◉</span>
+          <h3>Failures glow on the map</h3>
+          <p>A failing check turns its node red — and shows which check, right on the card.</p>
+          <div class="mini-mock">
+            <div><span class="err">● edge healthy</span>&nbsp;&nbsp;<span class="cm">exit 1 · 4s ago</span></div>
+            <div><span class="ok">● cert valid</span>&nbsp;&nbsp;<span class="cm">ok · 4s ago</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= product flow ================= -->
+  <section id="product">
+    <div class="wrap">
+
+      <div class="flow-row">
+        <div class="flow-copy">
+          <span class="kicker">DRAW</span>
+          <h3>A diagram tool you'd choose anyway</h3>
+          <p>Infinite canvas, buttery pan and zoom, 30+ infra-native shapes, semantic edges. Clean enough to hand to a CTO — before it ever does anything live.</p>
+        </div>
+        <!-- ▓▓ MEDIA SLOT: SCREENSHOT ▓▓
+             Dark-theme canvas with the palette open: an AWS-style topology
+             (region → VPC → subnets). Suggest the enterprise-aws sample,
+             Fit view, ~2400px wide, 16:10. -->
+        <div class="media-slot ar-app">
+          <div class="slot-label"><b>SCREENSHOT</b> canvas + palette · enterprise-aws sample · dark theme</div>
+        </div>
+      </div>
+
+      <div class="flow-row flip">
+        <div class="flow-copy">
+          <span class="kicker">OPERATE</span>
+          <h3>Select a node. <kbd>⌘</kbd><kbd>⏎</kbd>. You're in a shell.</h3>
+          <p>A real terminal over your own SSH or kubectl — plus one-click runbook actions with output inline. See the problem and fix the simple case without leaving the map.</p>
+        </div>
+        <!-- ▓▓ MEDIA SLOT: SCREENCAST ▓▓
+             20–30s muted loop: red node → open shell from it → run the fix
+             → node turns green. This clip IS the product story. -->
+        <div class="media-slot ar-video">
+          <div class="slot-label"><b>SCREENCAST · 20–30s</b> red node → shell → fix → green</div>
+        </div>
+      </div>
+
+      <div class="flow-row">
+        <div class="flow-copy">
+          <span class="kicker">EXPORT</span>
+          <h3>The export is a status report</h3>
+          <p>One click → a print-quality vector PDF with the topology, the legend, and the health of the system <em>at that moment</em>. Attach it to the postmortem. Put it in the customer deck. It's true.</p>
+        </div>
+        <!-- ▓▓ MEDIA SLOT: IMAGE ▓▓
+             The exported PDF page itself (A4 landscape). Export the
+             enterprise-aws sample with one node red, screenshot the PDF. -->
+        <div class="media-slot ar-doc">
+          <div class="slot-label"><b>IMAGE</b> exported PDF page · A4 landscape · one node red</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= teams ================= -->
+  <section id="teams">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="kicker">FOR TEAMS</span>
+        <h2>One live map. Everyone sees the same thing.</h2>
+        <p class="lede">The team daemon serves this exact app to browsers on your network from a single tiny binary. Engineers work in it. Everyone else finally <em>sees</em> it — when something breaks, a viewer link shows anyone which box is red and what depends on it.</p>
+      </div>
+
+      <div class="cards-3" style="margin-bottom:48px;">
+        <div class="card">
+          <span class="card-icon">⊘</span>
+          <h3>Read-only by default</h3>
+          <p>Forgetting a flag can never hand out write access. No edit token configured — nobody edits, nobody executes. Share the map as freely as a dashboard.</p>
+          <div class="mini-mock">
+            <div><span class="cm">$ reticle-daemon --config prod.yaml</span></div>
+            <div>&nbsp;&nbsp;auth: <span class="ok">read-only for everyone</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <span class="card-icon">⛨</span>
+          <h3>Roles the server enforces</h3>
+          <p>Editor and viewer tokens, checked in the daemon — not hidden buttons in the UI. A viewer physically cannot save, run, or open a shell. Wrong tokens are denied, never quietly downgraded.</p>
+          <div class="mini-mock">
+            <div><span class="k">--edit-token</span> ****&nbsp;&nbsp;<span class="cm">→ edit &amp; run</span></div>
+            <div><span class="k">--view-token</span> ****&nbsp;&nbsp;<span class="cm">→ watch live</span></div>
+            <div>wrong token&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm">→ denied</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <span class="card-icon">☰</span>
+          <h3>An audit trail — when you ask</h3>
+          <p>One flag appends a JSON line for every connection, save, and command — including refused attempts. No flag, no file. Keystrokes are never logged.</p>
+          <div class="mini-mock">
+            <div><span class="cm">--audit-log audit.jsonl</span></div>
+            <div>{"role":"viewer","cmd":"run_local",</div>
+            <div>&nbsp;"allowed":<span class="err">false</span>,"peer":"10.0.0.34"}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ▓▓ MEDIA SLOT: SCREENSHOT ▓▓
+           A browser window (URL bar visible, your LAN/domain) showing the
+           same map — ideally two windows side-by-side: editor + viewer, same
+           red node in both. Sells "shared, live, no install" in one image. -->
+      <div class="media-slot ar-video" style="margin-bottom:48px;">
+        <div class="slot-label"><b>SCREENSHOT</b> the same live map in two browser windows — editor &amp; viewer</div>
+      </div>
+
+      <div class="plans">
+        <div class="plan">
+          <div>
+            <div class="plan-name">Desktop</div>
+            <div class="plan-price"><strong>Free forever</strong> · MIT license</div>
+          </div>
+          <ul>
+            <li>The full app — canvas, terminals, checks, actions, PDF export</li>
+            <li>Runs with <em>your</em> keys, reaches what <em>your</em> machine reaches</li>
+            <li>One YAML file, versioned in your git</li>
+          </ul>
+          <div class="plan-cta">
+            <!-- TODO: real download links (macOS / Linux) -->
+            <a class="btn btn-ghost" href="#">Download — coming soon</a>
+          </div>
+          <p class="plan-fineprint">For the person who runs their own stuff.</p>
+        </div>
+
+        <div class="plan featured">
+          <span class="plan-tag">For your org</span>
+          <div>
+            <div class="plan-name">Team Daemon</div>
+            <div class="plan-price"><strong>Per daemon, flat per year.</strong> Unlimited editors &amp; viewers.</div>
+          </div>
+          <ul>
+            <li>Same app, served to every browser on your network — nothing to install</li>
+            <li>Checks run 24/7 on the daemon; every viewer sees live health</li>
+            <li>Read-only by default — strict editor/viewer roles, enforced server-side</li>
+            <li>Optional JSONL audit log: who connected, who ran what, what was refused</li>
+            <li>Credentials stay on one host — no keys on laptops, nothing to offboard</li>
+            <li>Set up on one short call, invoiced to your org</li>
+          </ul>
+          <div class="plan-cta">
+            <a class="btn btn-primary" href="mailto:matt@masoftware.net?subject=Reticle%20team%20daemon%20for%20our%20org">Email us — get your org set up</a>
+          </div>
+          <p class="plan-fineprint">Reply within a day. Stripe invoicing: card, ACH, or bank transfer.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= faq ================= -->
+  <section id="faq">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="kicker">FAQ</span>
+        <h2>Fair questions</h2>
+      </div>
+      <div class="faq">
+        <details>
+          <summary>Is the desktop app really free?</summary>
+          <p>Yes — free, MIT-licensed, complete, forever. The paid product is genuinely different infrastructure: a shared always-on daemon for organizations. If you never need that, you never pay.</p>
+        </details>
+        <details>
+          <summary>Where do my credentials live?</summary>
+          <p>Never in Reticle and never in the YAML. The desktop app uses your own <code>ssh</code> and <code>kubectl</code>. The daemon runs commands with <em>its</em> host's credentials — teammates connect with a browser and a token, so nobody distributes keys.</p>
+        </details>
+        <details>
+          <summary>How does team licensing work?</summary>
+          <p>Per running daemon, flat per year, unlimited teammates. One daemon serves one topology — most teams run one or two. Email us; we set it up together and invoice your org.</p>
+        </details>
+        <details>
+          <summary>Can people see the map without being able to touch it?</summary>
+          <p>That's the default. A daemon with no edit token is read-only for everyone — viewers pan, inspect, watch live health, and export, but the server refuses every write and every command. Editing exists only if you explicitly configure an edit token and hand it to someone.</p>
+        </details>
+        <details>
+          <summary>Does it keep a record of who did what?</summary>
+          <p>If you ask it to. Pass <code>--audit-log audit.jsonl</code> and the daemon appends one JSON line per connection, save, and command — including attempts it refused. No flag, no file, nothing collected. Keystrokes inside terminals are never logged (that's where passwords get typed).</p>
+        </details>
+        <details>
+          <summary>Is this a monitoring product?</summary>
+          <p>No — Grafana and friends own deep metrics. Reticle is the layer above: the map of what you run, that can also touch what you run. Health here is "is it up, is its service alive" — answered where your eyes already are.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= final cta ================= -->
+  <section>
+    <div class="wrap">
+      <div class="cta-panel">
+        <h2>Your diagram should do something.</h2>
+        <p class="lede">Map what you run with the free app — or put a living map in front of your whole team this week.</p>
+        <div class="hero-ctas">
+          <!-- TODO: real download link -->
+          <a class="btn btn-primary" href="#">Download free — MIT</a>
+          <a class="btn btn-ghost" href="mailto:matt@masoftware.net?subject=Reticle%20team%20daemon%20for%20our%20org">Talk to us about your org →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= footer ================= -->
+  <footer>
+    <div class="wrap footer-inner">
+      <a class="brand" href="#"><img class="brand-mark" src="reticle.svg" alt="" width="22" height="22" />Reticle</a>
+      <span>Desktop app MIT-licensed.</span>
+      <span class="spacer"></span>
+      <!-- TODO: real links -->
+      <a href="#">GitHub</a>
+      <a href="mailto:matt@masoftware.net">matt@masoftware.net</a>
+    </div>
+  </footer>
+
+  <script>
+    // Small-screen nav dropdown: toggle on the burger, close on any link
+    // click or a click anywhere outside.
+    (function () {
+      var btn = document.getElementById("nav-menu-btn");
+      var menu = document.getElementById("nav-menu");
+      if (!btn || !menu) return;
+      function close() { menu.hidden = true; btn.setAttribute("aria-expanded", "false"); }
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var opening = menu.hidden;
+        menu.hidden = !opening;
+        btn.setAttribute("aria-expanded", String(opening));
+      });
+      menu.addEventListener("click", function (e) {
+        if (e.target.closest("a")) close();
+      });
+      document.addEventListener("click", function (e) {
+        if (!menu.hidden && !menu.contains(e.target) && e.target !== btn) close();
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") close();
+      });
+    })();
+    (function () {
+      var btn = document.getElementById("theme-toggle");
+      function icon() {
+        btn.textContent = document.documentElement.dataset.theme === "dark" ? "☀" : "☾";
+      }
+      icon();
+      btn.addEventListener("click", function () {
+        var dark = document.documentElement.dataset.theme === "dark";
+        if (dark) delete document.documentElement.dataset.theme;
+        else document.documentElement.dataset.theme = "dark";
+        try { localStorage.setItem("reticle-site-theme", dark ? "light" : "dark"); } catch (e) {}
+        icon();
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,309 @@
+# Reticle sample — on-prem datacenter
+# Edge firewall → core routing → two racks drawn as generic boxes:
+# a compute rack (ESXi pair + app VMs) and a data rack (Postgres pair,
+# SAN, backup). Monitoring watches everything over the mgmt VLAN.
+version: 1
+nodes:
+  fw-edge:
+    id: fw-edge
+    kind: firewall
+    title: fw-edge
+    subtitle: "pfsense HA pair"
+    x: 60
+    y: 300
+    w: 180
+    h: 120
+    spec: { host: 172.16.0.1, port: 22, user: admin }
+    notes: |
+      CARP pair — this is the VIP. Rules live in git (infra/pf/).
+      Change window: Tuesdays. Console access via IPMI if you cut yourself off.
+    actions:
+      - { name: state table, script: "pfctl -si | head -20" }
+      - { name: carp status, script: "ifconfig | grep -A1 carp" }
+    crons:
+      - { name: carp master, interval: 60s, script: "ifconfig | grep -q 'carp: MASTER'" }
+
+  rtr-core:
+    id: rtr-core
+    kind: router
+    title: rtr-core
+    subtitle: "OSPF · vlan trunking"
+    x: 320
+    y: 300
+    w: 180
+    h: 120
+    spec: { host: 172.16.0.2, port: 22, user: admin }
+    actions:
+      - { name: routes, script: "vtysh -c 'show ip route' | head -30" }
+      - { name: ospf neighbors, script: "vtysh -c 'show ip ospf neighbor'" }
+    crons:
+      - { name: ospf full, interval: 5m, script: "vtysh -c 'show ip ospf neighbor' | grep -q Full" }
+
+  sw-core:
+    id: sw-core
+    kind: switch
+    title: sw-core
+    subtitle: "2×10G to each rack"
+    x: 580
+    y: 300
+    w: 180
+    h: 120
+    spec: { host: 172.16.0.3, port: 22, user: admin }
+    notes: "LACP to both racks. A single link drop is invisible; watch for flapping instead."
+
+  monitoring:
+    id: monitoring
+    kind: server
+    title: monitoring
+    subtitle: "prometheus + alertmanager"
+    x: 580
+    y: 560
+    w: 180
+    h: 120
+    spec: { host: 172.16.0.9, port: 22, user: ops }
+    notes: "If THIS box is red, assume everything else is unknown, not healthy."
+    actions:
+      - { name: down targets, script: "curl -s localhost:9090/api/v1/targets | grep -o '\"health\":\"down\"' | wc -l" }
+      - { name: firing alerts, script: "curl -s localhost:9093/api/v2/alerts | head -40" }
+    crons:
+      - { name: prometheus alive, interval: 60s, script: "systemctl is-active prometheus" }
+
+  rack-a:
+    id: rack-a
+    kind: box
+    title: rack A — compute
+    subtitle: "row 3 · PDU a+b"
+    x: 840
+    y: 40
+    w: 620
+    h: 380
+    notes: "ESXi pair with vMotion between them. One host can carry everything in a pinch — barely."
+
+  esxi-01:
+    id: esxi-01
+    kind: server
+    title: esxi-01
+    subtitle: "2×Xeon · 512G"
+    x: 880
+    y: 120
+    w: 200
+    h: 120
+    parentId: rack-a
+    spec: { host: 172.16.10.11, port: 22, user: root }
+    actions:
+      - { name: running VMs, script: "vim-cmd vmsvc/getallvms" }
+      - { name: hw health, script: "esxcli hardware health get 2>/dev/null || true" }
+    crons:
+      - { name: host up, interval: 60s, script: "uptime" }
+
+  esxi-02:
+    id: esxi-02
+    kind: server
+    title: esxi-02
+    subtitle: "2×Xeon · 512G"
+    x: 1160
+    y: 120
+    w: 200
+    h: 120
+    parentId: rack-a
+    spec: { host: 172.16.10.12, port: 22, user: root }
+    actions:
+      - { name: running VMs, script: "vim-cmd vmsvc/getallvms" }
+    crons:
+      - { name: host up, interval: 60s, script: "uptime" }
+
+  vm-app-01:
+    id: vm-app-01
+    kind: vm
+    title: vm-app-01
+    subtitle: "erp app · debian 12"
+    x: 880
+    y: 280
+    w: 200
+    h: 120
+    parentId: rack-a
+    spec: { host: 172.16.20.21, port: 22, user: deploy }
+    notes: "Pinned to esxi-01 by DRS rule (license is host-bound, ask legal, don't ask why)."
+    actions:
+      - { name: app logs, script: "journalctl -u erp -n 60 --no-pager" }
+      - { name: restart app, script: "sudo systemctl restart erp" }
+    crons:
+      - { name: erp alive, interval: 30s, script: "systemctl is-active erp" }
+
+  vm-app-02:
+    id: vm-app-02
+    kind: vm
+    title: vm-app-02
+    subtitle: "erp app · debian 12"
+    x: 1160
+    y: 280
+    w: 200
+    h: 120
+    parentId: rack-a
+    spec: { host: 172.16.20.22, port: 22, user: deploy }
+    crons:
+      - { name: erp alive, interval: 30s, script: "systemctl is-active erp" }
+
+  rack-b:
+    id: rack-b
+    kind: box
+    title: rack B — data
+    subtitle: "row 3 · PDU a+b"
+    x: 840
+    y: 460
+    w: 620
+    h: 380
+    notes: "Everything here is stateful. Power work on this rack requires the DBA on the call."
+
+  db-primary:
+    id: db-primary
+    kind: database
+    title: db-primary
+    subtitle: "postgres 16"
+    x: 880
+    y: 540
+    w: 180
+    h: 160
+    parentId: rack-b
+    spec: { host: 172.16.30.31, port: 22, user: postgres }
+    notes: |
+      Synchronous replication to db-standby — a standby outage BLOCKS writes
+      by design. Runbook: infra/runbooks/db-failover.md
+    actions:
+      - { name: ready, script: "pg_isready" }
+      - { name: replication state, script: "psql -c 'select application_name, state, sync_state from pg_stat_replication'" }
+    crons:
+      - { name: pg ready, interval: 30s, script: "pg_isready -q" }
+      - { name: standby in sync, interval: 60s, script: "psql -tAc \"select count(*) from pg_stat_replication where sync_state='sync'\" | grep -q 1" }
+
+  db-standby:
+    id: db-standby
+    kind: database
+    title: db-standby
+    subtitle: "sync standby"
+    x: 1160
+    y: 540
+    w: 180
+    h: 160
+    parentId: rack-b
+    spec: { host: 172.16.30.32, port: 22, user: postgres }
+    actions:
+      - { name: recovery status, script: "psql -tAc 'select pg_is_in_recovery()'" }
+      - { name: replay lag, script: "psql -tAc 'select now() - pg_last_xact_replay_timestamp()'" }
+    crons:
+      - { name: in recovery, interval: 60s, script: "psql -tAc 'select pg_is_in_recovery()' | grep -q t" }
+
+  san-01:
+    id: san-01
+    kind: object-store
+    title: san-01
+    subtitle: "iSCSI · 40T usable"
+    x: 880
+    y: 700
+    w: 180
+    h: 120
+    parentId: rack-b
+    spec: { host: 172.16.30.40, port: 22, user: admin }
+    notes: "Both ESXi hosts and the DB pair boot from here. This box is the blast radius."
+    crons:
+      - { name: array healthy, interval: 5m, script: "check_array_health --brief" }
+
+  backup-01:
+    id: backup-01
+    kind: server
+    title: backup-01
+    subtitle: "veeam + offsite sync"
+    x: 1160
+    y: 700
+    w: 200
+    h: 120
+    parentId: rack-b
+    spec: { host: 172.16.30.50, port: 22, user: veeam }
+    notes: "3-2-1: SAN snapshots → this box → offsite. Restore test is the first Monday monthly."
+    actions:
+      - { name: last job result, script: "veeamconfig job list | head -10" }
+    crons:
+      - { name: last backup < 26h, interval: 1h, script: "find /backups -name '*.vbk' -mtime -1 | grep -q ." }
+
+edges:
+  e-fw-rtr:
+    id: e-fw-rtr
+    kind: ethernet
+    label: "10G"
+    from: fw-edge
+    to: rtr-core
+  e-rtr-sw:
+    id: e-rtr-sw
+    kind: ethernet
+    label: "2×10G LACP"
+    from: rtr-core
+    to: sw-core
+  e-sw-esxi1:
+    id: e-sw-esxi1
+    kind: ethernet
+    label: ""
+    from: sw-core
+    to: esxi-01
+  e-sw-esxi2:
+    id: e-sw-esxi2
+    kind: ethernet
+    label: ""
+    from: sw-core
+    to: esxi-02
+  e-sw-db1:
+    id: e-sw-db1
+    kind: ethernet
+    label: ""
+    from: sw-core
+    to: db-primary
+  e-app1-db:
+    id: e-app1-db
+    kind: tcp
+    label: "5432"
+    from: vm-app-01
+    to: db-primary
+  e-app2-db:
+    id: e-app2-db
+    kind: tcp
+    label: "5432"
+    from: vm-app-02
+    to: db-primary
+  e-repl:
+    id: e-repl
+    kind: replication
+    label: "sync"
+    from: db-primary
+    to: db-standby
+  e-db1-san:
+    id: e-db1-san
+    kind: tcp
+    label: "iSCSI/3260"
+    from: db-primary
+    to: san-01
+  e-db2-san:
+    id: e-db2-san
+    kind: tcp
+    label: "iSCSI/3260"
+    from: db-standby
+    to: san-01
+  e-backup-san:
+    id: e-backup-san
+    kind: depends-on
+    label: "snapshots"
+    from: backup-01
+    to: san-01
+  e-mon-esxi1:
+    id: e-mon-esxi1
+    kind: mgmt
+    label: "scrape"
+    from: monitoring
+    to: esxi-01
+  e-mon-db:
+    id: e-mon-db
+    kind: mgmt
+    label: "scrape"
+    from: monitoring
+    to: db-primary
+
+groups: []
+layers: []

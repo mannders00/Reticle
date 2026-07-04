@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Reticle app icon">
+  <!-- Master brand mark. Mirrors the site's .brand-mark (rounded square,
+       radial accent gradient, white reticle ring) with crosshair ticks
+       that read at large sizes and vanish gracefully at 16px.
+       All raster sizes are generated from this file — see assets/icon/README.md. -->
+  <defs>
+    <radialGradient id="bg" cx="30%" cy="30%" r="90%">
+      <stop offset="0%" stop-color="#5b8cff"/>
+      <stop offset="55%" stop-color="#3d6bff"/>
+      <stop offset="100%" stop-color="#2f56d6"/>
+    </radialGradient>
+  </defs>
+
+  <!-- rounded square plate (radius ≈ 22px at 22px mark → 6/22 of size) -->
+  <rect x="0" y="0" width="1024" height="1024" rx="232" fill="url(#bg)"/>
+
+  <!-- reticle ring: inset 6/22 of the mark, ~1.7/22 stroke -->
+  <circle cx="512" cy="512" r="234" fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="66"/>
+
+  <!-- crosshair ticks: N E S W, stopping short of the ring -->
+  <g stroke="rgba(255,255,255,0.92)" stroke-width="66" stroke-linecap="round">
+    <line x1="512" y1="148" x2="512" y2="252"/>
+    <line x1="512" y1="772" x2="512" y2="876"/>
+    <line x1="148" y1="512" x2="252" y2="512"/>
+    <line x1="772" y1="512" x2="876" y2="512"/>
+  </g>
+
+  <!-- center node dot -->
+  <circle cx="512" cy="512" r="72" fill="rgba(255,255,255,0.92)"/>
+</svg>

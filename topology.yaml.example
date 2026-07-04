@@ -1,0 +1,51 @@
+# Reticle topology example
+# This is the shape a user-authored topology file takes. The frontend's
+# staged state mirrors it 1:1 (see src/core/store.js). `spec` is opaque to
+# the store/transport layers — only the `ssh` and `health` modules parse it.
+version: 1
+nodes:
+  web-01:
+    id: web-01
+    type: server
+    title: web-01
+    subtitle: "nginx · 10.0.1.4"
+    x: 60
+    y: 80
+    w: 220
+    h: 120
+    health:
+      state: unknown
+    spec:
+      ssh:
+        host: 10.0.1.4
+        user: deploy
+        # key path resolved relative to $HOME; never stored inline
+        key: ~/.ssh/id_ed25519
+      health:
+        # command run over ssh; exit 0 ⇒ ok, non-zero ⇒ err
+        command: "systemctl is-active nginx"
+        every: 30s
+  db-primary:
+    id: db-primary
+    type: database
+    title: db-primary
+    subtitle: "postgres · 10.0.2.3"
+    x: 200
+    y: 280
+    w: 220
+    h: 120
+    spec:
+      ssh:
+        host: 10.0.2.3
+        user: postgres
+        key: ~/.ssh/id_ed25519
+      health:
+        command: "pg_isready"
+        every: 15s
+edges:
+  e_web_db:
+    id: e_web_db
+    type: solid
+    label: "tcp/5432"
+    from: web-01
+    to: db-primary
