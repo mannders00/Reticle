@@ -346,3 +346,23 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+/* ---- edge kind picker: the chips ARE the legend ---- */
+.edge-kind-pick { display: flex; flex-wrap: wrap; gap: 4px; }
+.edge-kind-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--bg-2);
+  border: 1px solid var(--stroke-1);
+  border-radius: var(--radius-sm);
+  color: var(--text-2);
+  font: 11px var(--font-mono);
+  cursor: pointer;
+}
+.edge-kind-chip:hover { border-color: var(--stroke-strong); color: var(--text-1); }
+.edge-kind-chip.is-active {
+  border-color: var(--accent);
+  color: var(--text-1);
+  background: var(--bg-3);
+}

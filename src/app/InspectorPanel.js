@@ -9,7 +9,7 @@ import { h, clear } from "../core/dom.js";
 import { bus } from "../core/eventBus.js";
 import { getSelectedIds, getState, removeNode, removeEdge, updateEdge, updateNodeMeta, setNodeSpec } from "../core/store.js";
 import { KINDS, ADDONS, kindMeta, isGroupKind } from "../canvas/nodes/kinds.js";
-import { EDGE_KINDS, EDGE_LABELS } from "../canvas/edges/styles.js";
+import { EDGE_KINDS, EDGE_LABELS, EDGE_STYLES } from "../canvas/edges/styles.js";
 import { iconSvg } from "../canvas/nodes/icons.js";
 import { checkHealth, runAction, runCronNow, getCronResults, effectiveExec } from "../core/ops.js";
 import api from "../core/api.js";
@@ -421,14 +421,26 @@ function edgeCard(e) {
     ),
   );
 
-  const kindSel = h("select", { class: "inspector-input" },
+  // Kind IS the visual language — no free color picking. Each chip shows
+  // the actual line style (color, weight, dash) that kind draws with and
+  // that the PDF legend explains. Pick the meaning, get the color.
+  const kindPick = h("div", { class: "edge-kind-pick" },
     ...EDGE_KINDS.map((k) => {
-      const o = h("option", { value: k }, EDGE_LABELS[k] ?? k);
-      if (k === e.kind) o.selected = true;
-      return o;
+      const st = EDGE_STYLES[k] || EDGE_STYLES.tcp;
+      const chip = h("button", {
+        class: "edge-kind-chip" + (k === e.kind ? " is-active" : ""),
+        type: "button",
+        title: EDGE_LABELS[k] ?? k,
+      });
+      chip.innerHTML =
+        `<svg width="26" height="8" aria-hidden="true"><line x1="1" y1="4" x2="25" y2="4" ` +
+        `stroke="${st.color}" stroke-width="${Math.min(st.width, 2.6)}"` +
+        `${st.dash ? ` stroke-dasharray="${st.dash}"` : ""}/></svg>` +
+        `<span>${EDGE_LABELS[k] ?? k}</span>`;
+      chip.addEventListener("click", () => updateEdge(e.id, { kind: k }));
+      return chip;
     }),
   );
-  kindSel.addEventListener("change", () => updateEdge(e.id, { kind: kindSel.value }));
 
   const actions = h("div", { class: "inspector-actions" });
   actions.appendChild(btn("Delete", "del-btn", () => removeEdge(e.id)));
@@ -437,7 +449,7 @@ function edgeCard(e) {
     h("dt", {}, "label"),
     h("dd", {}, editableField(e.label || "", (val) => updateEdge(e.id, { label: val }), "tcp/5432")),
     h("dt", {}, "kind"),
-    h("dd", {}, kindSel),
+    h("dd", {}, kindPick),
     h("dt", {}, "id"),
     h("dd", {}, e.id),
   );

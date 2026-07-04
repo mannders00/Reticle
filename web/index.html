@@ -10,9 +10,16 @@
   <meta property="og:title" content="Reticle — the infrastructure diagram you can operate" />
   <meta property="og:description" content="Draw your real topology, watch it breathe, fix it from the map. Free MIT desktop app; single-binary team daemon." />
   <meta property="og:url" content="https://reticle.live/" />
-  <meta property="og:image" content="https://reticle.live/assets/demo-overview.png" />
+  <meta property="og:image" content="https://reticle.live/assets/og-card.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:site_name" content="Reticle" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:image" content="https://reticle.live/assets/demo-overview.png" />
+  <meta name="twitter:title" content="Reticle — the infrastructure diagram you can operate" />
+  <meta name="twitter:description" content="Draw your real topology, watch it breathe, fix it from the map. Free MIT desktop app." />
+  <meta name="twitter:image" content="https://reticle.live/assets/og-card.jpg" />
+  <meta name="theme-color" content="#0b0e14" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#f7f8fb" media="(prefers-color-scheme: light)" />
   <link rel="icon" href="favicon.ico" sizes="48x48" />
   <link rel="icon" href="reticle.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -27,6 +34,24 @@
         : window.matchMedia("(prefers-color-scheme: dark)").matches;
       if (dark) document.documentElement.dataset.theme = "dark";
     })();
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Reticle",
+    "operatingSystem": "macOS, Linux, Windows",
+    "applicationCategory": "DeveloperApplication",
+    "description": "An infinite-canvas infrastructure diagram that is also the operational surface: live health checks, one-click actions, real SSH terminals, and vector PDF export. One git-diffable YAML file.",
+    "url": "https://reticle.live/",
+    "downloadUrl": "https://github.com/mannders00/reticle/releases/latest",
+    "softwareVersion": "1.0.0",
+    "license": "https://opensource.org/licenses/MIT",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": { "@type": "Organization", "name": "M&A Software LLC", "email": "matt@masoftware.net" },
+    "screenshot": "https://reticle.live/assets/demo-overview.webp",
+    "sameAs": ["https://github.com/mannders00/reticle"]
+  }
   </script>
 </head>
 <body>
@@ -155,7 +180,7 @@
           <p>Infinite canvas, buttery pan and zoom, 30+ infra-native shapes, semantic edges. Clean enough to hand to a CTO — before it ever does anything live.</p>
         </div>
         <div class="media-slot is-shot">
-          <img src="assets/demo-overview.png" alt="Region, hosts, services and notes on the Reticle canvas" loading="lazy" />
+          <img src="assets/demo-overview.webp" width="1800" height="1169" alt="Region, hosts, services and notes on the Reticle canvas" loading="lazy" />
         </div>
       </div>
 
@@ -166,7 +191,7 @@
           <p>A real terminal over your own SSH or kubectl — plus one-click runbook actions with output inline. See the problem and fix the simple case without leaving the map.</p>
         </div>
         <div class="media-slot is-shot">
-          <img src="assets/demo-shell.png" alt="A selected server with a live htop over SSH, docked next to the map" loading="lazy" />
+          <img src="assets/demo-shell.webp" width="1800" height="1169" alt="A selected server with a live htop over SSH, docked next to the map" loading="lazy" />
         </div>
       </div>
 
@@ -177,7 +202,7 @@
           <p>One click → a print-quality vector PDF with the topology, the legend, and the health of the system <em>at that moment</em>. Attach it to the postmortem. Put it in the customer deck. It's true.</p>
         </div>
         <a class="media-slot ar-doc is-doc" href="assets/demo-pdf.pdf" target="_blank" rel="noreferrer" title="Open the real exported PDF">
-          <img src="assets/demo-pdf-preview.png" alt="Print-quality vector PDF export of the same map" loading="lazy" />
+          <img src="assets/demo-pdf-preview.webp" width="1800" height="1271" alt="Print-quality vector PDF export of the same map" loading="lazy" />
         </a>
       </div>
 
