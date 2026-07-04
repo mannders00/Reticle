@@ -620,3 +620,13 @@ footer {
   animation: livepulse 2s ease-in-out infinite;
 }
 @keyframes livepulse { 50% { opacity: 0.4; } }
+
+/* ---------- text-only hero ---------- */
+.hero-solo {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+.hero-solo .hero-badges,
+.hero-solo .hero-ctas { justify-content: center; }
+.hero-solo .lede { margin-left: auto; margin-right: auto; }
