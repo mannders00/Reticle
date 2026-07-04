@@ -62,7 +62,6 @@
       <a class="brand" href="#"><img class="brand-mark" src="reticle.svg" alt="" width="22" height="22" />Reticle</a>
       <nav class="nav-links">
         <a href="#live">Live demo</a>
-        <a href="#alive">What it does</a>
         <a href="#product">Product</a>
         <a href="#teams">For teams</a>
         <a href="#faq">FAQ</a>
@@ -73,7 +72,6 @@
       <button class="nav-menu-btn" id="nav-menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="nav-menu">☰</button>
       <nav class="nav-menu" id="nav-menu" hidden>
         <a href="#live">Live demo</a>
-        <a href="#alive">What it does</a>
         <a href="#product">Product</a>
         <a href="#teams">For teams</a>
         <a href="#faq">FAQ</a>
@@ -128,46 +126,6 @@
     </div>
   </section>
 
-  <!-- ================= the living map ================= -->
-  <section id="alive">
-    <div class="wrap">
-      <div class="section-head">
-        <span class="kicker">CHECKS · ACTIONS · SHELLS</span>
-        <h2>Diagrams go stale. This one has a pulse.</h2>
-      </div>
-      <div class="cards-3">
-        <div class="card">
-          <span class="card-icon">▶</span>
-          <h3>Your runbook, on the node</h3>
-          <p>Named scripts run with one click — output right there on the map.</p>
-          <div class="mini-mock">
-            <div>disk usage&nbsp;&nbsp;<span class="cm">df -h</span>&nbsp;&nbsp;▶</div>
-            <div><span class="ok">exit 0</span></div>
-            <div><span class="cm">/dev/root&nbsp; 39G&nbsp; 21G&nbsp; 57% /</span></div>
-          </div>
-        </div>
-        <div class="card">
-          <span class="card-icon">⏱</span>
-          <h3>Checks that never sleep</h3>
-          <p>SSH scripts, local CLI calls, or HTTP endpoints — on a schedule, around the clock.</p>
-          <div class="mini-mock">
-            <div><span class="k">- name:</span> <span class="s">nginx alive</span></div>
-            <div>&nbsp;&nbsp;<span class="k">interval:</span> <span class="s">30s</span></div>
-            <div>&nbsp;&nbsp;<span class="k">script:</span> <span class="s">systemctl is-active nginx</span></div>
-          </div>
-        </div>
-        <div class="card">
-          <span class="card-icon">◉</span>
-          <h3>Failures glow on the map</h3>
-          <p>A failing check turns its node red — and shows which check, right on the card.</p>
-          <div class="mini-mock">
-            <div><span class="err">● edge healthy</span>&nbsp;&nbsp;<span class="cm">exit 1 · 4s ago</span></div>
-            <div><span class="ok">● cert valid</span>&nbsp;&nbsp;<span class="cm">ok · 4s ago</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
 
   <!-- ================= product flow ================= -->
   <section id="product">
