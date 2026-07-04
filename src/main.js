@@ -130,6 +130,23 @@ window.addEventListener("DOMContentLoaded", async () => {
     seedDemo();
   }
 
+  // Tiny transient toast — surfaces events that used to vanish silently
+  // (⌘⏎ on a node that can't shell, a save refused as stale, …).
+  let toastEl = null, toastTimer = null;
+  function toast(msg) {
+    if (!toastEl) {
+      toastEl = document.createElement("div");
+      toastEl.className = "app-toast";
+      document.getElementById("app").appendChild(toastEl);
+    }
+    toastEl.textContent = msg;
+    toastEl.classList.add("is-visible");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove("is-visible"), 2600);
+  }
+  bus.on("terminal:error", ({ error }) => toast(error));
+  bus.on("config:conflict", () => toast("Someone else saved first — reloaded their version"));
+
   // Palette drag-and-drop → spawn a node of that kind at the drop world
   // coords, select it, and make it the "double-click empty" default.
   bus.on("palette:drop", ({ kind, worldX, worldY }) => {
@@ -259,8 +276,10 @@ window.addEventListener("DOMContentLoaded", async () => {
       e.preventDefault();
       redo();
     } else if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      e.preventDefault();
       const ids = getSelectedIds();
       if (ids.length === 1) bus.emit("terminal:open", { nodeId: ids[0] });
+      else toast(ids.length === 0 ? "Select a node first, then ⌘⏎ opens its shell" : "Select exactly ONE node to open a shell");
     }
   });
 });

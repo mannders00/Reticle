@@ -67,7 +67,9 @@ function card(n) {
   // Action buttons
   const actions = h("div", { class: "inspector-actions" });
   if (!group && (meta.modes.includes("ssh") || meta.modes.includes("kubectl"))) {
-    actions.appendChild(btn("Shell", "shell-btn", () => bus.emit("terminal:open", { nodeId: n.id })));
+    const shellBtn = btn("Shell", "shell-btn", () => bus.emit("terminal:open", { nodeId: n.id }));
+    shellBtn.title = "Open an SSH/kubectl shell on this node (⌘⏎)";
+    actions.appendChild(shellBtn);
   }
   if (!group) {
     actions.appendChild(btn("Check", "check-btn", async () => {

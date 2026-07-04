@@ -392,3 +392,23 @@ textarea:focus {
 /* role badge variants */
 .statusbar .sb-role.is-editor { color: var(--ok, #2ec27e); }
 .statusbar .sb-role.is-disconnected { color: var(--err); font-weight: 700; }
+
+/* ---- transient toast (bottom-center, above the statusbar) ---- */
+.app-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 44px;
+  transform: translateX(-50%) translateY(8px);
+  padding: 9px 16px;
+  background: var(--bg-elev, var(--bg-2));
+  border: 1px solid var(--stroke-2, var(--stroke-1));
+  border-radius: var(--radius-pill, 999px);
+  color: var(--text-1);
+  font: 12.5px var(--font-sans);
+  box-shadow: var(--shadow-3, 0 8px 30px rgba(0,0,0,.35));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 500;
+}
+.app-toast.is-visible { opacity: 1; transform: translateX(-50%) translateY(0); }
