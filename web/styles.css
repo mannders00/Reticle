@@ -352,6 +352,23 @@ h3 { font-size: 17px; font-weight: 650; letter-spacing: -0.01em; }
 }
 .media-slot .slot-label b { color: var(--accent); display: block; margin-bottom: 6px; letter-spacing: 0.08em; }
 .media-slot.is-live { border-style: solid; border-color: var(--stroke); background: var(--bg-inset); }
+/* macOS window captures carry their own rounded chrome + shadow — any
+ * slot border/background double-frames them. Let them float bare. */
+.media-slot.is-shot {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  aspect-ratio: auto;
+  overflow: visible;
+}
+.media-slot.is-shot > img { border-radius: 0; box-shadow: none; }
+/* The PDF is paper — keep it on a white card in BOTH themes. */
+.media-slot.is-doc {
+  background: #fff;
+  border-style: solid;
+  border-color: var(--stroke);
+  box-shadow: var(--shadow-1);
+}
 .media-slot > img, .media-slot > video, .media-slot > iframe {
   width: 100%;
   height: 100%;
@@ -537,6 +554,9 @@ footer {
   .hero { padding: 64px 0 48px; }
   .hero-grid { grid-template-columns: 1fr; gap: 40px; }
   .cards-3, .features { grid-template-columns: 1fr; }
+  .flow-row, .flow-row.flip { grid-template-columns: 1fr; gap: 22px; }
+  .flow-row.flip .flow-copy { order: 0; }
+  .flow-row + .flow-row { margin-top: 56px; }
   .plans { grid-template-columns: 1fr; }
   .stub-grid { grid-template-columns: repeat(2, 1fr); }
   /* medium: links stay inline, just tighter */
