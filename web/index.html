@@ -89,15 +89,16 @@
       </div>
       <h1>The infrastructure diagram you can operate.</h1>
       <p class="lede">
-        Draw your real systems on a beautiful canvas. Then watch them breathe —
-        live health on every node, a real terminal one keypress away, and the
-        whole map shared with your team in real time.
+        Every infra diagram goes stale the week it's drawn. Reticle's can't —
+        it checks your real systems around the clock, turns nodes red when
+        they break, and opens a real terminal right on the map. Solo with the
+        free desktop app; live in front of your whole team with the daemon.
       </p>
       <div class="hero-ctas">
         <a class="btn btn-primary" href="https://github.com/mannders00/reticle/releases/latest">Download free</a>
         <a class="btn btn-ghost" href="#live">See it live ↓</a>
       </div>
-      <p class="hero-note">No account. No cloud. Your map is one <code>topology.yaml</code> you own.</p>
+      <p class="hero-note">macOS · Linux · Windows &nbsp;·&nbsp; <a href="https://github.com/mannders00/reticle" target="_blank" rel="noreferrer">open source, MIT ↗</a> &nbsp;·&nbsp; your map is one <code>topology.yaml</code> you own</p>
     </div>
   </section>
 
@@ -107,7 +108,7 @@
       <div class="section-head" style="text-align:center;max-width:none;">
         <span class="kicker">SEE FOR YOURSELF</span>
         <h2>This one is real. Go ahead — poke it.</h2>
-        <p class="lede" style="margin-left:auto;margin-right:auto;">A live daemon, a live topology, read-only access. What you're seeing is the actual health of the machines, right now.</p>
+        <p class="lede" style="margin-left:auto;margin-right:auto;">This is the real infrastructure serving reticle.live — mapped in Reticle, health-checked around the clock by the same daemon that's streaming it to you. Read-only. Poke away.</p>
       </div>
 
       <!-- The real daemon at demo.reticle.live, embedded read-only.
@@ -173,7 +174,7 @@
       <div class="section-head">
         <span class="kicker">FOR TEAMS</span>
         <h2>One live map. Everyone sees the same thing.</h2>
-        <p class="lede">The team daemon serves this exact app to browsers on your network from a single tiny binary. Engineers work in it. Everyone else finally <em>sees</em> it — when something breaks, a viewer link shows anyone which box is red and what depends on it.</p>
+        <p class="lede">The team daemon serves this exact app to browsers on your network from a single tiny binary. Engineers work in it. Everyone else finally <em>sees</em> it — when something breaks, a viewer link shows anyone which box is red and what depends on it. Deployment is one binary and a systemd unit on a box you already have — most teams are live in an afternoon.</p>
       </div>
 
       <div class="cards-3" style="margin-bottom:48px;">
@@ -275,6 +276,10 @@
         <details>
           <summary>Does it keep a record of who did what?</summary>
           <p>If you ask it to. Pass <code>--audit-log audit.jsonl</code> and the daemon appends one JSON line per connection, save, and command — including attempts it refused. No flag, no file, nothing collected. Keystrokes inside terminals are never logged (that's where passwords get typed).</p>
+        </details>
+        <details>
+          <summary>What does it take to run the daemon?</summary>
+          <p>A single ~4 MB static binary and a systemd unit — no database, no containers, no dependencies. Point it at your <code>topology.yaml</code>, put Caddy or nginx in front for TLS, hand out the link. It's read-only for everyone until you configure an edit token.</p>
         </details>
         <details>
           <summary>Is this a monitoring product?</summary>
