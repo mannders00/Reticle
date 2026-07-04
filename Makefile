@@ -81,7 +81,7 @@ deploy-pi: daemon-linux-arm64
 # ---- misc ----
 
 serve:
-	bash reticle-serve.sh
+	bash scripts/reticle-serve.sh
 
 # Snapshot the open-source tree (everything minus daemon/ + internal
 # docs) into ../reticle-oss and push it to the public GitHub mirror.
