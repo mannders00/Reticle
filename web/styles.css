@@ -553,7 +553,50 @@ footer {
   /* footer: stack, no cramming */
   .footer-inner { flex-direction: column; align-items: flex-start; gap: 10px; }
   .footer-inner .spacer { display: none; }
+
+  /* long CTA labels may wrap instead of forcing the card wider */
+  .plan { min-width: 0; padding: 26px 22px; }
+  .plan .btn { white-space: normal; text-align: center; justify-content: center; width: 100%; }
+  .hero-ctas .btn { flex: 1 1 auto; justify-content: center; }
 }
 @media (max-width: 520px) {
   .stub-grid { grid-template-columns: 1fr; }
 }
+
+/* ---------- live demo embed ---------- */
+#live-embed { position: relative; padding: 0; overflow: hidden; }
+#live-embed iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  pointer-events: none; /* inert until armed — no scroll trap */
+}
+#live-embed.is-armed iframe { pointer-events: auto; }
+.live-gate {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  background: rgba(8, 10, 16, 0.25);
+  border: 0;
+  color: #fff;
+  font: 600 16px var(--font-sans);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+}
+.live-gate:hover { background: rgba(8, 10, 16, 0.12); }
+.live-gate-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #2ec27e;
+  box-shadow: 0 0 12px #2ec27e;
+  animation: livepulse 2s ease-in-out infinite;
+}
+@keyframes livepulse { 50% { opacity: 0.4; } }

@@ -96,13 +96,16 @@ export function applyTheme(mode) {
   };
   for (const [k, v] of Object.entries(map)) root.style.setProperty(k, v);
 
-  localStorage.setItem("reticle-theme", mode);
+  // try/catch: strict-privacy browsers throw on storage access inside
+  // third-party iframes (the site embeds the live demo) — theme still
+  // applies, it just won't persist there.
+  try { localStorage.setItem("reticle-theme", mode); } catch {}
   bus.emit("theme:changed", { mode, palette: p });
   return p;
 }
 
 export function getTheme() {
-  return localStorage.getItem("reticle-theme") || "dark";
+  try { return localStorage.getItem("reticle-theme") || "dark"; } catch { return "dark"; }
 }
 
 export function toggleTheme() {
