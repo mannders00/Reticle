@@ -27,7 +27,25 @@ export function mountStatusBar(root) {
           .catch((err) => console.warn("[statusbar] opener failed:", err));
       }
     },
-  }, "Reticle v1");
+  }, "Reticle");
+  // Real build info instead of a hardcoded version: desktop asks Tauri,
+  // daemon reports its version in the hello frame, mock is the demo.
+  api.whenReady().then(async () => {
+    try {
+      if (api.hasTauri) {
+        const v = await window.__TAURI__.app.getVersion();
+        brand.textContent = `Reticle v${v} · desktop`;
+      } else if (api.transport === "ws") {
+        brand.textContent = api.serverVersion
+          ? `Reticle v${api.serverVersion} · daemon`
+          : "Reticle · daemon";
+      } else {
+        brand.textContent = "Reticle · demo";
+      }
+    } catch {
+      /* keep the plain brand */
+    }
+  });
   // Role badge — set once transport resolves (hello carries role). Both
   // roles get one on the daemon transport, so switching tokens gives
   // visible feedback in BOTH directions, not just into read-only.

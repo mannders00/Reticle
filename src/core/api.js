@@ -17,6 +17,7 @@ let role = "editor";                        // ws mode may say "viewer"
 let connId = null;                          // ws: our id, tags our own saves
 let rev = 0;                                // ws: config revision we hold
 let deniedReason = null;                    // set when a daemon REFUSED us
+let serverVersion = null;                   // daemon's version (from hello)
 let socket = null;
 let nextId = 0;
 const pending = new Map();     // id → {resolve, reject}
@@ -81,6 +82,7 @@ function connectWs() {
       role = msg.payload?.role || "editor";
       connId = msg.payload?.connId ?? null;
       rev = msg.payload?.rev ?? 0;
+      serverVersion = msg.payload?.version ?? null;
       console.info(`[api] daemon transport up (role: ${role})`);
       wireWs(s);
       bus.emit("api:hello", msg.payload);
@@ -168,6 +170,8 @@ export const api = {
   get role() { return role; },
   /** Why the daemon refused us (transport === "denied" only). */
   get deniedReason() { return deniedReason; },
+  /** Daemon build version (ws transport; from the hello frame). */
+  get serverVersion() { return serverVersion; },
   /** Await this to know which transport was picked. */
   whenReady() { return transportReady; },
   hasTauri,

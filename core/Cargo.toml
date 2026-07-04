@@ -1,6 +1,6 @@
 [package]
 name = "reticle-core"
-version = "0.1.0"
+version = "1.0.0"
 description = "Domain modules shared by the Reticle desktop (Tauri) and daemon (axum) shells"
 edition = "2021"
 
