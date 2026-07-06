@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Reticle — the infrastructure diagram you can operate</title>
+  <title>Reticle: the infrastructure diagram you can operate</title>
   <meta name="description" content="Draw your real topology, watch it breathe, fix it from the map, and share it live with your whole team. Free MIT desktop app; single-binary team daemon." />
   <link rel="canonical" href="https://reticle.live/" />
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Reticle — the infrastructure diagram you can operate" />
+  <meta property="og:title" content="Reticle: the infrastructure diagram you can operate" />
   <meta property="og:description" content="Draw your real topology, watch it breathe, fix it from the map. Free MIT desktop app; single-binary team daemon." />
   <meta property="og:url" content="https://reticle.live/" />
   <meta property="og:image" content="https://reticle.live/assets/og-card.jpg" />
@@ -15,7 +15,7 @@
   <meta property="og:image:height" content="630" />
   <meta property="og:site_name" content="Reticle" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Reticle — the infrastructure diagram you can operate" />
+  <meta name="twitter:title" content="Reticle: the infrastructure diagram you can operate" />
   <meta name="twitter:description" content="Draw your real topology, watch it breathe, fix it from the map. Free MIT desktop app." />
   <meta name="twitter:image" content="https://reticle.live/assets/og-card.jpg" />
   <meta name="theme-color" content="#0b0e14" media="(prefers-color-scheme: dark)" />
@@ -48,7 +48,7 @@
     "softwareVersion": "1.0.0",
     "license": "https://opensource.org/licenses/MIT",
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-    "author": { "@type": "Organization", "name": "M&A Software LLC", "email": "matt@masoftware.net" },
+    "author": { "@type": "Organization", "name": "MA Software LLC", "email": "matt@masoftware.net" },
     "screenshot": "https://reticle.live/assets/demo-overview.webp",
     "sameAs": ["https://github.com/mannders00/reticle"]
   }
@@ -68,14 +68,14 @@
       </nav>
       <span class="nav-spacer"></span>
       <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark" aria-label="Toggle theme">☾</button>
-      <a class="btn btn-primary btn-small nav-cta" href="#teams">Get Reticle</a>
+      <a class="btn btn-primary btn-small nav-cta" href="#pricing">Get Reticle</a>
       <button class="nav-menu-btn" id="nav-menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="nav-menu">☰</button>
       <nav class="nav-menu" id="nav-menu" hidden>
         <a href="#live">Live demo</a>
         <a href="#product">Product</a>
         <a href="#teams">For teams</a>
         <a href="#faq">FAQ</a>
-        <a class="btn btn-primary btn-small" href="#teams">Get Reticle</a>
+        <a class="btn btn-primary btn-small" href="#pricing">Get Reticle</a>
       </nav>
     </div>
   </header>
@@ -89,13 +89,12 @@
       </div>
       <h1>The infrastructure diagram you can operate.</h1>
       <p class="lede">
-        Every infra diagram goes stale the week it's drawn. Reticle's can't —
-        it checks your real systems around the clock, turns nodes red when
-        they break, and opens a real terminal right on the map. Solo with the
-        free desktop app; live in front of your whole team with the daemon.
+        Draw your real systems on a beautiful canvas, then watch them
+        breathe. Live health on every node, a real terminal one keypress
+        away, and the whole map shared live with your team.
       </p>
       <div class="hero-ctas">
-        <a class="btn btn-primary" href="https://github.com/mannders00/reticle/releases/latest">Download free</a>
+        <a class="btn btn-primary" href="#pricing">Download free</a>
         <a class="btn btn-ghost" href="#live">See it live ↓</a>
       </div>
       <p class="hero-note">macOS · Linux · Windows &nbsp;·&nbsp; <a href="https://github.com/mannders00/reticle" target="_blank" rel="noreferrer">open source, MIT ↗</a> &nbsp;·&nbsp; your map is one <code>topology.yaml</code> you own</p>
@@ -107,21 +106,21 @@
     <div class="wrap">
       <div class="section-head" style="text-align:center;max-width:none;">
         <span class="kicker">SEE FOR YOURSELF</span>
-        <h2>This one is real. Go ahead — poke it.</h2>
-        <p class="lede" style="margin-left:auto;margin-right:auto;">This is the real infrastructure serving reticle.live — mapped in Reticle, health-checked around the clock by the same daemon that's streaming it to you. Read-only. Poke away.</p>
+        <h2>This one is real. Go ahead, poke it.</h2>
+        <p class="lede" style="margin-left:auto;margin-right:auto;">This is the real infrastructure serving reticle.live, mapped in Reticle and health-checked around the clock by the same daemon that's streaming it to you. Read-only. Poke away.</p>
       </div>
 
       <!-- The real daemon at demo.reticle.live, embedded read-only.
            Click-to-activate so the iframe doesn't trap page scroll. -->
       <div class="media-slot ar-video is-live" id="live-embed">
-        <iframe id="live-frame" src="https://demo.reticle.live/" title="Reticle live demo — real infrastructure, read-only" loading="lazy"></iframe>
+        <iframe id="live-frame" src="https://demo.reticle.live/" title="Reticle live demo: real infrastructure, read-only" loading="lazy"></iframe>
         <button class="live-gate" id="live-gate" type="button">
           <span class="live-gate-dot"></span>
           Click to explore the live map
         </button>
       </div>
       <p class="media-caption">
-        Viewers can pan, inspect, and export — they can't change or run anything.
+        Viewers can pan, inspect, and export. They can't change or run anything.
         &nbsp;<a href="https://demo.reticle.live/" target="_blank" rel="noreferrer">Open full screen ↗</a>
       </p>
     </div>
@@ -136,7 +135,7 @@
         <div class="flow-copy">
           <span class="kicker">DRAW</span>
           <h3>A diagram tool you'd choose anyway</h3>
-          <p>Infinite canvas, buttery pan and zoom, 30+ infra-native shapes, semantic edges. Clean enough to hand to a CTO — before it ever does anything live.</p>
+          <p>Infinite canvas, buttery pan and zoom, 30+ infra-native shapes, semantic edges. Clean enough to hand to a CTO, before it ever does anything live.</p>
         </div>
         <div class="media-slot is-shot">
           <img src="assets/demo-overview.webp" width="1800" height="1169" alt="Region, hosts, services and notes on the Reticle canvas" loading="lazy" />
@@ -147,7 +146,7 @@
         <div class="flow-copy">
           <span class="kicker">OPERATE</span>
           <h3>Select a node. <kbd>⌘</kbd><kbd>⏎</kbd>. You're in a shell.</h3>
-          <p>A real terminal over your own SSH or kubectl — plus one-click runbook actions with output inline. See the problem and fix the simple case without leaving the map.</p>
+          <p>A real terminal over your own SSH or kubectl, plus one-click runbook actions with output inline. See the problem and fix the simple case without leaving the map.</p>
         </div>
         <div class="media-slot is-shot">
           <img src="assets/demo-shell.webp" width="1800" height="1169" alt="A selected server with a live htop over SSH, docked next to the map" loading="lazy" />
@@ -173,15 +172,16 @@
     <div class="wrap">
       <div class="section-head">
         <span class="kicker">FOR TEAMS</span>
-        <h2>One live map. Everyone sees the same thing.</h2>
-        <p class="lede">The team daemon serves this exact app to browsers on your network from a single tiny binary. Engineers work in it. Everyone else finally <em>sees</em> it — when something breaks, a viewer link shows anyone which box is red and what depends on it. Deployment is one binary and a systemd unit on a box you already have — most teams are live in an afternoon.</p>
+        <h2>One live map. Engineers operate it. Everyone understands it.</h2>
+        <p class="lede">The team daemon serves this exact app to every browser on your network from a single tiny binary. Engineers keep the full power: terminals, actions, edits. Everyone else gets a viewer link and instant clarity: which box is red, what depends on it, no begging an engineer for a screenshot mid-incident. Deployment is one binary and a systemd unit; most teams are live in an afternoon.</p>
+        <p class="teams-moments">On-call handoffs · postmortems · stakeholder updates · onboarding · "here's why your service was down, see the red box?"</p>
       </div>
 
       <div class="cards-3" style="margin-bottom:48px;">
         <div class="card">
           <span class="card-icon">⊘</span>
           <h3>Read-only by default</h3>
-          <p>Forgetting a flag can never hand out write access. No edit token configured — nobody edits, nobody executes. Share the map as freely as a dashboard.</p>
+          <p>Forgetting a flag can never hand out write access. No edit token configured means nobody edits and nobody executes. Viewers get clarity without risk; share the map as freely as a dashboard.</p>
           <div class="mini-mock">
             <div><span class="cm">$ reticle-daemon --config prod.yaml</span></div>
             <div>&nbsp;&nbsp;auth: <span class="ok">read-only for everyone</span></div>
@@ -190,7 +190,7 @@
         <div class="card">
           <span class="card-icon">⛨</span>
           <h3>Roles the server enforces</h3>
-          <p>Editor and viewer tokens, checked in the daemon — not hidden buttons in the UI. A viewer physically cannot save, run, or open a shell. Wrong tokens are denied, never quietly downgraded.</p>
+          <p>Editor and viewer tokens, checked in the daemon, not hidden buttons in the UI. A viewer physically cannot save, run, or open a shell. Wrong tokens are denied, never quietly downgraded.</p>
           <div class="mini-mock">
             <div><span class="k">--edit-token</span> ****&nbsp;&nbsp;<span class="cm">→ edit &amp; run</span></div>
             <div><span class="k">--view-token</span> ****&nbsp;&nbsp;<span class="cm">→ watch live</span></div>
@@ -199,8 +199,8 @@
         </div>
         <div class="card">
           <span class="card-icon">☰</span>
-          <h3>An audit trail — when you ask</h3>
-          <p>One flag appends a JSON line for every connection, save, and command — including refused attempts. No flag, no file. Keystrokes are never logged.</p>
+          <h3>An audit trail, when you ask</h3>
+          <p>One flag appends a JSON line for every connection, save, and command, including refused attempts. No flag, no file. Keystrokes are never logged.</p>
           <div class="mini-mock">
             <div><span class="cm">--audit-log audit.jsonl</span></div>
             <div>{"role":"viewer","cmd":"run_local",</div>
@@ -209,19 +209,19 @@
         </div>
       </div>
 
-      <div class="plans">
+      <div class="plans" id="pricing">
         <div class="plan">
           <div>
             <div class="plan-name">Desktop</div>
             <div class="plan-price"><strong>Free forever</strong> · MIT license</div>
           </div>
           <ul>
-            <li>The full app — canvas, terminals, checks, actions, PDF export</li>
+            <li>The full app: canvas, terminals, checks, actions, PDF export</li>
             <li>Runs with <em>your</em> keys, reaches what <em>your</em> machine reaches</li>
             <li>One YAML file, versioned in your git</li>
           </ul>
           <div class="plan-cta">
-            <a class="btn btn-ghost" href="https://github.com/mannders00/reticle/releases/latest">Download — macOS · Linux · Windows</a>
+            <a class="btn btn-ghost" href="https://github.com/mannders00/reticle/releases/latest">Download for macOS · Linux · Windows</a>
           </div>
           <p class="plan-fineprint">For the person who runs their own stuff.</p>
         </div>
@@ -233,15 +233,15 @@
             <div class="plan-price"><strong>Per daemon, flat per year.</strong> Unlimited editors &amp; viewers.</div>
           </div>
           <ul>
-            <li>Same app, served to every browser on your network — nothing to install</li>
+            <li>Same app, served to every browser on your network, nothing to install</li>
             <li>Checks run 24/7 on the daemon; every viewer sees live health</li>
-            <li>Read-only by default — strict editor/viewer roles, enforced server-side</li>
+            <li>Read-only by default: strict editor/viewer roles, enforced server-side</li>
             <li>Optional JSONL audit log: who connected, who ran what, what was refused</li>
-            <li>Credentials stay on one host — no keys on laptops, nothing to offboard</li>
+            <li>Credentials stay on one host: no keys on laptops, nothing to offboard</li>
             <li>Set up on one short call, invoiced to your org</li>
           </ul>
           <div class="plan-cta">
-            <a class="btn btn-primary" href="mailto:matt@masoftware.net?subject=Reticle%20team%20daemon%20for%20our%20org">Email us — get your org set up</a>
+            <a class="btn btn-primary" href="mailto:matt@masoftware.net?subject=Reticle%20team%20daemon%20for%20our%20org">Email us to get your org set up</a>
           </div>
           <p class="plan-fineprint">Reply within a day. Stripe invoicing: card, ACH, or bank transfer.</p>
         </div>
@@ -255,35 +255,36 @@
       <div class="section-head">
         <span class="kicker">FAQ</span>
         <h2>Fair questions</h2>
+        <p class="faq-discord">Something else on your mind? <a href="https://discord.gg/x6hY9GYyph" target="_blank" rel="noreferrer">Ask in the Discord →</a></p>
       </div>
       <div class="faq">
         <details>
           <summary>Is the desktop app really free?</summary>
-          <p>Yes — free, MIT-licensed, complete, forever. The paid product is genuinely different infrastructure: a shared always-on daemon for organizations. If you never need that, you never pay.</p>
+          <p>Yes. Free, MIT-licensed, complete, forever. The paid product is genuinely different infrastructure: a shared always-on daemon for organizations. If you never need that, you never pay.</p>
         </details>
         <details>
           <summary>Where do my credentials live?</summary>
-          <p>Never in Reticle and never in the YAML. The desktop app uses your own <code>ssh</code> and <code>kubectl</code>. The daemon runs commands with <em>its</em> host's credentials — teammates connect with a browser and a token, so nobody distributes keys.</p>
+          <p>Never in Reticle and never in the YAML. The desktop app uses your own <code>ssh</code> and <code>kubectl</code>. The daemon runs commands with <em>its</em> host's credentials; teammates connect with a browser and a token, so nobody distributes keys.</p>
         </details>
         <details>
           <summary>How does team licensing work?</summary>
-          <p>Per running daemon, flat per year, unlimited teammates. One daemon serves one topology — most teams run one or two. Email us; we set it up together and invoice your org.</p>
+          <p>Per running daemon, flat per year, unlimited teammates. One daemon serves one topology; most teams run one or two. Email us; we set it up together and invoice your org.</p>
         </details>
         <details>
           <summary>Can people see the map without being able to touch it?</summary>
-          <p>That's the default. A daemon with no edit token is read-only for everyone — viewers pan, inspect, watch live health, and export, but the server refuses every write and every command. Editing exists only if you explicitly configure an edit token and hand it to someone.</p>
+          <p>That's the default. A daemon with no edit token is read-only for everyone: viewers pan, inspect, watch live health, and export, but the server refuses every write and every command. Editing exists only if you explicitly configure an edit token and hand it to someone.</p>
         </details>
         <details>
           <summary>Does it keep a record of who did what?</summary>
-          <p>If you ask it to. Pass <code>--audit-log audit.jsonl</code> and the daemon appends one JSON line per connection, save, and command — including attempts it refused. No flag, no file, nothing collected. Keystrokes inside terminals are never logged (that's where passwords get typed).</p>
+          <p>If you ask it to. Pass <code>--audit-log audit.jsonl</code> and the daemon appends one JSON line per connection, save, and command, including attempts it refused. No flag, no file, nothing collected. Keystrokes inside terminals are never logged (that's where passwords get typed).</p>
         </details>
         <details>
           <summary>What does it take to run the daemon?</summary>
-          <p>A single ~4 MB static binary and a systemd unit — no database, no containers, no dependencies. Point it at your <code>topology.yaml</code>, put Caddy or nginx in front for TLS, hand out the link. It's read-only for everyone until you configure an edit token.</p>
+          <p>A single ~4 MB static binary and a systemd unit. No database, no containers, no dependencies. Point it at your <code>topology.yaml</code>, put Caddy or nginx in front for TLS, hand out the link. It's read-only for everyone until you configure an edit token.</p>
         </details>
         <details>
           <summary>Is this a monitoring product?</summary>
-          <p>No — Grafana and friends own deep metrics. Reticle is the layer above: the map of what you run, that can also touch what you run. Health here is "is it up, is its service alive" — answered where your eyes already are.</p>
+          <p>No. Grafana and friends own deep metrics. Reticle is the layer above: the map of what you run, that can also touch what you run. Health here is "is it up, is its service alive," answered where your eyes already are.</p>
         </details>
       </div>
     </div>
@@ -294,9 +295,9 @@
     <div class="wrap">
       <div class="cta-panel">
         <h2>Your diagram should do something.</h2>
-        <p class="lede">Map what you run with the free app — or put a living map in front of your whole team this week.</p>
+        <p class="lede">Map what you run with the free app, or put a living map in front of your whole team this week.</p>
         <div class="hero-ctas">
-          <a class="btn btn-primary" href="https://github.com/mannders00/reticle/releases/latest">Download free — MIT</a>
+          <a class="btn btn-primary" href="#pricing">Download free (MIT)</a>
           <a class="btn btn-ghost" href="mailto:matt@masoftware.net?subject=Reticle%20team%20daemon%20for%20our%20org">Talk to us about your org →</a>
         </div>
       </div>
@@ -310,7 +311,11 @@
       <span>Desktop app MIT-licensed.</span>
       <span class="spacer"></span>
       <a href="https://github.com/mannders00/reticle" target="_blank" rel="noreferrer">GitHub</a>
+      <a href="https://discord.gg/x6hY9GYyph" target="_blank" rel="noreferrer">Discord</a>
       <a href="mailto:matt@masoftware.net">matt@masoftware.net</a>
+    </div>
+    <div class="wrap footer-legal">
+      © 2026 MA Software LLC. Reticle™ is a trademark of MA Software LLC.
     </div>
   </footer>
 

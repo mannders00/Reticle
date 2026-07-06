@@ -262,3 +262,13 @@
 @media (max-width: 460px) {
   .statusbar .sb-item:not(.sb-role):not(.sb-dirty) { display: none; } /* node/edge counts */
 }
+
+/* Daemon mode: the workspace "button" is a fixed-config label, not a
+ * control. Neutralize every button affordance. */
+.ws-btn.is-fixed,
+.ws-btn.is-fixed:hover {
+  cursor: default;
+  border-color: var(--stroke-1);
+  background: var(--bg-2);
+  opacity: 1;
+}

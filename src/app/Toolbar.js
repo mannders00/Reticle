@@ -170,7 +170,16 @@ function workspaceSwitcher() {
       if (wrap.classList.contains("is-open")) refresh();
     },
   }, "config ▾");
-  // In daemon mode the button is a plain label showing the shared config.
+  // Daemon mode serves ONE fixed config: the switcher is not a control
+  // there, so render it as a plain disabled label (no caret, no hover,
+  // no cursor) instead of a button that silently does nothing.
+  api.whenReady().then(() => {
+    if (api.transport !== "ws") return;
+    btn.disabled = true;
+    btn.classList.add("is-fixed");
+    btn.textContent = btn.textContent.replace(" ▾", "");
+    btn.title = "This daemon serves one fixed config";
+  });
   bus.on("session:loaded", ({ fileName }) => {
     if (api.transport !== "ws" || !fileName) return;
     const base = String(fileName).split("/").pop().replace(/\.ya?ml$/i, "");

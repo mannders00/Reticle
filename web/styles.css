@@ -397,7 +397,8 @@ h3 { font-size: 17px; font-weight: 650; letter-spacing: -0.01em; }
 .flow-copy h3 { font-size: clamp(20px, 2.4vw, 26px); letter-spacing: -0.015em; margin-bottom: 10px; }
 .flow-copy p { color: var(--text-1); font-size: 15.5px; max-width: 440px; }
 .flow-copy .kicker { margin-bottom: 10px; }
-.flow-copy kbd {
+.flow-copy kbd,
+.hero-solo kbd {
   font: 600 11px var(--font-mono);
   padding: 2px 6px;
   border: 1px solid var(--stroke-strong);
@@ -630,3 +631,22 @@ footer {
 .hero-solo .hero-badges,
 .hero-solo .hero-ctas { justify-content: center; }
 .hero-solo .lede { margin-left: auto; margin-right: auto; }
+
+.faq-discord { margin-top: 10px; font-size: 14px; color: var(--text-2); }
+
+/* footer legal line */
+.footer-legal {
+  margin-top: 18px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+/* land the pricing cards below the sticky nav, with breathing room */
+#pricing { scroll-margin-top: 86px; }
+
+/* the moments the shared map earns its keep — muted, concrete */
+.teams-moments {
+  margin-top: 14px;
+  font: 13px var(--font-mono);
+  color: var(--text-2);
+}
