@@ -12,7 +12,7 @@ and print-quality PDF export. Everything is one git-diffable YAML file.
 
 No accounts. No cloud. No lock-in.
 
-[**⬇ Download**](https://github.com/mannders00/reticle/releases/latest) · [**Live demo**](https://demo.reticle.live) · [**Team daemon →**](https://reticle.live)
+[**⬇ Download**](https://github.com/mannders00/reticle/releases/latest) · [**Live demo**](https://demo.reticle.live) · [**Team daemon →**](https://reticle.live) [**Discord →**](https://discord.gg/x6hY9GYyph)
 
 MIT-licensed desktop app · macOS / Linux / Windows
 
