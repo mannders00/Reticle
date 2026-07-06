@@ -106,3 +106,5 @@ map.example.com {
 ```
 
 Never use `--open` or `--enable-terminal` on anything public.
+
+Deployment questions are welcome in the [Discord](https://discord.gg/x6hY9GYyph).

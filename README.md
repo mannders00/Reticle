@@ -105,7 +105,7 @@ daemon serving its own real infrastructure, read-only. Go poke it.
 | [Keyboard shortcuts](docs/shortcuts.md) | Canvas, editing, and operating keys |
 | [The team daemon](docs/daemon.md) | Flags, the access model, audit log, deployment |
 | [DAEMON.md](DAEMON.md) | Full architecture and wire protocol |
-| [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) | |
+| [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Discord](https://discord.gg/x6hY9GYyph) | |
 
 ## Repo layout
 

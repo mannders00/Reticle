@@ -63,3 +63,5 @@ bun run tauri build   # release bundle
 - [Topology file reference](topology-reference.md) covers every field.
 - [Keyboard shortcuts](shortcuts.md).
 - [The team daemon](daemon.md) serves the same map to your whole team.
+
+Stuck on something? Ask in the [Discord](https://discord.gg/x6hY9GYyph); it is small and friendly.

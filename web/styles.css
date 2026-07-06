@@ -650,3 +650,5 @@ footer {
   font: 13px var(--font-mono);
   color: var(--text-2);
 }
+
+.cta-note { margin-top: 16px; font-size: 13.5px; color: var(--text-2); }
