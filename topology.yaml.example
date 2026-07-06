@@ -1,7 +1,7 @@
 # Reticle topology example
 # This is the shape a user-authored topology file takes. The frontend's
 # staged state mirrors it 1:1 (see src/core/store.js). `spec` is opaque to
-# the store/transport layers — only the `ssh` and `health` modules parse it.
+# the store/transport layers; only the `ssh` and `health` modules parse it.
 version: 1
 nodes:
   web-01:
