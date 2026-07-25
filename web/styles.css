@@ -385,9 +385,13 @@ h3 { font-size: 17px; font-weight: 650; letter-spacing: -0.01em; }
   color: var(--text-2);
   text-align: center;
 }
-/* Demo video sits in the same section as the live embed — give its head
- * section-scale breathing room from the caption above. */
-.demo-video-head { margin-top: 72px; }
+/* Demo video sits in the same section as the live embed — it reads as its
+ * own section, so give it the same breathing room two adjacent sections
+ * get (2 × the 88px section padding), not within-section spacing. */
+.demo-video-head { margin-top: 176px; }
+@media (max-width: 900px) {
+  .demo-video-head { margin-top: 128px; }
+}
 
 /* ---------- alternating value rows ---------- */
 
