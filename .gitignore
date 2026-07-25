@@ -32,3 +32,7 @@ dist/
 
 # raw screen recordings (the compressed encode ships from web/assets/)
 reticle-demo.mov
+
+# the maintainer's own topology maps — personal, never tracked or mirrored
+homelab-wireguard.yaml
+laptop-to-ec2.yaml
