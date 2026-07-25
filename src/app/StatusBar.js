@@ -84,6 +84,25 @@ export function mountStatusBar(root) {
   const count = h("span", { class: "sb-item" });
   const path = h("span", { class: "sb-item sb-path" });
   const dirty = h("span", { class: "sb-item sb-dirty" });
+  // Last time ANY health signal landed (scheduled sweep, cron result, or
+  // the toolbar's global refresh) — always UTC so screenshots/teammates
+  // in different zones read the same clock.
+  const lastUpdate = h("span", {
+    class: "sb-item sb-last-update",
+    title: "Last health update (UTC) — ⟳ in the toolbar refreshes everything now",
+  });
+  let updateTimer = null;
+  function renderLastUpdate() {
+    // Coalesce bursts (a sweep ticks every node at once) into one write.
+    if (updateTimer) return;
+    updateTimer = setTimeout(() => {
+      updateTimer = null;
+      lastUpdate.textContent = `updated ${new Date().toISOString().slice(11, 19)} UTC`;
+    }, 50);
+  }
+  bus.on("health:tick", renderLastUpdate);
+  bus.on("cron:result", renderLastUpdate);
+  bus.on("refresh:done", renderLastUpdate);
 
   function renderSnap() {
     const on = isSnapToGrid();
@@ -130,6 +149,6 @@ export function mountStatusBar(root) {
     h("span", { class: "sb-spacer" }),
     count,
     h("span", { class: "sb-spacer" }),
-    path, dirty,
+    path, dirty, lastUpdate,
   );
 }

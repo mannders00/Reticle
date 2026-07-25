@@ -29,3 +29,6 @@ dist/
 
 # playwright-mcp session artifacts
 .playwright-mcp/
+
+# raw screen recordings (the compressed encode ships from web/assets/)
+reticle-demo.mov

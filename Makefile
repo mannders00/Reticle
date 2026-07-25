@@ -26,7 +26,7 @@ name-armv7-unknown-linux-musleabihf  := linux-armv7
 name-aarch64-apple-darwin            := macos-arm64
 name-x86_64-apple-darwin             := macos-x64
 
-.PHONY: desktop desktop-dev daemon daemon-dev daemon-all deploy-pi serve check toolchain clean publish-oss release-oss \
+.PHONY: desktop desktop-dev daemon daemon-dev daemon-all deploy-pi serve check toolchain clean publish-oss release-oss publish-daemon release-daemon \
         $(addprefix daemon-,$(foreach t,$(LINUX_TARGETS) $(MACOS_TARGETS),$(name-$(t))))
 
 # ---- desktop (Tauri) ----
@@ -98,6 +98,22 @@ release-oss: publish-oss
 	  (echo "tauri.conf.json version != $(VERSION) — bump it first" && exit 2)
 	cd ../reticle-oss && git tag v$(VERSION) && git push origin main --tags
 	@echo "→ watch the build: https://github.com/mannders00/reticle/actions"
+
+# Snapshot the daemon + its build deps (core + frontend) into
+# ../reticle-daemon and push to the PRIVATE GitHub repo. CI there builds
+# and tests the daemon on every push.
+publish-daemon:
+	bash scripts/publish-daemon.sh
+
+# Cut a daemon release: sync the private mirror, tag it, push the tag →
+# GitHub Actions cross-compiles the static Linux binaries onto the release.
+#   make release-daemon VERSION=1.0.0
+release-daemon: publish-daemon
+	@test -n "$(VERSION)" || (echo "usage: make release-daemon VERSION=x.y.z" && exit 2)
+	@grep -q '^version = "$(VERSION)"' daemon/Cargo.toml || \
+	  (echo "daemon/Cargo.toml version != $(VERSION) — bump it first" && exit 2)
+	cd ../reticle-daemon && git tag v$(VERSION) && git push origin main --tags
+	@echo "→ watch the build: https://github.com/mannders00/reticle-daemon/actions"
 
 check:
 	cargo check --workspace

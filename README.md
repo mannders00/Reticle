@@ -20,6 +20,12 @@ MIT-licensed desktop app · macOS / Linux / Windows
 
 <img src="assets/demo-overview.png" alt="A live infrastructure map in Reticle: real health, real topology" width="100%" />
 
+<br/><br/>
+
+[<img src="web/assets/reticle-demo-poster.jpg" alt="Two-minute demo: draw the map, attach real hosts, watch live health, open a real shell, export the PDF" width="100%" />](web/assets/reticle-demo.mp4)
+
+**[▶ Watch the two-minute demo](web/assets/reticle-demo.mp4)** — draw the map → attach real hosts → checks go live → <kbd>⌘⏎</kbd> into a shell → export the PDF
+
 </div>
 
 ---

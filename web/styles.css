@@ -341,6 +341,9 @@ h3 { font-size: 17px; font-weight: 650; letter-spacing: -0.01em; }
   overflow: hidden;
 }
 .media-slot.ar-video { aspect-ratio: 16 / 9; }
+/* The demo capture's own shape (1728×1118) — cover-cropping a tutorial
+ * to 16:9 would cut the toolbar and statusbar off. */
+.media-slot.ar-demo { aspect-ratio: 1728 / 1118; }
 .media-slot.ar-app { aspect-ratio: 16 / 10; }
 .media-slot.ar-doc { aspect-ratio: 210 / 148; } /* A4 landscape */
 .media-slot .slot-label {
@@ -382,6 +385,9 @@ h3 { font-size: 17px; font-weight: 650; letter-spacing: -0.01em; }
   color: var(--text-2);
   text-align: center;
 }
+/* Demo video sits in the same section as the live embed — give its head
+ * section-scale breathing room from the caption above. */
+.demo-video-head { margin-top: 72px; }
 
 /* ---------- alternating value rows ---------- */
 

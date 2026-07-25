@@ -256,41 +256,54 @@ export async function exportPdf() {
       pdf.text(metaFit, tx, y + h - 8 * s, { size: metaSize, font: "mono", color: INK.faint });
     }
 
-    // attached resources — icon + label chips, bottom-right (mirrors the
-    // canvas). Chips that don't fit collapse into a "+N" overflow marker.
+    // attached resources — icon + label chips stacked UP from the bottom-right
+    // corner, into the card's otherwise-unused right-hand space. The bottom row
+    // shares the baseline with the meta line, so it dodges the meta text; rows
+    // above get the full card width. Each chip is right-aligned to the card's
+    // right edge. If the stack would reach the title band, the remaining chips
+    // collapse into a "+N" marker on the top row.
     const addons = nd.addons ?? [];
     if (addons.length && h > 40 * s) {
       const aSize = 8 * s;
       const tSize = Math.max(4, 6 * s);
-      const gap = 2 * s;   // icon ↔ label
-      const pad = 6 * s;   // chip ↔ chip
+      const gap = 2 * s;          // icon ↔ label
+      const vGap = 3 * s;         // row ↔ row
+      const rowStep = aSize + vGap;
       const rightEdge = x + w - 8 * s;
-      const leftLimit = metaFit
-        ? tx + pdf.textWidth(metaFit, metaSize, "mono") + 8 * s
+      const bottomIconY = y + h - 6 * s - aSize;   // bottom-right corner
+      const topLimit = y + 28 * s;                 // stay clear of title/subtitle
+      const metaRight = metaFit
+        ? tx + pdf.textWidth(metaFit, metaSize, "mono") + 6 * s
         : x + 10 * s;
-      const chips = addons.map((a) => {
-        const label = a.label || ADDONS[a.kind]?.label || a.kind;
-        return { kind: a.kind, label, w: aSize + gap + pdf.textWidth(label, tSize, "sans") };
-      });
-      // Greedy fit, reserving room for the overflow marker when needed.
-      const overW = (n) => (n > 0 ? pdf.textWidth(`+${n}`, tSize, "sans") + pad : 0);
-      let shown = chips.length;
-      const rowW = (k) =>
-        chips.slice(0, k).reduce((acc, c, i) => acc + c.w + (i ? pad : 0), 0) + overW(chips.length - k);
-      while (shown > 1 && rowW(shown) > rightEdge - leftLimit) shown--;
-      const iconY = y + h - 6 * s - aSize;
-      const textY = iconY + aSize / 2 + tSize * 0.36;
-      let cx = Math.max(leftLimit, rightEdge - rowW(shown));
-      for (const c of chips.slice(0, shown)) {
-        drawGlyph(pdf, glyph(c.kind), cx, iconY, aSize, INK.sub, INK.cardFill);
-        // +0.1 slack: cx derives from rightEdge-rowW, so float rounding can
-        // land a hair under the measured width and spuriously ellipsize.
-        pdf.text(pdf.fitText(c.label, rightEdge - cx - aSize - gap + 0.1, tSize, "sans"),
-          cx + aSize + gap, textY, { size: tSize, font: "sans", color: INK.sub });
-        cx += c.w + pad;
+
+      const maxRows = Math.max(1, Math.floor((bottomIconY - topLimit) / rowStep) + 1);
+      const overflowing = addons.length > maxRows;
+      const realCount = overflowing ? maxRows - 1 : addons.length;
+
+      // i = 0 is the bottom row; higher i stacks upward.
+      const drawRow = (i, kind, text, color) => {
+        const iconY = bottomIconY - i * rowStep;
+        const textY = iconY + aSize / 2 + tSize * 0.36;
+        const leftLimit = i === 0 ? metaRight : x + 10 * s;  // dodge meta on the bottom row only
+        if (rightEdge - leftLimit < aSize) return;           // no room (huge meta, bottom row)
+        const maxLabelW = Math.max(0, rightEdge - leftLimit - aSize - gap);
+        const fit = maxLabelW > 3 * s ? pdf.fitText(text, maxLabelW, tSize, "sans") : "";
+        const chipW = aSize + gap + pdf.textWidth(fit, tSize, "sans");
+        const cx = rightEdge - chipW;
+        drawGlyph(pdf, glyph(kind), cx, iconY, aSize, INK.sub, INK.cardFill);
+        pdf.text(fit, cx + aSize + gap, textY, { size: tSize, font: "sans", color });
+      };
+
+      for (let i = 0; i < realCount; i++) {
+        const a = addons[i];
+        drawRow(i, a.kind, a.label || ADDONS[a.kind]?.label || a.kind, INK.sub);
       }
-      if (shown < chips.length) {
-        pdf.text(`+${chips.length - shown}`, cx, textY, { size: tSize, font: "sans", color: INK.faint });
+      if (overflowing) {
+        // "+N" alone on the top row, right-aligned (no icon).
+        const marker = `+${addons.length - realCount}`;
+        const iconY = bottomIconY - realCount * rowStep;
+        pdf.text(marker, rightEdge - pdf.textWidth(marker, tSize, "sans"),
+          iconY + aSize / 2 + tSize * 0.36, { size: tSize, font: "sans", color: INK.faint });
       }
     }
   }

@@ -195,11 +195,20 @@
 .check-chip[data-state="unknown"] { color: var(--text-3); }
 .check-chip[data-state="more"] { color: var(--text-3); }
 
-/* Attached resources (GPU, disk, IP…) — tiny icon chips */
+/* Attached resources (GPU, disk, IP…) — tiny icon chips. Stacked UP from the
+   bottom-right corner into the card's otherwise-unused space, right-aligned —
+   mirrors the PDF export. Absolutely placed so they overlay the footer's empty
+   right side without pushing the card's flow layout. */
 .node-addons {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column-reverse;   /* first chip sits at the bottom, rest stack up */
+  align-items: flex-end;            /* right-aligned to the card edge */
   gap: 4px;
+  max-width: calc(100% - 24px);
+  pointer-events: none;             /* empty space stays click-through for card drag */
 }
 .addon-chip {
   display: inline-flex;
@@ -212,12 +221,11 @@
   background: var(--bg-2);
   color: var(--text-2);
   white-space: nowrap;
+  max-width: 100%;
+  pointer-events: auto;             /* chips keep their hover/tooltip */
 }
 .addon-chip .kind-icon { flex: 0 0 auto; opacity: 0.9; }
 .addon-label { max-width: 90px; overflow: hidden; text-overflow: ellipsis; }
-.node-checks + .node-addons, .node-addons + .node-meta { margin-top: 4px; }
-/* addons start the bottom stack when there's no checks strip */
-.node-card > .node-head + .node-addons { margin-top: auto; }
 
 .node-meta {
   display: flex;

@@ -19,36 +19,36 @@ export const CATEGORIES = [
 
 export const KINDS = {
   // ---- compute ----------------------------------------------------------
-  server: { label: "Server", category: "compute", size: [220, 120], modes: ["ssh"], health: ["tcp"], actions: ["df -h", "free -m", "uptime", "systemctl status"] },
+  server: { label: "Server", category: "compute", size: [330, 180], modes: ["ssh"], health: ["tcp"], actions: ["df -h", "free -m", "uptime", "systemctl status"] },
   // A docker/podman container ON A HOST (not k8s — that's Pod). SSH to
   // the host it runs on; docker commands run there via that ssh.
-  container: { label: "Container", category: "compute", size: [150, 100], modes: ["ssh"], health: ["tcp", "exec"], actions: ["docker ps --filter name=myctr", "docker logs --tail 80 myctr"] },
-  vm: { label: "VM", category: "compute", size: [200, 110], modes: ["ssh"], health: ["tcp"], actions: ["df -h", "free -m"] },
+  container: { label: "Container", category: "compute", size: [230, 150], modes: ["ssh"], health: ["tcp", "exec"], actions: ["docker ps --filter name=myctr", "docker logs --tail 80 myctr"] },
+  vm: { label: "VM", category: "compute", size: [300, 170], modes: ["ssh"], health: ["tcp"], actions: ["df -h", "free -m"] },
   // A process/service on a machine — nginx, your API, a systemd unit.
   // SSH to its host; health = TCP on the app's own port.
-  app: { label: "Application", category: "compute", size: [200, 110], modes: ["ssh"], health: ["tcp"], actions: ["systemctl status myapp --no-pager", "journalctl -u myapp -n 80 --no-pager"] },
-  pod: { label: "Pod", category: "composite", size: [160, 110], modes: ["kubectl"], health: ["kubectl"], actions: ["kubectl logs --tail=80", "kubectl describe pod"] },
-  daemonset: { label: "DaemonSet", category: "composite", size: [160, 110], modes: ["kubectl"], health: ["kubectl"], actions: ["kubectl get pods -l app=daemonset"] },
-  statefulset: { label: "StatefulSet", category: "composite", size: [170, 120], modes: ["kubectl"], health: ["kubectl"], actions: ["kubectl get pods", "kubectl rollout status"] },
-  deployment: { label: "Deployment", category: "composite", size: [170, 120], modes: ["kubectl"], health: ["kubectl"], actions: ["kubectl rollout status", "kubectl get pods"] },
-  cluster: { label: "Cluster", category: "composite", size: [280, 180], modes: ["kubectl"], health: ["kubectl"], actions: ["kubectl get nodes", "kubectl get pods -A"] },
-  knode: { label: "K8s Node", category: "composite", size: [200, 120], modes: ["kubectl"], health: ["kubectl"], actions: ["kubectl describe node", "kubectl get pods -A --field-selector spec.nodeName=$NAME"] },
+  app: { label: "Application", category: "compute", size: [300, 170], modes: ["ssh"], health: ["tcp"], actions: ["systemctl status myapp --no-pager", "journalctl -u myapp -n 80 --no-pager"] },
+  pod: { label: "Pod", category: "composite", size: [240, 170], modes: ["kubectl"], health: ["kubectl"], actions: ["kubectl logs --tail=80", "kubectl describe pod"] },
+  daemonset: { label: "DaemonSet", category: "composite", size: [240, 170], modes: ["kubectl"], health: ["kubectl"], actions: ["kubectl get pods -l app=daemonset"] },
+  statefulset: { label: "StatefulSet", category: "composite", size: [260, 180], modes: ["kubectl"], health: ["kubectl"], actions: ["kubectl get pods", "kubectl rollout status"] },
+  deployment: { label: "Deployment", category: "composite", size: [260, 180], modes: ["kubectl"], health: ["kubectl"], actions: ["kubectl rollout status", "kubectl get pods"] },
+  cluster: { label: "Cluster", category: "composite", size: [420, 270], modes: ["kubectl"], health: ["kubectl"], actions: ["kubectl get nodes", "kubectl get pods -A"] },
+  knode: { label: "K8s Node", category: "composite", size: [300, 180], modes: ["kubectl"], health: ["kubectl"], actions: ["kubectl describe node", "kubectl get pods -A --field-selector spec.nodeName=$NAME"] },
 
   // ---- data -------------------------------------------------------------
-  database: { label: "Database", category: "data", size: [180, 150], modes: ["ssh"], health: ["tcp", "exec"], actions: ["pg_isready", "mysqladmin status", "redis-cli ping"] },
-  cache: { label: "Cache", category: "data", size: [160, 140], modes: ["ssh"], health: ["tcp", "exec"], actions: ["redis-cli ping", "redis-cli info memory"] },
-  queue: { label: "Queue", category: "data", size: [180, 140], modes: ["ssh"], health: ["tcp", "exec"], actions: ["kafka-topics --list", "rabbitmqctl list_queues"] },
-  "object-store": { label: "Object Store", category: "data", size: [180, 140], modes: ["ssh"], health: ["tcp"], actions: ["aws s3 ls", "gsutil ls"] },
+  database: { label: "Database", category: "data", size: [270, 230], modes: ["ssh"], health: ["tcp", "exec"], actions: ["pg_isready", "mysqladmin status", "redis-cli ping"] },
+  cache: { label: "Cache", category: "data", size: [240, 210], modes: ["ssh"], health: ["tcp", "exec"], actions: ["redis-cli ping", "redis-cli info memory"] },
+  queue: { label: "Queue", category: "data", size: [270, 210], modes: ["ssh"], health: ["tcp", "exec"], actions: ["kafka-topics --list", "rabbitmqctl list_queues"] },
+  "object-store": { label: "Object Store", category: "data", size: [270, 210], modes: ["ssh"], health: ["tcp"], actions: ["aws s3 ls", "gsutil ls"] },
 
   // ---- network ----------------------------------------------------------
-  "load-balancer": { label: "Load Balancer", category: "network", size: [220, 120], modes: ["ssh"], health: ["tcp", "http"], actions: ["show backends", "curl -s localhost/stats"] },
-  switch: { label: "Switch", category: "network", size: [180, 110], modes: ["ssh"], health: ["tcp"], actions: ["show interfaces", "show mac address-table"] },
-  router: { label: "Router", category: "network", size: [180, 110], modes: ["ssh"], health: ["tcp"], actions: ["show ip route", "show interfaces"] },
-  firewall: { label: "Firewall", category: "network", size: [180, 120], modes: ["ssh"], health: ["tcp"], actions: ["show rules", "show connections"] },
-  vpn: { label: "VPN", category: "network", size: [180, 120], modes: ["ssh"], health: ["tcp"], actions: ["show tunnels", "show status"] },
-  bastion: { label: "Bastion", category: "network", size: [180, 120], modes: ["ssh"], health: ["tcp"], actions: ["who", "last -n 20"] },
-  dns: { label: "DNS", category: "network", size: [160, 100], modes: ["none"], health: ["http"], actions: ["dig example.com", "nslookup example.com"] },
-  cdn: { label: "CDN", category: "network", size: [180, 140], modes: ["none"], health: ["http"], actions: ["curl -I https://edge"] },
+  "load-balancer": { label: "Load Balancer", category: "network", size: [330, 180], modes: ["ssh"], health: ["tcp", "http"], actions: ["show backends", "curl -s localhost/stats"] },
+  switch: { label: "Switch", category: "network", size: [270, 170], modes: ["ssh"], health: ["tcp"], actions: ["show interfaces", "show mac address-table"] },
+  router: { label: "Router", category: "network", size: [270, 170], modes: ["ssh"], health: ["tcp"], actions: ["show ip route", "show interfaces"] },
+  firewall: { label: "Firewall", category: "network", size: [270, 180], modes: ["ssh"], health: ["tcp"], actions: ["show rules", "show connections"] },
+  vpn: { label: "VPN", category: "network", size: [270, 180], modes: ["ssh"], health: ["tcp"], actions: ["show tunnels", "show status"] },
+  bastion: { label: "Bastion", category: "network", size: [270, 180], modes: ["ssh"], health: ["tcp"], actions: ["who", "last -n 20"] },
+  dns: { label: "DNS", category: "network", size: [240, 150], modes: ["none"], health: ["http"], actions: ["dig example.com", "nslookup example.com"] },
+  cdn: { label: "CDN", category: "network", size: [270, 210], modes: ["none"], health: ["http"], actions: ["curl -I https://edge"] },
 
   // ---- network & cloud groups -------------------------------------------
   lan: { label: "LAN", category: "network-group", size: [400, 280], modes: ["none"], isGroup: true },
@@ -60,9 +60,9 @@ export const KINDS = {
   "security-group": { label: "Security Group", category: "cloud-group", size: [360, 280], modes: ["none"], isGroup: true },
 
   // ---- composite --------------------------------------------------------
-  service: { label: "Service", category: "composite", size: [160, 100], modes: ["kubectl"], health: ["kubectl"], actions: ["kubectl get svc", "kubectl describe svc"] },
-  ingress: { label: "Ingress", category: "composite", size: [160, 100], modes: ["kubectl"], health: ["kubectl"], actions: ["kubectl get ingress", "kubectl describe ingress"] },
-  gateway: { label: "Gateway", category: "composite", size: [160, 110], modes: ["kubectl"], health: ["kubectl"], actions: ["kubectl get gateway", "kubectl describe gateway"] },
+  service: { label: "Service", category: "composite", size: [240, 150], modes: ["kubectl"], health: ["kubectl"], actions: ["kubectl get svc", "kubectl describe svc"] },
+  ingress: { label: "Ingress", category: "composite", size: [240, 150], modes: ["kubectl"], health: ["kubectl"], actions: ["kubectl get ingress", "kubectl describe ingress"] },
+  gateway: { label: "Gateway", category: "composite", size: [240, 170], modes: ["kubectl"], health: ["kubectl"], actions: ["kubectl get gateway", "kubectl describe gateway"] },
 
   // A machine as a BOUNDING BOX — draw the host, drop its applications
   // and containers inside. The children carry the ssh endpoints (each
@@ -71,8 +71,8 @@ export const KINDS = {
   host: { label: "Host", category: "compute", size: [460, 320], modes: ["none"], isGroup: true },
 
   // ---- misc -------------------------------------------------------------
-  generic: { label: "Generic", category: "misc", size: [180, 120], modes: ["ssh"], health: ["tcp"], actions: [] },
-  note: { label: "Note", category: "misc", size: [180, 140], modes: ["none"], health: [] },
+  generic: { label: "Generic", category: "misc", size: [270, 180], modes: ["ssh"], health: ["tcp"], actions: [] },
+  note: { label: "Note", category: "misc", size: [270, 210], modes: ["none"], health: [] },
   // A free-form container: group anything under any label (a rack, an
   // office, a team, "legacy stuff") without cloud/network semantics.
   box: { label: "Box", category: "misc", size: [420, 300], modes: ["none"], isGroup: true },
@@ -83,7 +83,7 @@ export function kindMeta(id) {
     KINDS[id] || {
       label: id,
       category: "misc",
-      size: [180, 120],
+      size: [270, 180],
       modes: ["none"],
       health: [],
       actions: [],

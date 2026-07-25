@@ -162,6 +162,47 @@ export async function checkAll() {
   await Promise.allSettled(promises);
 }
 
+/* ---- global refresh (toolbar ⟳) ----
+ * Force-runs every signal now instead of waiting for the pollers: the
+ * TCP probe on every node with an endpoint, plus every complete cron.
+ * Ad-hoc cron runs feed the same cronState/combined-health path as
+ * scheduler results, so cards and check chips update identically.
+ */
+let refreshInFlight = false;
+export const isRefreshing = () => refreshInFlight;
+
+export async function refreshAll() {
+  if (refreshInFlight) return false;
+  refreshInFlight = true;
+  bus.emit("refresh:start", {});
+  try {
+    const complete = (c) => (c.exec === "http" ? (c.url ?? "").trim() : (c.script ?? "").trim()) !== "";
+    const tasks = [];
+    for (const node of Object.values(getState().topology.nodes)) {
+      if (node.spec?.host && node.spec?.port) tasks.push(checkHealth(node.id));
+      for (const cron of (node.crons ?? []).filter(complete)) {
+        tasks.push(runItem(node, cron).then((r) => {
+          if (!r) return;
+          const payload = {
+            server: node.id, cron: cron.name, success: r.success,
+            exit_code: r.exitCode, timestamp: Math.floor(Date.now() / 1000),
+          };
+          const m = cronState.get(node.id) ?? new Map();
+          m.set(cron.name, { success: r.success, timestamp: payload.timestamp, exit_code: r.exitCode });
+          cronState.set(node.id, m);
+          applyCombined(node.id);
+          bus.emit("cron:result", payload);
+        }));
+      }
+    }
+    await Promise.allSettled(tasks);
+  } finally {
+    refreshInFlight = false;
+    bus.emit("refresh:done", { at: Date.now() });
+  }
+  return true;
+}
+
 /**
  * Run a named action (bash script) on a node via SSH.
  * Returns { success, exitCode, stdout, stderr }.

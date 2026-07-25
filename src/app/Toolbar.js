@@ -9,6 +9,7 @@ import { bus } from "../core/eventBus.js";
 import { getState } from "../core/store.js";
 import { toggleTheme, getTheme } from "../core/theme.js";
 import { exportPdf } from "../core/export/exportPdf.js";
+import { refreshAll } from "../core/ops.js";
 import api from "../core/api.js";
 
 export function mountToolbar(root, world) {
@@ -60,6 +61,7 @@ export function mountToolbar(root, world) {
       syncZoom();
     }),
     h("div", { class: "spacer" }),
+    refreshButton(),
     themeToggle(),
     toolButton("PDF", async (e) => {
       const btn = e.currentTarget;
@@ -133,6 +135,7 @@ function overflowMenu(world, syncZoom) {
   const menu = h("div", { class: "tb-menu" },
     item("Zoom in ＋", () => zoomBy(1.18)),
     item("Zoom out −", () => zoomBy(0.85)),
+    item("Refresh everything ⟳", () => refreshAll()),
     item("Export PDF", async () => {
       const ok = await exportPdf();
       if (!ok) console.info("[reticle] export skipped: empty canvas");
@@ -306,6 +309,38 @@ function workspaceSwitcher() {
   });
 
   return wrap;
+}
+
+/** Global refresh — re-runs every health signal on the map right now
+ *  (TCP probes + every cron), instead of waiting for the pollers. */
+function refreshButton() {
+  const btn = h("button", {
+    class: "tool-btn refresh-btn",
+    type: "button",
+    title: "Refresh everything — re-run every health check now",
+    onClick: async () => { await refreshAll(); },
+  });
+  // Inline SVG instead of a "⟳" text glyph: unicode arrows sit off-baseline
+  // at button sizes, so they never center; a stroked icon flex-centers
+  // exactly and inherits the button's color states.
+  btn.innerHTML =
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" ' +
+    'stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<polyline points="23 4 23 10 17 10"></polyline>' +
+    '<polyline points="1 20 1 14 7 14"></polyline>' +
+    '<path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>' +
+    "</svg>";
+  bus.on("refresh:start", () => { btn.disabled = true; btn.classList.add("is-refreshing"); });
+  bus.on("refresh:done", () => { btn.disabled = false; btn.classList.remove("is-refreshing"); });
+  // Viewers can't execute anything server-side — the button would just
+  // collect a column of permission errors, so disable it up front.
+  api.whenReady().then(() => {
+    if (api.isViewer) {
+      btn.disabled = true;
+      btn.title = "Read-only session — checks run on the daemon's schedule";
+    }
+  });
+  return btn;
 }
 
 function themeToggle() {
