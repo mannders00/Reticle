@@ -16,6 +16,5 @@ pub fn load(file: &str, config_dir: &str) -> Result<String, String> {
     } else {
         PathBuf::from(config_dir).join(&expanded)
     };
-    fs::read_to_string(&path)
-        .map_err(|e| format!("failed to read {}: {}", path.display(), e))
+    fs::read_to_string(&path).map_err(|e| format!("failed to read {}: {}", path.display(), e))
 }

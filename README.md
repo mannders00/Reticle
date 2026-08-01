@@ -4,15 +4,18 @@
 
 # Reticle
 
-**The infrastructure diagram you can operate.**
+**The live operational graph your whole team can see.**
 
-Draw your real topology on an infinite canvas, then watch it breathe.
-Live health on every node, a real SSH terminal one keypress away,
-and print-quality PDF export. Everything is one git-diffable YAML file.
+Reticle turns topology and fixed health checks into one human-first map of
+production. The visual UI, JSON API, and read-only MCP are first-class lenses on
+the same graph, so people and tools work from the same truth.
 
-No accounts. No cloud. No lock-in.
+The free Desktop is standalone and local-only for individuals and homelabs. The
+paid Team Daemon provides the shared, always-on graph described above.
 
-[**↓ Download**](https://github.com/mannders00/reticle/releases/latest) · [**Live demo**](https://demo.reticle.live) · [**Discord**](https://discord.gg/x6hY9GYyph) · [**Team daemon →**](https://reticle.live)
+Desktop requires no Reticle account or hosted service. No lock-in.
+
+[**↓ Download free Desktop**](https://github.com/mannders00/reticle/releases/latest) · [**Live demo**](https://demo.reticle.live) · [**Discord**](https://discord.gg/x6hY9GYyph) · [**Team Daemon →**](https://reticle.live/team/)
 
 MIT-licensed desktop app · macOS / Linux / Windows
 
@@ -22,37 +25,61 @@ MIT-licensed desktop app · macOS / Linux / Windows
 
 <br/><br/>
 
-[<img src="web/assets/reticle-demo-poster.jpg" alt="Two-minute demo: draw the map, attach real hosts, watch live health, open a real shell, export the PDF" width="100%" />](web/assets/reticle-demo.mp4)
+[<img src="web/assets/reticle-demo-poster.jpg" alt="Two-minute demo: draw the map, attach real hosts, watch live health, and export the PDF" width="100%" />](web/assets/reticle-demo.mp4)
 
-**[▶ Watch the two-minute demo](web/assets/reticle-demo.mp4)** — draw the map → attach real hosts → checks go live → <kbd>⌘⏎</kbd> into a shell → export the PDF
+**[▶ Watch the two-minute demo](web/assets/reticle-demo.mp4)** — draw the map → attach real hosts → checks go live → export the PDF
 
 </div>
 
 ---
 
-## Your diagram, but it does something
+## One truth during an incident
 
-Every box on that map is a real machine. The health pills are live checks,
-not decoration. And when something goes red:
+Every box is connected to current evidence. When something goes red, operators
+and tools can inspect the same topology and health truth instead of reconciling
+a stale diagram, a dashboard, and terminal folklore.
 
-<img src="assets/demo-shell.png" alt="Select a server, press Enter, and get a real SSH shell with htop right in the sidebar" width="100%" />
+- **Canonical graph**: normalized nodes, edges, signals, collectors, and named
+  action descriptors, assembled in the shared Rust core
+- **Narrow collectors**: static YAML topology, HTTP status/JSON assertions,
+  and fixed read-only SSH probes for uptime or systemd service state
+- **Guarded actions**: only named `service.restart` and `service.reload`
+  actions, with validated targets, timeouts, preconditions, optional approval,
+  and daemon audit logging. No caller-provided shell
+- **Shared consumers**: the UI, `GET /api/graph`, and read-only MCP tools read
+  the same snapshot
+- **Local-only Desktop**: commit topology beside infrastructure code and review
+  it in pull requests. Credentials stay in your existing SSH configuration
 
-Select the node and hit <kbd>⌘⏎</kbd>. A **real SSH shell** opens right there.
-No copy-pasting hostnames into another terminal. The diagram *is* the
-operational surface:
+## Reduce the cost of ambiguity
 
-- **Actions**: named scripts on any node, one click, output on the map
-  (`df -h`, `journalctl -u api -n 80`, `kubectl rollout status`, yours)
-- **Checks**: scheduled crons per node. SSH scripts, local CLI calls
-  (`aws`, `dig`, anything), or HTTP probes with status + `jq` assertions.
-  A failing check turns its node red and tells you *which* check, on the card
-- **Terminals**: full xterm over SSH or `kubectl exec`, docked next to the map
-- **Everything in one YAML**: positions, edges, checks, notes. Commit it
-  next to your infra code; review topology changes in pull requests
+The expensive part of incident response is rarely typing the command. It is
+understanding what is happening, recovering the relevant change context, and
+deciding what is safe. Reticle is designed to help teams improve:
 
-Reticle uses **your** `ssh`, **your** `kubectl`, **your** keys and
-kubeconfig, exactly like your terminal does. No credentials are ever
-stored, asked for, or sent anywhere.
+- **Time to understand an incident**: orient around topology, dependencies,
+  current evidence, and freshness instead of reconstructing the system aloud.
+- **Time to safe next action**: connect evidence to bounded, preconfigured
+  responses with explicit preconditions and approval.
+- **Failed-deployment recovery time**: keep the affected service, dependencies,
+  signals, and available response in one operating context.
+- **Change-context latency**: make the reason and surrounding system state easier
+  to recover when the original author is not present.
+- **Operational handoff time**: give the next shift or escalation path the same
+  live graph instead of a partial verbal summary.
+- **Operational memory**: preserve context in topology, bounded history, audit
+  records, and exported incident snapshots.
+
+These are outcomes Reticle helps move by reducing incident ambiguity; they are
+not fixed ROI promises.
+
+| | Free Desktop | [Team Daemon](https://reticle.live/team/) |
+|---|---|---|
+| Best for | Individuals and homelabs | Teams sharing one operational view |
+| Runtime | Standalone, local-only | Shared, always-on daemon with browser access |
+| API and MCP | Loopback JSON API and read-only MCP | Authenticated JSON API and read-only MCP |
+| History and audit | No retained history or audit log | Bounded in-memory history; configured JSONL audit log |
+| Price | Free and MIT licensed | $199/month or $1,999/year per daemon |
 
 ## Hand the map to anyone
 
@@ -71,8 +98,8 @@ in the customer deck, print it:
 **[Download the latest release](https://github.com/mannders00/reticle/releases/latest)**: .dmg (macOS, Apple Silicon + Intel), .AppImage/.deb/.rpm (Linux), .msi/.exe (Windows).
 
 > macOS builds are unsigned for now: right-click → Open the first time.
-> Windows: interactive terminals aren't supported yet. Actions, checks,
-> health, and PDF export all work.
+> Named actions require a configured SSH target. Checks, graph inspection,
+> and PDF export work without enabling an action.
 
 Or build from source (Rust + [Bun](https://bun.sh)):
 
@@ -83,24 +110,55 @@ bun install
 bun run tauri build   # or: bun run tauri dev
 ```
 
-Try it with a sample: the app ships five worked topologies (homelab to
-enterprise) in the workspace switcher, or start from
+Try it with a sample: the app ships six visual topology templates (homelab to
+enterprise) in the workspace switcher. The Reticle deployment sample includes
+live public HTTP collectors; adapt the others to your own endpoints, or start from
 [`topology.yaml.example`](topology.yaml.example).
+
+## Query your desktop graph locally
+
+The OSS desktop includes an opt-in, loopback-only JSON API and read-only MCP
+server. It is disabled by default and never binds beyond `127.0.0.1`:
+
+```sh
+make desktop-api-dev
+curl http://127.0.0.1:8786/api/graph
+```
+
+MCP is available at `POST http://127.0.0.1:8786/mcp` with
+`reticle_get_graph` and `reticle_get_node`. There are no local or daemon MCP
+action tools. Set `RETICLE_DESKTOP_HTTP_PORT` to choose another port.
 
 ## Share it live with your whole team
 
 The desktop app is yours, free, forever. When the *team* needs the map,
-there's the **[Reticle team daemon](https://reticle.live)**, a single
-~4 MB binary that serves this exact app to every browser on your network:
+there's the **[Reticle Team Daemon](https://reticle.live/team/)**, a single
+binary that serves this exact app to every browser on your network:
 
 - Nothing to install for teammates, just a browser and a link
-- Checks run 24/7 on the daemon; **everyone sees live health**, even viewers
+- Always-on collection from one shared network vantage point
+- Bounded signal history through JSON and read-only MCP
 - **Read-only by default**: strict editor/viewer tokens, enforced server-side
 - Credentials stay on one host; nobody distributes SSH keys
-- Optional JSONL audit log of who ran what
+- Configured JSONL audit logging for named-action attempts
+- Optional editor-authorized, read-only chat lens with request-scoped credentials
 
 The live demo at **[demo.reticle.live](https://demo.reticle.live)** is the
 daemon serving its own real infrastructure, read-only. Go poke it.
+
+The [Team Daemon](https://reticle.live/team/) is **$199/month or $1,999/year
+per daemon**. White-glove installation and operational mapping starts at
+**$3,000 one-time**.
+
+## Optional chat lens
+
+The optional chat panel can use OpenAI or a loopback Ollama instance to answer
+questions from the current graph. It is a read-only lens, not the product or a
+source of truth. It receives only graph/node tools (plus bounded signal history
+on the daemon) and cannot save topology, open a shell, or run a named action.
+OpenAI keys are request-scoped, sent to the daemon when applicable and then to
+OpenAI's official API, and are never persisted or logged. Ollama endpoints are
+restricted to `localhost` or literal loopback IPs.
 
 ## Documentation
 
@@ -108,8 +166,10 @@ daemon serving its own real infrastructure, read-only. Go poke it.
 |---|---|
 | [Getting started](docs/getting-started.md) | Install, first map, where things live |
 | [Topology reference](docs/topology-reference.md) | Every field of the YAML: kinds, specs, checks, health, edges, add-ons |
+| [Operational graph](docs/operational-graph.md) | Canonical schema, collectors, named actions, JSON API, and MCP |
 | [Keyboard shortcuts](docs/shortcuts.md) | Canvas, editing, and operating keys |
-| [The team daemon](docs/daemon.md) | Flags, the access model, audit log, deployment |
+| [The Team Daemon](https://reticle.live/team/) | Pricing, licensing, and team deployment |
+| [Daemon operations](docs/daemon.md) | Flags, access model, audit log, deployment |
 | [DAEMON.md](DAEMON.md) | Full architecture and wire protocol |
 | [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Discord](https://discord.gg/x6hY9GYyph) | |
 
@@ -117,14 +177,13 @@ daemon serving its own real infrastructure, read-only. Go poke it.
 
 ```
 src/          the frontend (vanilla ESM + SVG, no framework, no build step)
-core/         reticle-core: shared Rust domain modules (config, ssh, health,
-              cron scheduler, pty terminals, file watcher)
-src-tauri/    desktop shell (Tauri 2)
+core/         reticle-core: shared graph, collectors, named actions, config
+src-tauri/    desktop shell and opt-in loopback read API (Tauri 2)
 web/          the reticle.live site (static)
 DAEMON.md     team-daemon design: sharing model, roles, wire protocol
 ```
 
 ## License
 
-Everything in this repository is **[MIT](LICENSE)**. The team daemon is a
-separate commercial binary; see [reticle.live](https://reticle.live).
+Everything in this repository is **[MIT](LICENSE)**. The
+[Team Daemon](https://reticle.live/team/) is a separate commercial binary.

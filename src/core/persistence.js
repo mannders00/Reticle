@@ -15,6 +15,7 @@ import {
 } from "./store.js";
 import api from "./api.js";
 import { debounce } from "./dom.js";
+import { graphToTopology, serializeTopology } from "./operationalGraph.js";
 
 const AUTOSAVE_MS = 800;
 
@@ -38,7 +39,7 @@ export class Persistence {
   /** Called on boot. Loads config from disk (or mock) into the store. */
   async load() {
     try {
-      const raw = await api.loadConfig();
+      const raw = await api.getOperationalGraph();
       const topo = migrate(raw);
       replaceTopology(topo);
       this.configPath = await api.getConfigPath().catch(() => null);
@@ -54,7 +55,7 @@ export class Persistence {
   async save() {
     if (!api.canWrite) return;
     const state = getState();
-    const doc = serialize(state.topology);
+    const doc = serializeTopology(state.topology);
     this.saving = true;
     try {
       await api.saveConfig(doc);
@@ -97,11 +98,7 @@ function migrate(raw) {
 
   // v1: nodes and edges are already maps
   if (raw.nodes && typeof raw.nodes === "object") {
-    return {
-      version: raw.version ?? 1,
-      nodes: raw.nodes,
-      edges: raw.edges ?? {},
-    };
+    return graphToTopology(raw);
   }
 
   // v0: servers array → migrate to nodes map
@@ -133,15 +130,4 @@ function migrate(raw) {
   }
 
   return { version: 1, nodes: {}, edges: {} };
-}
-
-/** Convert the store topology to the on-disk shape. */
-function serialize(topology) {
-  return {
-    version: topology.version || 1,
-    nodes: topology.nodes,
-    edges: topology.edges,
-    groups: [],
-    layers: [],
-  };
 }

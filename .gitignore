@@ -25,6 +25,8 @@ dist-ssr
 
 # Rust build artifacts (workspace target at repo root)
 /target
+/core/target
+/daemon/target
 dist/
 
 # playwright-mcp session artifacts

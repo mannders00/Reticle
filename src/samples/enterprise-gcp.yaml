@@ -2,6 +2,8 @@
 # Cloud DNS → global HTTPS LB (with Cloud CDN) → GKE ingress → API/web
 # deployments, backed by Cloud SQL and Memorystore. Region → VPC →
 # subnets nesting, kubectl specs on the cluster objects.
+# Visual-only sample. Adapt collectors or guarded named actions from
+# topology.yaml.example for your own endpoints, credentials, and services.
 version: 1
 nodes:
   cloud-dns:
@@ -13,8 +15,6 @@ nodes:
     y: 80
     w: 160
     h: 100
-    actions:
-      - { name: resolve, script: "dig +short api.example.io" }
 
   glb:
     id: glb
@@ -95,9 +95,6 @@ nodes:
     notes: |
       Autopilot off; node pools: default (e2-standard-4) + burst (spot).
       Spot pool drains happen — anything stateful is banned from it.
-    actions:
-      - { name: nodes, script: "kubectl get nodes -o wide" }
-      - { name: pending pods, script: "kubectl get pods -A --field-selector status.phase=Pending" }
 
   ingress-gke:
     id: ingress-gke

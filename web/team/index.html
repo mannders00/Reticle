@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reticle Team Daemon: shared, always-on operational graph</title>
+  <meta name="description" content="Reticle Team Daemon gives your organization one shared, always-on operational graph with browser UI, bounded in-memory history, configurable JSONL audit logs, authenticated JSON API, and read-only MCP. $199/month or $1,999/year." />
+  <link rel="canonical" href="https://reticle.live/team/" />
+  <meta property="og:type" content="product" />
+  <meta property="og:title" content="Reticle Team Daemon" />
+  <meta property="og:description" content="A shared, always-on operational graph with a human-first UI, JSON API, and read-only MCP." />
+  <meta property="og:url" content="https://reticle.live/team/" />
+  <meta property="og:image" content="https://reticle.live/assets/og-card.jpg" />
+  <meta property="og:site_name" content="Reticle" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Reticle Team Daemon" />
+  <meta name="twitter:description" content="One shared, always-on operational graph. $199/month or $1,999/year." />
+  <meta name="twitter:image" content="https://reticle.live/assets/og-card.jpg" />
+  <meta name="theme-color" content="#0b0e14" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#f7f8fb" media="(prefers-color-scheme: light)" />
+  <link rel="icon" href="../favicon.ico" sizes="48x48" />
+  <link rel="icon" href="../reticle.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+  <link rel="stylesheet" href="../styles.css" />
+  <script>
+    (function () { var saved = null; try { saved = localStorage.getItem("reticle-site-theme"); } catch (e) {} var dark = saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches; if (dark) document.documentElement.dataset.theme = "dark"; })();
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "Reticle Team Daemon",
+        "applicationCategory": "DeveloperApplication",
+        "description": "Commercial shared, always-on operational graph software with a browser UI, authenticated JSON API, and read-only MCP.",
+        "url": "https://reticle.live/team/",
+        "offers": [
+          { "@type": "Offer", "name": "Monthly", "price": "199", "priceCurrency": "USD", "url": "https://reticle.live/team/#pricing" },
+          { "@type": "Offer", "name": "Annual", "price": "1999", "priceCurrency": "USD", "url": "https://reticle.live/team/#pricing" }
+        ],
+        "author": { "@type": "Organization", "name": "MA Software LLC", "email": "matt@masoftware.net" }
+      },
+      {
+        "@type": "Service",
+        "name": "Reticle white-glove installation and mapping",
+        "description": "Team Daemon deployment, least-privilege access, TLS, authentication, collectors, and initial operational mapping.",
+        "provider": { "@type": "Organization", "name": "MA Software LLC" },
+        "offers": { "@type": "Offer", "price": "3000", "priceCurrency": "USD", "url": "https://reticle.live/team/#pricing" }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="../"><img class="brand-mark" src="../reticle.svg" alt="" width="22" height="22" />Reticle</a>
+      <nav class="nav-links" aria-label="Primary navigation"><a href="#capabilities">Capabilities</a><a href="#outcomes">Outcomes</a><a href="#compare">Compare</a><a href="#security">Security</a><a href="#faq">FAQ</a></nav>
+      <span class="nav-spacer"></span>
+      <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark" aria-label="Toggle theme">☾</button>
+      <a class="btn btn-primary btn-small nav-cta" href="#pricing">See pricing</a>
+      <button class="nav-menu-btn" id="nav-menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="nav-menu">☰</button>
+      <nav class="nav-menu" id="nav-menu" aria-label="Mobile navigation" hidden><a href="#capabilities">Capabilities</a><a href="#outcomes">Outcomes</a><a href="#compare">Compare</a><a href="#security">Security</a><a href="#faq">FAQ</a><a class="btn btn-primary btn-small" href="#pricing">See pricing</a></nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero team-hero">
+      <div class="wrap hero-solo">
+        <div class="hero-badges"><span class="pill accent">RETICLE TEAM DAEMON</span><span class="pill">Commercial</span></div>
+        <h1>The live operational graph your whole team can see.</h1>
+        <p class="lede">Reticle turns topology and fixed health checks into one human-first map of production. The visual UI, JSON API, and read-only MCP are first-class lenses on the same graph, so people and tools work from the same truth.</p>
+        <div class="hero-ctas"><a class="btn btn-primary" href="#pricing">Get Team</a><a class="btn btn-ghost" href="mailto:matt@masoftware.net?subject=Reticle%20Team%20Daemon">Talk through your deployment</a></div>
+        <p class="hero-note">$199/month or $1,999/year per daemon. Unlimited team access.</p>
+      </div>
+    </section>
+
+    <section id="capabilities">
+      <div class="wrap">
+        <div class="section-head"><span class="kicker">HUMAN-FIRST, SHARED BY DESIGN</span><h2>Three first-class lenses. One canonical graph.</h2><p class="lede">The visual UI leads the incident. The authenticated JSON API and read-only MCP expose the same server-owned model without creating a second source of truth.</p></div>
+        <div class="cards-3 lens-cards">
+          <article class="card"><span class="card-icon" aria-hidden="true">◎</span><h3>Browser UI</h3><p>A live visual canvas for understanding topology, evidence, and dependencies. No desktop install for teammates.</p></article>
+          <article class="card"><span class="card-icon" aria-hidden="true">{ }</span><h3>Authenticated JSON API</h3><p>Structured graph, health, and bounded history for approved internal integrations.</p></article>
+          <article class="card"><span class="card-icon" aria-hidden="true">M</span><h3>Read-only MCP</h3><p>Graph inspection for agents, intentionally separated from all named-action execution.</p></article>
+        </div>
+        <p class="subordinate-note"><strong>Chat is optional and subordinate.</strong> It is a read-only way to ask questions of the graph, not a separate product or an autonomous operator.</p>
+      </div>
+    </section>
+
+    <section id="outcomes">
+      <div class="wrap">
+        <div class="section-head"><span class="kicker">THE COST OF AMBIGUITY</span><h2>Improve the decisions around the command.</h2><p class="lede">The slow part of incident response is often forming a trustworthy picture, recovering change context, and agreeing on what is safe. Team Daemon keeps that context live and shared.</p></div>
+        <div class="cards-3 outcome-cards">
+          <article class="card"><span class="outcome-metric">TIME TO UNDERSTAND</span><h3>Build a shared incident model sooner.</h3><p>Topology, dependencies, live evidence, and freshness help responders reduce the time spent asking what is connected and why it is red.</p></article>
+          <article class="card"><span class="outcome-metric">SAFE ACTION AND RECOVERY</span><h3>Move from evidence to a bounded response.</h3><p>Reticle is designed to improve time to safe next action and failed-deployment recovery time by keeping preconditions and named actions beside current graph context.</p></article>
+          <article class="card"><span class="outcome-metric">OPERATIONAL MEMORY</span><h3>Carry context across people and time.</h3><p>Shared history and one continuously available map help reduce change-context latency and operational handoff time during shifts, escalation, and review.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="compare">
+      <div class="wrap">
+        <div class="section-head"><span class="kicker">PRODUCT SPLIT</span><h2>Desktop for one person. Team for the organization.</h2></div>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Desktop and Team feature comparison">
+          <table class="comparison-table">
+            <caption>Reticle Desktop compared with Reticle Team Daemon</caption>
+            <thead><tr><th scope="col">Capability</th><th scope="col">Desktop</th><th scope="col">Team Daemon</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Deployment</th><td>Standalone, local-only application</td><td>Shared, always-on daemon</td></tr>
+              <tr><th scope="row">Access</th><td>One person on the local machine</td><td>Team access through the browser</td></tr>
+              <tr><th scope="row">Collection vantage point</th><td>Your machine and its network access</td><td>One trusted, continuously running host</td></tr>
+              <tr><th scope="row">Visual UI</th><td>Local application</td><td>Shared browser UI</td></tr>
+              <tr><th scope="row">JSON API</th><td>Opt-in, loopback only</td><td>Authenticated remote JSON API</td></tr>
+              <tr><th scope="row">MCP</th><td>Local, read-only</td><td>Authenticated, read-only</td></tr>
+              <tr><th scope="row">History</th><td>No retained history</td><td>Bounded in-memory history; resets on daemon restart</td></tr>
+              <tr><th scope="row">Audit logs</th><td>Not a shared service</td><td>JSONL when <code>--audit-log</code> is configured</td></tr>
+              <tr><th scope="row">License</th><td>Free, MIT</td><td>Commercial subscription</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="security">
+      <div class="wrap">
+        <div class="section-head"><span class="kicker">BOUNDED BY DESIGN</span><h2>Least privilege at every boundary.</h2><p class="lede">Reticle is an operational context layer, not a remote shell.</p></div>
+        <div class="cards-3">
+          <article class="card"><span class="card-icon" aria-hidden="true">⊘</span><h3>Fixed probes</h3><p>Use explicit HTTP checks and fixed, read-only SSH probes. Give the daemon a restricted principal with only the access each check requires.</p></article>
+          <article class="card"><span class="card-icon" aria-hidden="true">⛨</span><h3>Server-owned actions</h3><p>Operators can request only named actions configured on the server, with preconditions and timeouts. Clients cannot submit arbitrary commands.</p></article>
+          <article class="card"><span class="card-icon" aria-hidden="true">≠</span><h3>No arbitrary shell</h3><p>No arbitrary shell is exposed through Team, the JSON API, MCP, or chat. MCP and chat remain read-only lenses.</p></article>
+        </div>
+        <div class="qualification"><h3>History and audit qualifications</h3><p>Team history is bounded and held in memory; it resets whenever the daemon restarts. Audit logging is not automatic: pass <code>--audit-log &lt;path&gt;</code> to append JSONL records for relevant access and action events.</p></div>
+      </div>
+    </section>
+
+    <section id="pricing">
+      <div class="wrap">
+        <div class="section-head"><span class="kicker">SIMPLE PRICING</span><h2>One daemon. Unlimited teammates.</h2><p class="lede">Choose monthly flexibility or save with an annual subscription.</p></div>
+        <div class="pricing-grid">
+          <article class="price-card"><span class="pill">Monthly</span><p class="price"><strong>$199</strong><span>/month</span></p><p>Per running Team Daemon, billed monthly.</p></article>
+          <article class="price-card featured"><span class="plan-tag">Save $389</span><span class="pill accent">Annual</span><p class="price"><strong>$1,999</strong><span>/year</span></p><p>Per running Team Daemon, billed annually.</p></article>
+          <article class="price-card"><span class="pill">Implementation</span><p class="price service-price"><strong>$3,000</strong><span>one-time</span></p><p>White-glove install and mapping starts at $3,000 one-time, scoped to your environment.</p></article>
+        </div>
+        <div class="pricing-cta"><a class="btn btn-primary" href="mailto:matt@masoftware.net?subject=Reticle%20Team%20Daemon">Start with Team</a><p>We reply within one business day. Card, ACH, or bank transfer.</p></div>
+      </div>
+    </section>
+
+    <section id="faq">
+      <div class="wrap">
+        <div class="section-head"><span class="kicker">FAQ</span><h2>Deployment and product questions</h2></div>
+        <div class="faq">
+          <details><summary>Is Team just a hosted desktop app?</summary><p>No. Desktop is standalone and local-only, with no shared daemon. Team is commercial server software that stays running from a trusted network vantage point and serves authorized browsers, API clients, and MCP clients.</p></details>
+          <details><summary>What exactly is retained?</summary><p>The daemon keeps bounded signal history in memory for incident context. It is not durable storage and resets on every restart. JSONL audit records are written only when you configure <code>--audit-log</code>.</p></details>
+          <details><summary>Can API, MCP, or chat execute commands?</summary><p>No. MCP and chat are read-only. The API does not expose an arbitrary shell. Any operator action is a server-owned named action, configured in advance and bounded by server-side controls.</p></details>
+          <details><summary>Where should the daemon run?</summary><p>On a least-privileged host that can reach only the systems and checks it needs. Put TLS and your normal network controls in front, use restricted SSH principals, and issue access only to authorized teammates and clients.</p></details>
+          <details><summary>What does white-glove install and mapping include?</summary><p>Starting at $3,000 one-time, we help deploy the daemon, establish least-privilege access, configure TLS and authentication, and map the first agreed production scope. Final scope and price depend on the environment.</p></details>
+          <details><summary>Is Team Daemon MIT-licensed?</summary><p>No. Reticle Desktop is free and MIT-licensed. Team Daemon is commercial software provided under a paid subscription.</p></details>
+        </div>
+      </div>
+    </section>
+
+    <section><div class="wrap"><div class="cta-panel"><h2>Make the operational graph a team resource.</h2><p class="lede">Start with a Team Daemon, or bring us in to install it and map your first production scope.</p><div class="hero-ctas"><a class="btn btn-primary" href="mailto:matt@masoftware.net?subject=Reticle%20Team%20Daemon">Talk to us about Team</a><a class="btn btn-ghost" href="../">Back to Reticle</a></div></div></div></section>
+  </main>
+
+  <footer>
+    <div class="wrap footer-inner"><a class="brand" href="../"><img class="brand-mark" src="../reticle.svg" alt="" width="22" height="22" />Reticle</a><span>Desktop is MIT-licensed. Team Daemon is commercial software.</span><span class="spacer"></span><a href="https://github.com/mannders00/reticle" target="_blank" rel="noreferrer">GitHub</a><a href="mailto:matt@masoftware.net">matt@masoftware.net</a></div>
+    <div class="wrap footer-legal">© 2026 MA Software LLC. Reticle™ is a trademark of MA Software LLC.</div>
+  </footer>
+
+  <script>
+    (function () { var btn = document.getElementById("nav-menu-btn"); var menu = document.getElementById("nav-menu"); if (!btn || !menu) return; function close() { menu.hidden = true; btn.setAttribute("aria-expanded", "false"); } btn.addEventListener("click", function (e) { e.stopPropagation(); var opening = menu.hidden; menu.hidden = !opening; btn.setAttribute("aria-expanded", String(opening)); }); menu.addEventListener("click", function (e) { if (e.target.closest("a")) close(); }); document.addEventListener("click", function (e) { if (!menu.hidden && !menu.contains(e.target) && e.target !== btn) close(); }); document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); }); })();
+    (function () { var btn = document.getElementById("theme-toggle"); function icon() { btn.textContent = document.documentElement.dataset.theme === "dark" ? "☀" : "☾"; } icon(); btn.addEventListener("click", function () { var dark = document.documentElement.dataset.theme === "dark"; if (dark) delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = "dark"; try { localStorage.setItem("reticle-site-theme", dark ? "light" : "dark"); } catch (e) {} icon(); }); })();
+  </script>
+</body>
+</html>

@@ -15,7 +15,7 @@ use std::time::{Duration, Instant};
 
 use serde::Deserialize;
 
-use crate::config::{parse_interval, now_timestamp, CronResult, CronStatus};
+use crate::config::{now_timestamp, parse_interval, CronResult, CronStatus};
 use crate::events::EventSink;
 use crate::ssh::run_ssh_command;
 
@@ -93,7 +93,11 @@ fn exec_target(node: &NodeDef) -> Option<ExecTarget> {
     }
     // v0 flat fields
     if let (Some(h), Some(u)) = (node.host.as_ref(), node.user.as_ref()) {
-        return Some(ExecTarget::Ssh(h.clone(), node.port.unwrap_or(22), u.clone()));
+        return Some(ExecTarget::Ssh(
+            h.clone(),
+            node.port.unwrap_or(22),
+            u.clone(),
+        ));
     }
     None
 }
@@ -109,14 +113,25 @@ fn interp(node: &NodeDef) -> Option<String> {
 /// Cron definitions from the config joined with their latest results —
 /// what the inspector's cron timeline renders. Shared by both shells'
 /// `get_cron_status` commands.
-pub fn status(config_path: &Path, cron_results: &CronResultsMap) -> Result<Vec<CronStatus>, String> {
+pub fn status(
+    config_path: &Path,
+    cron_results: &CronResultsMap,
+) -> Result<Vec<CronStatus>, String> {
     let val = crate::config::load_raw(config_path)?;
     let results = cron_results.lock().unwrap();
     let mut status = Vec::new();
 
     let mut push = |sname: &str, cron: &serde_json::Value| {
-        let cname = cron.get("name").and_then(|v| v.as_str()).unwrap_or("").to_string();
-        let interval = cron.get("interval").and_then(|v| v.as_str()).unwrap_or("").to_string();
+        let cname = cron
+            .get("name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+        let interval = cron
+            .get("interval")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
         let result = results.get(sname).and_then(|m| m.get(&cname));
         status.push(CronStatus {
             server: sname.to_string(),
@@ -132,14 +147,24 @@ pub fn status(config_path: &Path, cron_results: &CronResultsMap) -> Result<Vec<C
     if let Some(servers) = val.get("servers").and_then(|v| v.as_array()) {
         for srv in servers {
             let sname = srv.get("name").and_then(|v| v.as_str()).unwrap_or("");
-            for cron in srv.get("crons").and_then(|v| v.as_array()).into_iter().flatten() {
+            for cron in srv
+                .get("crons")
+                .and_then(|v| v.as_array())
+                .into_iter()
+                .flatten()
+            {
                 push(sname, cron);
             }
         }
     }
     if let Some(nodes) = val.get("nodes").and_then(|v| v.as_object()) {
         for (sname, node) in nodes {
-            for cron in node.get("crons").and_then(|v| v.as_array()).into_iter().flatten() {
+            for cron in node
+                .get("crons")
+                .and_then(|v| v.as_array())
+                .into_iter()
+                .flatten()
+            {
                 push(sname, cron);
             }
         }

@@ -49,35 +49,57 @@ pub struct HttpResult {
 /// body (healthy when jq's last output is truthy). Blocking; wrap in
 /// spawn_blocking.
 pub fn http_check(url: &str, status_expr: &str, jq_expr: &str) -> HttpResult {
+    http_check_with_timeout(url, status_expr, jq_expr, 8)
+}
+
+pub fn http_check_with_timeout(
+    url: &str,
+    status_expr: &str,
+    jq_expr: &str,
+    timeout_seconds: u64,
+) -> HttpResult {
     if url.trim().is_empty() {
-        return HttpResult { ok: false, status: None, detail: "no url".into() };
+        return HttpResult {
+            ok: false,
+            status: None,
+            detail: "no url".into(),
+        };
     }
 
     // Body to stdout (-o -), then curl appends the sentinel + status code
     // via -w, so stdout = "<body>\nRETICLE_HTTP_STATUS:<code>".
     let out = match Command::new("curl")
-        .args([
-            "-sS", "-L",
-            "--max-time", "8",
-            "-o", "-",
-            "-w", "\nRETICLE_HTTP_STATUS:%{http_code}",
-            url,
-        ])
+        .args(["-sS", "-L", "--max-time"])
+        .arg(timeout_seconds.clamp(1, 120).to_string())
+        .args(["-o", "-", "-w", "\nRETICLE_HTTP_STATUS:%{http_code}", url])
         .output()
     {
         Ok(o) => o,
-        Err(e) => return HttpResult { ok: false, status: None, detail: format!("curl not available: {e}") },
+        Err(e) => {
+            return HttpResult {
+                ok: false,
+                status: None,
+                detail: format!("curl not available: {e}"),
+            }
+        }
     };
 
     if !out.status.success() {
         let err = String::from_utf8_lossy(&out.stderr);
         let msg = err.lines().last().unwrap_or("request failed").trim();
-        return HttpResult { ok: false, status: None, detail: truncate(msg, 80) };
+        return HttpResult {
+            ok: false,
+            status: None,
+            detail: truncate(msg, 80),
+        };
     }
 
     let stdout = String::from_utf8_lossy(&out.stdout);
     let (body, code) = match stdout.rfind("RETICLE_HTTP_STATUS:") {
-        Some(i) => (&stdout[..i], stdout[i + "RETICLE_HTTP_STATUS:".len()..].trim()),
+        Some(i) => (
+            &stdout[..i],
+            stdout[i + "RETICLE_HTTP_STATUS:".len()..].trim(),
+        ),
         None => (stdout.as_ref(), ""),
     };
     let status: Option<i64> = code.trim().parse().ok();
@@ -88,18 +110,33 @@ pub fn http_check(url: &str, status_expr: &str, jq_expr: &str) -> HttpResult {
     };
 
     // jq gate (optional). jq -e: exit 0 when last output is truthy.
-    let mut detail = status.map(|c| c.to_string()).unwrap_or_else(|| "no status".into());
+    let mut detail = status
+        .map(|c| c.to_string())
+        .unwrap_or_else(|| "no status".into());
     let jq_ok = if jq_expr.trim().is_empty() {
         true
     } else {
         match run_jq(body, jq_expr) {
-            Ok(true) => { detail.push_str(" · jq ✓"); true }
-            Ok(false) => { detail.push_str(" · jq ✗"); false }
-            Err(e) => { detail.push_str(&format!(" · {e}")); false }
+            Ok(true) => {
+                detail.push_str(" · jq ✓");
+                true
+            }
+            Ok(false) => {
+                detail.push_str(" · jq ✗");
+                false
+            }
+            Err(e) => {
+                detail.push_str(&format!(" · {e}"));
+                false
+            }
         }
     };
 
-    HttpResult { ok: status_ok && jq_ok, status, detail }
+    HttpResult {
+        ok: status_ok && jq_ok,
+        status,
+        detail,
+    }
 }
 
 /// Pipe `body` through `jq -e <expr>`; Ok(true) if jq's last output is
@@ -168,5 +205,26 @@ fn truncate(s: &str, n: usize) -> String {
         s.to_string()
     } else {
         s.chars().take(n).collect::<String>() + "…"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn empty_status_accepts_only_success_family() {
+        assert!(status_matches(200, ""));
+        assert!(status_matches(299, ""));
+        assert!(!status_matches(300, ""));
+    }
+
+    #[test]
+    fn status_expressions_support_families_ranges_lists_and_exact_values() {
+        assert!(status_matches(204, "2xx"));
+        assert!(status_matches(503, "5XX"));
+        assert!(status_matches(202, "200-204"));
+        assert!(status_matches(301, "200, 301, 404"));
+        assert!(!status_matches(500, "200-204,404"));
     }
 }

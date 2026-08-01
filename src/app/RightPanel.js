@@ -1,17 +1,15 @@
 // app/RightPanel.js
-// Unified right sidebar: tabs for Inspector + terminal shells. The panel
-// is resizable via a drag handle on its left edge, and terminal tabs can
+// Unified right sidebar for graph inspection. The panel is resizable and can
 // maximize to take the full canvas area.
 //
 // Modules don't render into the panel directly — they emit bus events:
 //   "panel:show-inspector"  → switch to inspector tab
-//   "terminal:open"         → open a terminal tab + switch to it
-//   "terminal:close"        → close a terminal tab
 
 import { h, clear } from "../core/dom.js";
 import { bus } from "../core/eventBus.js";
+import api from "../core/api.js";
 import { mountInspectorContent } from "./InspectorPanel.js";
-import { createTerminalManager } from "./TerminalDock.js";
+import { mountAgentContent } from "./AgentPanel.js";
 
 export function mountRightPanel(root) {
   const tabsEl = document.getElementById("panel-tabs");
@@ -105,11 +103,22 @@ export function mountRightPanel(root) {
   addTab("inspector", "Inspector", inspectorEl, {});
   mountInspectorContent(inspectorEl);
 
+  // ---- Read-only Agent tab ----
+  const agentEl = h("div", { class: "agent-content" });
+  addTab("agent", "Agent", agentEl, {});
+  mountAgentContent(agentEl);
+  api.whenReady().then(() => {
+    if (api.isViewer || api.transport === "mock" || api.transport === "denied") {
+      removeTab("agent");
+    }
+  });
+
   // Selection changes do NOT open the panel — the inspector only appears
   // when the user explicitly asks (toolbar Inspector button / a shell
   // opening). Its content still live-updates while visible, because
   // InspectorPanel subscribes to selection:changed itself.
   bus.on("panel:show-inspector", () => switchTab("inspector"));
+  bus.on("panel:show-agent", () => switchTab("agent"));
   // The toolbar button is a plain open/close for the WHOLE panel: if any
   // tab is visible (inspector OR a terminal), close it; if hidden, reopen
   // on whatever tab was last active. It never steals the tab selection.
@@ -117,12 +126,6 @@ export function mountRightPanel(root) {
     if (!root.hidden) hidePanel();
     else switchTab(activeTab && tabs.has(activeTab) ? activeTab : "inspector");
   });
-
-  // ---- Terminal tabs ----
-  const termMgr = createTerminalManager(bodyEl, addTab, removeTab, switchTab);
-
-  bus.on("terminal:open", ({ nodeId }) => termMgr.openShell(nodeId));
-  bus.on("terminal:close", ({ nodeId }) => termMgr.closeShell(nodeId));
 
   // ---- Resize handle ----
   // clientX / getBoundingClientRect are VISUAL px; --panel-w is logical

@@ -32,9 +32,10 @@
 
 | Shortcut | Action |
 |---|---|
-| <kbd>Cmd</kbd>+<kbd>Enter</kbd> | Open an SSH or kubectl shell on the selected node |
 | <kbd>g</kbd> | Toggle snap-to-grid |
 | <kbd>n</kbd> | Toggle natural scroll direction |
+| <kbd>Enter</kbd> in optional chat lens | Send the message |
+| <kbd>Shift</kbd>+<kbd>Enter</kbd> in optional chat lens | Insert a new line |
 
 ## Application
 
@@ -43,5 +44,4 @@
 | <kbd>Cmd</kbd>+<kbd>=</kbd> / <kbd>Cmd</kbd>+<kbd>-</kbd> | UI scale up / down |
 | <kbd>Cmd</kbd>+<kbd>0</kbd> | Reset UI scale |
 
-Shortcuts stay quiet while you are typing in an input field or inside a
-terminal; keystrokes there belong to the shell.
+Shortcuts stay quiet while you are typing in an input field.

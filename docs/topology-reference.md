@@ -1,12 +1,15 @@
 # Topology File Reference
 
-A Reticle map is one YAML document. The desktop app edits the file you
-opened, in place; the daemon serves the file it was started with. The
-file watcher reloads the canvas when the file changes on disk, so
-editing it in a text editor works alongside the app.
+A Reticle topology is one YAML document. The desktop app edits the opened file
+in place, and the daemon reads the file it was started with. Canvas saves update
+the visual topology while preserving top-level operational configuration.
+
+For graph snapshots, signal behavior, APIs, MCP, and runtime limits, see the
+[Operational graph](operational-graph.md).
 
 ```yaml
 version: 1
+
 nodes:
   web-01:
     id: web-01
@@ -17,15 +20,12 @@ nodes:
     y: 80
     w: 220
     h: 120
-    parentId: prod-vpc          # optional: containing group node
-    spec: { host: 10.0.1.4, port: 22, user: deploy }
-    notes: "Immutable AMI. Fix the image, not the box."
+    parentId: prod-vpc
+    spec: { host: 10.0.1.4, port: 22, user: reticle-probe }
+    notes: "Public web entry point"
     addons:
       - { kind: ram, label: "64G" }
-    actions:
-      - { name: app logs, script: "journalctl -u app -n 80 --no-pager" }
-    crons:
-      - { name: app alive, interval: 30s, script: "systemctl is-active app" }
+
 edges:
   e1:
     id: e1
@@ -33,24 +33,57 @@ edges:
     label: "5432"
     from: web-01
     to: db-primary
+
+collectors:
+  - id: web-http
+    nodeId: web-01
+    name: Web health endpoint
+    kind: http
+    url: https://web.example.com/healthz
+    status: 2xx
+    jq: '.status == "ok"'
+    timeoutSeconds: 8
+  - id: web-uptime
+    nodeId: web-01
+    name: Web host uptime
+    kind: ssh
+    probe: host.uptime
+    timeoutSeconds: 10
+
+actions:
+  - id: reload-web
+    nodeId: web-01
+    name: Reload nginx
+    kind: service.reload
+    service: nginx.service
+    requiresSignal: web-http
+    requiresState: err
+    requiresApproval: true
+    timeoutSeconds: 20
+
 groups: []
 layers: []
 ```
 
 ## Nodes
 
+Nodes are keyed by stable ID. The persisted visual fields are:
+
 | Field | Type | Notes |
 |---|---|---|
-| `id` | string | Unique. Matches the map key. |
-| `kind` | string | One of the kinds below. Default `server`. |
-| `title`, `subtitle` | string | Card text. |
-| `x`, `y`, `w`, `h` | number | Position and size in world units. |
-| `parentId` | string or null | A group node id. Moving the group moves its children. |
-| `spec` | object | Connection details, see below. |
-| `notes` | string | Free text. Note-kind nodes render it as the card body. |
-| `addons` | list | Attached resources, see below. |
-| `actions` | list | On-demand scripts. |
-| `crons` | list | Scheduled checks that drive health. |
+| `id` | string | Stable node ID. When present, it should match the map key. |
+| `kind` | string | Card or boundary kind. Defaults to `server`. |
+| `title` | string | Primary card text. Defaults to the node ID. |
+| `subtitle` | string | Secondary card text. |
+| `x`, `y` | number | Position in canvas world units. |
+| `w`, `h` | number | Size in canvas world units. |
+| `parentId` | string or null | Containing group node. Moving a group moves its children. |
+| `spec` | object | Structured endpoint or Kubernetes identity metadata. |
+| `notes` | string | Free text; a `note` node renders it as the card body. |
+| `addons` | list | Visual resource facts shown as chips. |
+
+Health displayed on cards is projected from current graph signals and is not a
+persisted visual field.
 
 ### Node kinds
 
@@ -64,119 +97,117 @@ layers: []
 | Network groups | `lan`, `wan` |
 | Misc | `generic`, `note`, `box` (group) |
 
-Group kinds (`host`, `vpc`, `region`, `zone`, `subnet`,
-`security-group`, `lan`, `wan`, `box`) render as boundaries and contain
-other nodes via `parentId`.
+Group kinds (`host`, `vpc`, `region`, `zone`, `subnet`, `security-group`,
+`lan`, `wan`, and `box`) render as boundaries and contain nodes through
+`parentId`.
 
 ### `spec`
 
-For SSH-capable kinds:
+SSH collectors and guarded service actions resolve their target from the
+node's endpoint metadata:
 
 ```yaml
 spec:
-  host: 10.0.1.4        # TCP health probes this host:port
-  port: 22
-  user: deploy
-  interpreter: bash      # optional, see Interpreters
-  local: true            # optional: node default execution is local
+  host: 10.0.1.4
+  port: 22                 # optional; defaults to 22
+  user: reticle-probe
 ```
 
-For Kubernetes kinds:
+Use a least-privilege account and non-interactive authentication configured
+through OpenSSH. Kubernetes identity metadata can remain on visual nodes:
 
 ```yaml
 spec:
-  kubeContext: prod      # optional, defaults to current context
-  namespace: web         # optional
-  name: web-abc123       # pod or object name
+  kubeContext: prod
+  namespace: web
+  name: web
 ```
 
-Kinds with nothing to connect to (dns, cdn, managed cloud services) can
-omit `spec` entirely. Their actions and checks then run locally, which
-is usually what you want: `dig`, `curl`, `aws`, `gcloud`.
+## Collectors
 
-## Actions and checks
+`collectors` is a top-level list. Each collector has a unique `id`, references
+an existing `nodeId`, and produces a signal for that node. `name` is optional;
+`timeoutSeconds` defaults to 10 and must be between 1 and 120.
 
-Both lists share one shape. Checks add `interval` and run on a
-schedule; their results drive node health.
+### HTTP probe
+
+An HTTP collector performs a fixed GET request. It accepts `url`, an optional
+`status` expression, and an optional `jq` predicate over the response body.
+An omitted status accepts 2xx responses. Status expressions can be exact
+(`200`), a family (`2xx`), a range (`200-204`), or a comma-separated list.
 
 ```yaml
-actions:
-  - { name: disk, script: "df -h /" }                          # node default
-  - { name: whoami here, exec: local, script: "whoami" }       # force local
-crons:
-  - { name: app alive, interval: 30s, script: "systemctl is-active app" }
-  - { name: edge up, interval: 60s, exec: http,
-      url: "https://app.example.com/healthz", status: "2xx", jq: '.db == "up"' }
+- id: api-http
+  nodeId: api
+  name: API health endpoint
+  kind: http
+  url: https://api.example.com/healthz
+  status: 2xx
+  jq: '.status == "ok"'
+  timeoutSeconds: 8
 ```
 
-### Execution resolution
+### SSH probes
 
-Each item resolves to one of three executors:
+An SSH collector uses the referenced node's `spec.host`, `spec.port`, and
+`spec.user`. Only two fixed probes are supported:
 
-1. `exec: ssh | local | http` on the item always wins.
-2. An item with a `url` is treated as `http`.
-3. Otherwise the node decides: `spec.local: true` runs locally, a
-   `spec.host` runs over SSH, and no host at all runs locally.
+| Probe | Additional field | Observation |
+|---|---|---|
+| `host.uptime` | none | Runs the fixed uptime probe. |
+| `service.status` | `service` | Checks whether the validated systemd unit is active. |
 
-`ssh` uses the system `ssh` in batch mode with your keys. `local` runs
-on the machine that executes checks: your desktop, or the daemon host
-in team mode. `http` uses the system `curl`.
+```yaml
+- id: api-service
+  nodeId: api
+  name: API systemd unit
+  kind: ssh
+  probe: service.status
+  service: api.service
+  timeoutSeconds: 10
+```
 
-### HTTP checks
+Collector success produces `ok`; failure produces `err`. Nodes without a
+collector have no collector-derived health signal.
 
-| Field | Meaning |
-|---|---|
-| `url` | Required. The endpoint to request. |
-| `status` | Accepted status codes: empty (2xx and 3xx pass), `200`, `2xx`, `200-204`, or a comma list like `200,204`. |
-| `jq` | Optional `jq` expression evaluated against the body with `jq -e`; truthy passes. |
+## Guarded Actions
 
-### Intervals
+`actions` is a top-level list of server-resolved named operations. The only
+supported kinds are `service.restart` and `service.reload`; each invokes the
+corresponding fixed systemd operation for a validated service name on the
+referenced node's SSH endpoint.
 
-`30s`, `5m`, `1h`, or a bare number of seconds.
+| Field | Type | Notes |
+|---|---|---|
+| `id` | string | Unique action ID submitted by clients. |
+| `nodeId` | string | Existing node whose SSH endpoint is used. |
+| `name` | string | Human-readable label. |
+| `kind` | string | `service.restart` or `service.reload`. |
+| `service` | string | Validated systemd unit name. |
+| `requiresSignal` | string | Optional collector signal precondition. |
+| `requiresState` | string | Optional required state: `unknown`, `ok`, `warn`, or `err`. Requires `requiresSignal`. |
+| `requiresApproval` | boolean | Defaults to `true`. |
+| `timeoutSeconds` | number | Defaults to 20; must be between 1 and 120. |
 
-### Interpreters
-
-`spec.interpreter` selects how scripts are fed to the target:
-`bash` (default), `sh`, `zsh`, `powershell`, `pwsh`, `cmd`, `python3`,
-`node`, or any command that reads a script with `-s`.
-
-### Incomplete items
-
-A check with an empty `script` (or an http check with an empty `url`)
-is considered still being written. The scheduler skips it and it never
-affects health.
-
-## Health
-
-Node health is worst-wins across two signals:
-
-1. The TCP probe against `spec.host:port`, when present.
-2. The latest result of each scheduled check.
-
-Any failing check turns the node red and names the failing check on the
-card. Removing or renaming a failing check clears its effect
-immediately.
+When configured, signal preconditions are checked against a fresh graph before
+the action runs. Approval policy and daemon audit behavior are described in
+[Operational graph](operational-graph.md).
 
 ## Edges
 
-| Field | Notes |
-|---|---|
-| `kind` | Visual and semantic style, one of the kinds below. |
-| `label` | Optional text shown at the midpoint. |
-| `from`, `to` | Node ids. |
+Edges are keyed by stable ID and contain `id`, `kind`, optional `label`, and
+`from`/`to` node IDs. An optional `port` value may carry additional display
+metadata.
 
-Edge kinds: `ethernet`, `tcp`, `udp`, `http`, `https`, `grpc`,
-`replication`, `peering`, `tunnel`, `routes-to`, `mgmt`, `fanout`,
-`depends-on`, `custom`.
+Edge kinds: `ethernet`, `tcp`, `udp`, `http`, `https`, `grpc`, `replication`,
+`peering`, `tunnel`, `routes-to`, `mgmt`, `fanout`, `depends-on`, `custom`.
 
-Colors are not configurable by design. Each kind has a fixed style, the
-same style appears in the PDF export legend, so color always means
-something.
+Each kind has a fixed visual style shared with the PDF export legend.
 
 ## Add-ons
 
-Facts attached to a node, shown as chips on the card and in the PDF.
-They have no execution or health behavior.
+Add-ons are visual facts attached to a node. They do not produce signals or
+operations.
 
 ```yaml
 addons:
@@ -184,3 +215,7 @@ addons:
 ```
 
 Kinds: `gpu`, `disk`, `ram`, `cpu`, `nic`, `ip`, `cert`, `ups`, `misc`.
+
+`groups` and `layers` may remain at the document root for compatible visual
+metadata. Current containment is represented by group-kind nodes and
+`parentId`.

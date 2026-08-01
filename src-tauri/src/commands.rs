@@ -53,13 +53,22 @@ fn remember_recent(state: &AppState, path: &str) {
 
 #[tauri::command]
 pub fn list_workspaces(state: State<'_, AppState>) -> Result<Vec<Workspace>, String> {
-    let current = state.config_path.lock().unwrap().to_string_lossy().to_string();
+    let current = state
+        .config_path
+        .lock()
+        .unwrap()
+        .to_string_lossy()
+        .to_string();
     let mut out = Vec::new();
 
     // Recents — files the user has opened, wherever they live.
     for path_str in read_recents(&state) {
         let p = PathBuf::from(&path_str);
-        let name = p.file_stem().and_then(|s| s.to_str()).unwrap_or("?").to_string();
+        let name = p
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("?")
+            .to_string();
         out.push(Workspace {
             name,
             active: path_str == current,
@@ -76,7 +85,11 @@ pub fn list_workspaces(state: State<'_, AppState>) -> Result<Vec<Workspace>, Str
             let path = entry.path();
             if path.extension().and_then(|e| e.to_str()) == Some("yaml") {
                 let path_str = path.to_string_lossy().to_string();
-                let name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("?").to_string();
+                let name = path
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("?")
+                    .to_string();
                 out.push(Workspace {
                     name,
                     active: path_str == current,
@@ -101,8 +114,8 @@ pub fn switch_workspace(state: State<'_, AppState>, path: String) -> Result<(), 
     }
     // Validate it parses before we commit to it.
     let content = fs::read_to_string(&p).map_err(|e| format!("read: {}", e))?;
-    let _: serde_json::Value = serde_yaml::from_str(&content)
-        .map_err(|e| format!("invalid YAML: {}", e))?;
+    let _: serde_json::Value =
+        serde_yaml::from_str(&content).map_err(|e| format!("invalid YAML: {}", e))?;
     *state.config_path.lock().unwrap() = p;
     remember_recent(&state, &path);
     Ok(())
@@ -167,21 +180,61 @@ pub fn load_config(state: State<'_, AppState>) -> Result<serde_json::Value, Stri
 }
 
 #[tauri::command]
+pub async fn get_operational_graph(
+    state: State<'_, AppState>,
+) -> Result<crate::graph::OperationalGraph, String> {
+    let path = state.config_path.lock().unwrap().clone();
+    tauri::async_runtime::spawn_blocking(move || crate::graph::collect_yaml(&path))
+        .await
+        .map_err(|e| format!("task failed: {e}"))?
+}
+
+#[tauri::command]
+pub async fn run_named_action(
+    state: State<'_, AppState>,
+    action_id: String,
+    approved: bool,
+) -> Result<crate::config::ActionResult, String> {
+    let path = state.config_path.lock().unwrap().clone();
+    tauri::async_runtime::spawn_blocking(move || crate::actions::run(&path, &action_id, approved))
+        .await
+        .map_err(|e| format!("task failed: {e}"))?
+}
+
+#[tauri::command]
+pub async fn agent_chat(
+    state: State<'_, AppState>,
+    request: crate::agent::AgentRequest,
+) -> Result<crate::agent::AgentResponse, String> {
+    let path = state.config_path.lock().unwrap().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let graph = crate::graph::collect_yaml(&path)?;
+        crate::agent::run_request(request, &graph, None).map_err(|error| error.to_string())
+    })
+    .await
+    .map_err(|error| format!("task failed: {error}"))?
+}
+
+#[tauri::command]
 pub fn save_config(state: State<'_, AppState>, config: serde_json::Value) -> Result<(), String> {
     let path = state.config_path.lock().unwrap().clone();
-    crate::config::save_raw(&path, &config)
+    crate::config::save_topology(&path, &config)
 }
 
 #[tauri::command]
 pub fn get_config_path(state: State<'_, AppState>) -> Result<String, String> {
     let p = state.config_path.lock().unwrap();
-    p.to_str().map(|s| s.to_string()).ok_or_else(|| "invalid path".to_string())
+    p.to_str()
+        .map(|s| s.to_string())
+        .ok_or_else(|| "invalid path".to_string())
 }
 
 /* ---------- cron status ---------- */
 
 #[tauri::command]
-pub fn get_cron_status(state: State<'_, AppState>) -> Result<Vec<crate::config::CronStatus>, String> {
+pub fn get_cron_status(
+    state: State<'_, AppState>,
+) -> Result<Vec<crate::config::CronStatus>, String> {
     let path = state.config_path.lock().unwrap().clone();
     crate::cron::status(&path, &state.cron_results)
 }
@@ -226,11 +279,11 @@ pub async fn run_local(
 
 #[tauri::command]
 pub async fn health_check(host: String, port: u16) -> Result<bool, String> {
-    Ok(tauri::async_runtime::spawn_blocking(move || {
-        crate::health::reachable(&host, port)
-    })
-    .await
-    .map_err(|e| format!("task failed: {}", e))?)
+    Ok(
+        tauri::async_runtime::spawn_blocking(move || crate::health::reachable(&host, port))
+            .await
+            .map_err(|e| format!("task failed: {}", e))?,
+    )
 }
 
 #[tauri::command]
@@ -240,7 +293,11 @@ pub async fn http_check(
     jq: Option<String>,
 ) -> Result<crate::health::HttpResult, String> {
     tauri::async_runtime::spawn_blocking(move || {
-        crate::health::http_check(&url, status.as_deref().unwrap_or(""), jq.as_deref().unwrap_or(""))
+        crate::health::http_check(
+            &url,
+            status.as_deref().unwrap_or(""),
+            jq.as_deref().unwrap_or(""),
+        )
     })
     .await
     .map_err(|e| format!("task failed: {}", e))
@@ -288,7 +345,11 @@ pub fn open_shell(
 }
 
 #[tauri::command]
-pub fn write_shell(state: State<'_, AppState>, server_name: String, data: String) -> Result<(), String> {
+pub fn write_shell(
+    state: State<'_, AppState>,
+    server_name: String,
+    data: String,
+) -> Result<(), String> {
     crate::terminal::write(&state.shells, &server_name, &data)
 }
 

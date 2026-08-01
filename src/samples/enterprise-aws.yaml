@@ -1,7 +1,9 @@
 # Reticle sample — AWS three-tier production
 # Route 53 → CloudFront → ALB in a public subnet, an app tier, and an
 # RDS primary/replica pair — nested region → VPC → subnets, with a
-# bastion tunnel for operators and crons watching the tiers.
+# bastion tunnel for operators.
+# Visual-only sample. Adapt collectors or guarded named actions from
+# topology.yaml.example for your own endpoints, credentials, and services.
 version: 1
 nodes:
   route53:
@@ -13,12 +15,7 @@ nodes:
     y: 80
     w: 160
     h: 100
-    # Nothing to SSH into — actions run locally on the daemon host with
-    # its AWS creds. `dig` from the daemon's own vantage point.
     notes: "ALIAS to CloudFront. TTL 60 — cutovers propagate fast, typos propagate faster."
-    actions:
-      - { name: resolve, exec: local, script: "dig +short app.example.com" }
-      - { name: record set, exec: local, script: "aws route53 list-resource-record-sets --hosted-zone-id $ZONE --query 'ResourceRecordSets[?Name==`app.example.com.`]'" }
 
   cloudfront:
     id: cloudfront
@@ -29,12 +26,7 @@ nodes:
     y: 260
     w: 180
     h: 140
-    # The edge itself is the health signal — an http check on the app.
     notes: "Static under /assets/* cached 24h; everything else passes through to the ALB."
-    actions:
-      - { name: edge check, exec: local, script: "curl -sI https://app.example.com | head -8" }
-    crons:
-      - { name: edge healthy, interval: 60s, exec: http, url: "https://app.example.com/healthz", status: "2xx", jq: '.status == "ok"' }
 
   s3-assets:
     id: s3-assets
@@ -45,12 +37,7 @@ nodes:
     y: 480
     w: 180
     h: 140
-    # Managed — no host. Local-exec AWS CLI on the daemon.
     notes: "Versioning on. Lifecycle: uploads → IA after 30d. Never public — CloudFront OAC only."
-    actions:
-      - { name: bucket size, exec: local, script: "aws s3 ls --summarize --recursive s3://app-assets | tail -2" }
-    crons:
-      - { name: bucket reachable, interval: 5m, exec: local, script: "aws s3api head-bucket --bucket app-assets" }
 
   region-use1:
     id: region-use1
@@ -97,8 +84,6 @@ nodes:
     parentId: subnet-public
     spec: { host: 10.0.1.10, port: 443, user: ec2-user }
     notes: "Health check: GET /healthz, 2×5s. Deregistration delay 30s — deploys drain fast."
-    crons:
-      - { name: app healthy, interval: 30s, exec: http, url: "https://app.example.com/healthz", status: "200", jq: '.db == "up"' }
 
   bastion:
     id: bastion
@@ -114,11 +99,6 @@ nodes:
     notes: |
       The only SSH ingress. DB access: ssh -L 5432:rds-primary:5432 bastion.
       Sessions are logged; don't be interesting.
-    actions:
-      - { name: who is on, script: "who" }
-      - { name: recent logins, script: "last -n 20" }
-    crons:
-      - { name: sshd alive, interval: 60s, script: "systemctl is-active sshd" }
 
   elasticache:
     id: elasticache
@@ -156,13 +136,6 @@ nodes:
     parentId: subnet-app
     spec: { host: 10.0.2.11, port: 22, user: ec2-user }
     notes: "Immutable AMI, app in /srv/app. Instances are cattle — fix the AMI, not the box."
-    actions:
-      - { name: app logs, script: "journalctl -u app -n 80 --no-pager" }
-      - { name: health endpoint, script: "curl -s localhost:8080/healthz" }
-      - { name: running version, script: "cat /srv/app/RELEASE" }
-    crons:
-      - { name: app alive, interval: 30s, script: "systemctl is-active app" }
-      - { name: disk < 85%, interval: 5m, script: "test $(df / --output=pcent | tail -1 | tr -dc 0-9) -lt 85" }
 
   web-2:
     id: web-2
@@ -175,11 +148,6 @@ nodes:
     h: 120
     parentId: subnet-app
     spec: { host: 10.0.2.12, port: 22, user: ec2-user }
-    actions:
-      - { name: app logs, script: "journalctl -u app -n 80 --no-pager" }
-      - { name: health endpoint, script: "curl -s localhost:8080/healthz" }
-    crons:
-      - { name: app alive, interval: 30s, script: "systemctl is-active app" }
 
   subnet-data:
     id: subnet-data
@@ -206,8 +174,6 @@ nodes:
     notes: |
       Multi-AZ off (replica is our failover). PITR 7 days.
       Failover runbook: promote replica, flip app SSM param, restart app.
-    actions:
-      - { name: connections, script: "psql -h localhost -U postgres -c 'select count(*) from pg_stat_activity'" }
 
   rds-replica:
     id: rds-replica

@@ -26,13 +26,17 @@ name-armv7-unknown-linux-musleabihf  := linux-armv7
 name-aarch64-apple-darwin            := macos-arm64
 name-x86_64-apple-darwin             := macos-x64
 
-.PHONY: desktop desktop-dev daemon daemon-dev daemon-all deploy-pi serve check toolchain clean publish-oss release-oss publish-daemon release-daemon \
+.PHONY: desktop desktop-dev desktop-api-dev daemon daemon-dev daemon-all deploy-pi serve check test toolchain clean publish-oss release-oss publish-daemon release-daemon \
         $(addprefix daemon-,$(foreach t,$(LINUX_TARGETS) $(MACOS_TARGETS),$(name-$(t))))
 
 # ---- desktop (Tauri) ----
 
 desktop-dev:
 	bun run tauri dev
+
+# Desktop with the opt-in, loopback-only JSON + read-only MCP server.
+desktop-api-dev:
+	RETICLE_DESKTOP_HTTP_PORT=8786 bun run tauri dev
 
 desktop:
 	bun run tauri build
@@ -43,10 +47,9 @@ daemon:
 	cd daemon && cargo build --release
 	@ls -lh target/release/reticle-daemon | awk '{print "→ target/release/reticle-daemon (" $$5 ")"}'
 
-# Dev loop: UI served from disk (edit src/ without rebuilding), throwaway
-# config, terminals on, open access.
+# Dev loop: UI served from disk, throwaway config, open editor access.
 daemon-dev:
-	cd daemon && cargo run --release -- --port 8788 --config /tmp/reticle-dev.yaml --root ../src --enable-terminal --open
+	cd daemon && cargo run --release -- --port 8788 --config /tmp/reticle-dev.yaml --root ../src --open
 
 # Cross-compile the full matrix into dist/reticle-daemon-<platform>
 daemon-all: $(addprefix daemon-,$(foreach t,$(LINUX_TARGETS) $(MACOS_TARGETS),$(name-$(t))))
@@ -76,7 +79,7 @@ deploy-pi: daemon-linux-arm64
 	scp dist/reticle-daemon-linux-arm64 $(PI):reticle/reticle-daemon
 	@echo "on the pi:  tmux new -s reticle"
 	@echo "            cd reticle && ./reticle-daemon --config ./topology.yaml \\"
-	@echo "              --edit-token <secret> --view-token <secret> --enable-terminal"
+	@echo "              --edit-token <secret> --view-token <secret>"
 
 # ---- misc ----
 
@@ -92,11 +95,30 @@ publish-oss:
 # GitHub Actions builds mac/linux/windows bundles onto the release.
 #   make release-oss VERSION=0.1.0
 VERSION ?=
-release-oss: publish-oss
+release-oss:
 	@test -n "$(VERSION)" || (echo "usage: make release-oss VERSION=x.y.z" && exit 2)
+	@printf '%s\n' "$(VERSION)" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$$' || \
+	  (echo "VERSION must be a semantic version (for example, 1.2.3)" && exit 2)
 	@grep -q '"version": "$(VERSION)"' src-tauri/tauri.conf.json || \
 	  (echo "tauri.conf.json version != $(VERSION) — bump it first" && exit 2)
-	cd ../reticle-oss && git tag v$(VERSION) && git push origin main --tags
+	@grep -q '^version = "$(VERSION)"' src-tauri/Cargo.toml || \
+	  (echo "src-tauri/Cargo.toml version != $(VERSION) — bump it first" && exit 2)
+	@grep -q '^version = "$(VERSION)"' core/Cargo.toml || \
+	  (echo "core/Cargo.toml version != $(VERSION) — bump it first" && exit 2)
+	@grep -q '"version": "$(VERSION)"' package.json || \
+	  (echo "package.json version != $(VERSION) — bump it first" && exit 2)
+	@mirror="$${MIRROR:-../reticle-oss}"; remote="$${REMOTE:-git@github.com:mannders00/reticle.git}"; tag="v$(VERSION)"; \
+	  if [ -d "$$mirror/.git" ] && git -C "$$mirror" rev-parse -q --verify "refs/tags/$$tag" >/dev/null; then \
+	    echo "tag $$tag already exists in $$mirror"; exit 2; \
+	  fi; \
+	  remote_tag="$$(git ls-remote --tags "$$remote" "refs/tags/$$tag")" || exit $$?; \
+	  test -z "$$remote_tag" || (echo "tag $$tag already exists on $$remote" && exit 2)
+	$(MAKE) publish-oss
+	@mirror="$${MIRROR:-../reticle-oss}"; tag="v$(VERSION)"; \
+	  ! git -C "$$mirror" rev-parse -q --verify "refs/tags/$$tag" >/dev/null || \
+	    (echo "tag $$tag already exists" && exit 2); \
+	  git -C "$$mirror" tag -a "$$tag" -m "Reticle $$tag" && \
+	  git -C "$$mirror" push origin "refs/tags/$$tag"
 	@echo "→ watch the build: https://github.com/mannders00/reticle/actions"
 
 # Snapshot the daemon + its build deps (core + frontend) into
@@ -108,16 +130,36 @@ publish-daemon:
 # Cut a daemon release: sync the private mirror, tag it, push the tag →
 # GitHub Actions cross-compiles the static Linux binaries onto the release.
 #   make release-daemon VERSION=1.0.0
-release-daemon: publish-daemon
+release-daemon:
 	@test -n "$(VERSION)" || (echo "usage: make release-daemon VERSION=x.y.z" && exit 2)
+	@printf '%s\n' "$(VERSION)" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$$' || \
+	  (echo "VERSION must be a semantic version (for example, 1.2.3)" && exit 2)
 	@grep -q '^version = "$(VERSION)"' daemon/Cargo.toml || \
 	  (echo "daemon/Cargo.toml version != $(VERSION) — bump it first" && exit 2)
-	cd ../reticle-daemon && git tag v$(VERSION) && git push origin main --tags
+	@grep -q '^version = "$(VERSION)"' core/Cargo.toml || \
+	  (echo "core/Cargo.toml version != $(VERSION) — bump it first" && exit 2)
+	@mirror="$${MIRROR:-../reticle-daemon}"; remote="$${REMOTE:-git@github.com:mannders00/reticle-daemon.git}"; tag="v$(VERSION)"; \
+	  if [ -d "$$mirror/.git" ] && git -C "$$mirror" rev-parse -q --verify "refs/tags/$$tag" >/dev/null; then \
+	    echo "tag $$tag already exists in $$mirror"; exit 2; \
+	  fi; \
+	  remote_tag="$$(git ls-remote --tags "$$remote" "refs/tags/$$tag")" || exit $$?; \
+	  test -z "$$remote_tag" || (echo "tag $$tag already exists on $$remote" && exit 2)
+	$(MAKE) publish-daemon
+	@mirror="$${MIRROR:-../reticle-daemon}"; tag="v$(VERSION)"; \
+	  ! git -C "$$mirror" rev-parse -q --verify "refs/tags/$$tag" >/dev/null || \
+	    (echo "tag $$tag already exists" && exit 2); \
+	  git -C "$$mirror" tag -a "$$tag" -m "reticle-daemon $$tag" && \
+	  git -C "$$mirror" push origin "refs/tags/$$tag"
 	@echo "→ watch the build: https://github.com/mannders00/reticle-daemon/actions"
 
 check:
 	cargo check --workspace
 	cd daemon && cargo check
+
+test:
+	cargo test --workspace
+	cd daemon && cargo test
+	bash daemon/endpoint-smoke.sh
 
 # One-time setup for cross-compiling (zig + rust std for each target)
 toolchain:

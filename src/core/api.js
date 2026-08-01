@@ -183,6 +183,7 @@ export const api = {
   get connId() { return connId; },
 
   /* ---- config IO ---- */
+  async getOperationalGraph() { return invoke("get_operational_graph"); },
   async loadConfig() { return invoke("load_config"); },
   async saveConfig(config) {
     const t = transport ?? (await transportReady);
@@ -203,7 +204,13 @@ export const api = {
   async runAction(host, port, user, script, interpreter) {
     return invoke("run_action", { host, port, user, script, interpreter });
   },
+  async runNamedAction(actionId, approved = false) {
+    return invoke("run_named_action", { actionId, approved });
+  },
   async runLocal(script, interpreter) { return invoke("run_local", { script, interpreter }); },
+
+  /* ---- read-only agent ---- */
+  async agentChat(request) { return invoke("agent_chat", { request }); },
 
   /* ---- terminal (SSH) ---- */
   async openShell(serverName, host, port, user, cols, rows) {
@@ -296,6 +303,36 @@ async function mock(cmd, args) {
       if (name === "config") return { nodes: {}, edges: {}, groups: [], layers: [] };
       return await loadSampleData(name);
     }
+    case "get_operational_graph": {
+      const name = mockState.workspace || "config";
+      const doc = name === "config"
+        ? { version: 1, nodes: {}, edges: {} }
+        : await loadSampleData(name);
+      const now = Math.floor(Date.now() / 1000);
+      const signals = {};
+      const nodes = Object.fromEntries(Object.entries(doc.nodes ?? {}).map(([id, rawNode]) => {
+        const { actions, crons, health, ...node } = rawNode;
+        if (health) signals[`${id}:health`] = {
+          id: `${id}:health`, nodeId: id, name: "health",
+          state: health.state ?? "unknown", observedAt: health.lastCheck ?? null,
+          detail: health.detail ?? null, source: "static-topology",
+        };
+        return [id, { ...node, id }];
+      }));
+      return {
+        schemaVersion: 1,
+        version: doc.version ?? 1,
+        generatedAt: now,
+        nodes,
+        edges: doc.edges ?? {},
+        signals,
+        actions: {},
+        collectors: [{
+          id: "static-topology", name: "Static topology", kind: "static",
+          nodeId: null, state: "ok", detail: null, collectedAt: now, durationMs: 0,
+        }],
+      };
+    }
     case "save_config": return null;
     case "save_export_file": return null;
     case "get_config_path": return "(browser)";
@@ -306,6 +343,9 @@ async function mock(cmd, args) {
     case "run_action":
     case "run_local":
       return { success: true, exit_code: 0, stdout: "[mock] " + args.script, stderr: "" };
+    case "run_named_action":
+      return { success: true, exit_code: 0, stdout: `[mock] ${args.actionId}`, stderr: "" };
+    case "agent_chat": throw new Error("Agent chat requires a connected Reticle backend");
     case "list_pods": return ["pod-aaa", "pod-bbb", "pod-ccc"];
     case "import_workspace_file": return args.destPath || args.srcPath || null;
     case "list_workspaces": {

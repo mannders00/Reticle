@@ -1,0 +1,41 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - uses: swatinem/rust-cache@v2
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Linux system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev \
+            librsvg2-dev patchelf libgtk-3-dev
+      - name: Rust format
+        run: cargo fmt --all -- --check
+      - name: Rust check
+        run: cargo check --workspace --all-targets
+      - name: Rust tests
+        run: cargo test --workspace
+      - name: JavaScript tests
+        run: bun run test
+      - name: JavaScript syntax
+        run: git ls-files -z -- '*.js' '*.mjs' | xargs -0 -r -n1 node --check
+      - name: Shell syntax
+        shell: bash
+        run: |
+          shopt -s nullglob
+          scripts=(scripts/*.sh)
+          ((${#scripts[@]} == 0)) || bash -n "${scripts[@]}"

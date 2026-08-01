@@ -2,6 +2,8 @@
 # Three mini-PCs running k3s inside a generic "box" container, MetalLB
 # handing out the LAN VIP, Traefik ingress routing to app deployments,
 # and a TrueNAS box serving NFS persistent volumes.
+# Visual-only sample. Adapt collectors or guarded named actions from
+# topology.yaml.example for your own endpoints, credentials, and services.
 version: 1
 nodes:
   edge-router:
@@ -14,8 +16,6 @@ nodes:
     w: 180
     h: 120
     spec: { host: 10.0.0.1, port: 22, user: root }
-    actions:
-      - { name: dhcp leases, script: "cat /tmp/dhcp.leases" }
 
   lab-lan:
     id: lab-lan
@@ -58,11 +58,6 @@ nodes:
     notes: |
       All PersistentVolumes are NFS exports from tank/k8s.
       If pods hang in ContainerCreating, check this box first.
-    actions:
-      - { name: pool health, script: "zpool status -x" }
-      - { name: active NFS clients, script: "showmount -a" }
-    crons:
-      - { name: pool ok, interval: 5m, script: "zpool status -x | grep -q healthy" }
 
   k3s-box:
     id: k3s-box
@@ -89,12 +84,6 @@ nodes:
     parentId: k3s-box
     spec: { host: 10.0.0.11, port: 22, user: k3s, kubeContext: k3s, name: cp-01 }
     notes: "etcd snapshots hourly to the NAS. Single control plane — this box IS the cluster."
-    actions:
-      - { name: node status, script: "kubectl get nodes -o wide" }
-      - { name: etcd snapshots, script: "ls -lh /var/lib/rancher/k3s/server/db/snapshots | tail -5" }
-    crons:
-      - { name: all nodes ready, interval: 60s, script: "! kubectl get nodes --no-headers | grep -v ' Ready'" }
-      - { name: k3s alive, interval: 30s, script: "systemctl is-active k3s" }
 
   wk-01:
     id: wk-01
@@ -110,10 +99,6 @@ nodes:
     addons:
       - { kind: gpu, label: "RTX 4090 24G" }
       - { kind: ram, label: "64G" }
-    actions:
-      - { name: pods here, script: "kubectl get pods -A --field-selector spec.nodeName=wk-01" }
-    crons:
-      - { name: agent alive, interval: 60s, script: "systemctl is-active k3s-agent" }
 
   wk-02:
     id: wk-02
@@ -126,10 +111,6 @@ nodes:
     h: 120
     parentId: k3s-box
     spec: { host: 10.0.0.13, port: 22, user: k3s, kubeContext: k3s, name: wk-02 }
-    actions:
-      - { name: pods here, script: "kubectl get pods -A --field-selector spec.nodeName=wk-02" }
-    crons:
-      - { name: agent alive, interval: 60s, script: "systemctl is-active k3s-agent" }
 
   ingress-traefik:
     id: ingress-traefik

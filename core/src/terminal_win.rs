@@ -51,7 +51,12 @@ pub fn write(_shells: &ShellMap, _server_name: &str, _data: &str) -> Result<(), 
     Err(UNSUPPORTED.into())
 }
 
-pub fn resize(_shells: &ShellMap, _server_name: &str, _cols: u16, _rows: u16) -> Result<(), String> {
+pub fn resize(
+    _shells: &ShellMap,
+    _server_name: &str,
+    _cols: u16,
+    _rows: u16,
+) -> Result<(), String> {
     Err(UNSUPPORTED.into())
 }
 

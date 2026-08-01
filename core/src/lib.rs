@@ -6,10 +6,13 @@
 // to whatever UI is attached (Tauri event system / WebSocket broadcast).
 // Nothing in this crate may depend on tauri or axum.
 
+pub mod actions;
+pub mod agent;
 pub mod config;
 pub mod cron;
 pub mod custom_layer;
 pub mod events;
+pub mod graph;
 pub mod health;
 pub mod local;
 pub mod shell;

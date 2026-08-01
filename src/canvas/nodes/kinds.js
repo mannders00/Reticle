@@ -8,13 +8,13 @@
 // card and contain other nodes; moving them moves their children.
 
 export const CATEGORIES = [
+  { id: "misc", label: "Misc", color: "#6b7589" },
   { id: "compute", label: "Compute", color: "#5b8cff" },
   { id: "data", label: "Data", color: "#a78bfa" },
   { id: "network", label: "Network", color: "#2ec27e" },
   { id: "composite", label: "Kubernetes", color: "#3aa0ff" },
   { id: "cloud-group", label: "Cloud Groups", color: "#f5a623" },
   { id: "network-group", label: "Network Segments", color: "#7aa2f7" },
-  { id: "misc", label: "Misc", color: "#6b7589" },
 ];
 
 export const KINDS = {

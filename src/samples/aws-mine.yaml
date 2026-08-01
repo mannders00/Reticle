@@ -3,14 +3,12 @@
 # This is the topology behind the public demo: Cloudflare in front,
 # two EC2 boxes in us-east-2 — the xlarge workhorse serving the site
 # and the go services, and the t3.micro running the very daemon that
-# streams this map to you. HTTP crons hit the real public endpoints,
-# local crons run on the demo box itself, so the map is green (or
-# honestly red) the moment the daemon starts.
+# streams this map to you. Canonical HTTP collectors observe the real public
+# endpoints when collection runs.
 #
 # Before pointing the demo daemon at this file:
 #   - set host-main's spec.host to the workhorse's private VPC IP
-#     (and open its SG to the demo box) to light up SSH actions + TCP health
-#   - everything else works with zero config
+#     (and open its SG to the demo box) before adding an SSH probe
 version: 1
 nodes:
   cloudflare:
@@ -25,13 +23,6 @@ nodes:
     notes: "Orange-cloud on the site, grey-cloud on demo (Caddy owns that cert). 525s mean the origin cert story broke again."
     addons:
       - { kind: cert, label: "universal SSL" }
-    actions:
-      - { name: resolve site, exec: local, script: "dig +short reticle.live" }
-      - { name: resolve demo, exec: local, script: "dig +short demo.reticle.live" }
-      - { name: edge headers, exec: local, script: "curl -sI https://reticle.live | head -8" }
-    crons:
-      - { name: site edge, interval: 60s, exec: http, url: "https://reticle.live", status: "200" }
-      - { name: demo edge, interval: 60s, exec: http, url: "https://demo.reticle.live", status: "200" }
 
   note-meta:
     id: note-meta
@@ -82,10 +73,6 @@ nodes:
       - { kind: cpu, label: "4 vCPU" }
       - { kind: ram, label: "16G" }
       - { kind: disk, label: "gp3 120G" }
-    actions:
-      - { name: load, script: "uptime" }
-      - { name: disk, script: "df -h /" }
-      - { name: services, script: "systemctl list-units --type=service --state=running | head -25" }
 
   caddy-main:
     id: caddy-main
@@ -100,12 +87,6 @@ nodes:
     notes: "One Caddyfile fronts everything: file_server for the site, reverse_proxy per service. caddy validate before reload, always."
     addons:
       - { kind: cert, label: "auto via ACME" }
-    actions:
-      - { name: status, script: "systemctl status caddy --no-pager -l" }
-      - { name: recent logs, script: "journalctl -u caddy -n 40 --no-pager" }
-      - { name: validate config, script: "caddy validate --config /etc/caddy/Caddyfile" }
-    crons:
-      - { name: site up, interval: 60s, exec: http, url: "https://reticle.live", status: "200" }
 
   site:
     id: site
@@ -118,8 +99,6 @@ nodes:
     h: 100
     parentId: box-main
     notes: "Plain files in /home/admin/reticle/web. Deploys are an rsync — no build step, no pipeline, nothing to page about."
-    actions:
-      - { name: what's deployed, script: "ls -la /home/admin/reticle/web" }
 
   go-svcs:
     id: go-svcs
@@ -132,9 +111,6 @@ nodes:
     h: 100
     parentId: box-main
     notes: "Each micro-service is a single static binary + a systemd unit, listening on its own localhost port. Caddy is the only thing exposed."
-    actions:
-      - { name: containers, script: "docker ps --format 'table {{.Names}}\\t{{.Status}}'" }
-      - { name: listening ports, script: "ss -tlnp | grep 127.0.0.1" }
 
   box-demo:
     id: box-demo
@@ -158,11 +134,6 @@ nodes:
     h: 120
     parentId: box-demo
     notes: "Two-line Caddyfile: demo.reticle.live → 127.0.0.1:8788. Grey-cloud DNS so Caddy can hold the cert itself."
-    actions:
-      - { name: status, exec: local, script: "systemctl status caddy --no-pager -l" }
-      - { name: recent logs, exec: local, script: "journalctl -u caddy -n 40 --no-pager" }
-    crons:
-      - { name: caddy active, interval: 60s, exec: local, script: "systemctl is-active caddy" }
 
   daemon:
     id: daemon
@@ -174,19 +145,27 @@ nodes:
     w: 240
     h: 120
     parentId: box-demo
-    spec: { host: 127.0.0.1, port: 22, user: admin, local: true }
-    notes: "The 3.7MB binary streaming you this page — UI embedded, viewer token only, no terminal flag. Blast radius of a public demo: one $8 box."
+    spec: { host: 127.0.0.1, port: 22, user: admin }
+    notes: "The daemon streaming this page: UI embedded, viewer-only public access, and no arbitrary shell."
     addons:
       - { kind: cpu, label: "2 vCPU" }
       - { kind: ram, label: "1G" }
-      - { kind: misc, label: "~$8/mo" }
-    actions:
-      - { name: load, exec: local, script: "uptime" }
-      - { name: disk, exec: local, script: "df -h /" }
-      - { name: memory, exec: local, script: "free -m" }
-    crons:
-      - { name: disk < 85%, interval: 5m, exec: local, script: "test $(df / --output=pcent | tail -1 | tr -dc 0-9) -lt 85" }
-      - { name: full loop, interval: 60s, exec: http, url: "https://demo.reticle.live", status: "200" }
+
+collectors:
+  - id: site-edge
+    nodeId: cloudflare
+    name: reticle.live edge
+    kind: http
+    url: https://reticle.live
+    status: "200"
+    timeoutSeconds: 8
+  - id: demo-edge
+    nodeId: daemon
+    name: demo.reticle.live full loop
+    kind: http
+    url: https://demo.reticle.live
+    status: "200"
+    timeoutSeconds: 8
 
 edges:
   e-cf-main:

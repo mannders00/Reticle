@@ -13,20 +13,41 @@ use tauri::Manager;
 /// The frontend discovers them via `list_workspaces` (which scans for
 /// *.yaml files). Users can remove them from the workspace dropdown.
 const SAMPLES: &[(&str, &str)] = &[
-    ("homelab-pi.yaml", include_str!("../../src/samples/homelab-pi.yaml")),
-    ("homelab-k8s.yaml", include_str!("../../src/samples/homelab-k8s.yaml")),
-    ("enterprise-aws.yaml", include_str!("../../src/samples/enterprise-aws.yaml")),
-    ("enterprise-gcp.yaml", include_str!("../../src/samples/enterprise-gcp.yaml")),
-    ("enterprise-onprem.yaml", include_str!("../../src/samples/enterprise-onprem.yaml")),
-    ("aws-mine.yaml", include_str!("../../src/samples/aws-mine.yaml")),
+    (
+        "homelab-pi.yaml",
+        include_str!("../../src/samples/homelab-pi.yaml"),
+    ),
+    (
+        "homelab-k8s.yaml",
+        include_str!("../../src/samples/homelab-k8s.yaml"),
+    ),
+    (
+        "enterprise-aws.yaml",
+        include_str!("../../src/samples/enterprise-aws.yaml"),
+    ),
+    (
+        "enterprise-gcp.yaml",
+        include_str!("../../src/samples/enterprise-gcp.yaml"),
+    ),
+    (
+        "enterprise-onprem.yaml",
+        include_str!("../../src/samples/enterprise-onprem.yaml"),
+    ),
+    (
+        "aws-mine.yaml",
+        include_str!("../../src/samples/aws-mine.yaml"),
+    ),
 ];
 
 pub mod commands;
+pub mod http_server;
 pub mod state;
 
 // Domain modules live in reticle-core (shared with reticle-daemon, see
 // DAEMON.md phases 1–2); re-export them so crate::config etc. keep working.
-pub use reticle_core::{config, cron, custom_layer, health, local, ssh, terminal, watcher};
+pub use reticle_core::{
+    actions, agent, config, cron, custom_layer, graph, health, local, ssh, terminal, watcher,
+};
 
 pub use commands::*;
 
@@ -56,12 +77,16 @@ pub fn run() {
 
             let cron_results: state::CronResultsMap =
                 Arc::new(Mutex::new(std::collections::HashMap::new()));
-            let shells: state::ShellMap =
-                Arc::new(Mutex::new(std::collections::HashMap::new()));
+            let shells: state::ShellMap = Arc::new(Mutex::new(std::collections::HashMap::new()));
 
             // Shared with the watcher + cron threads: switching workspace
             // (including opening an external file in place) retargets them.
             let config_path = Arc::new(Mutex::new(config_path));
+
+            if let Some(port) = http_server::configured_port()? {
+                let server = http_server::start(config_path.clone(), port)?;
+                app.manage(server);
+            }
 
             app.manage(state::AppState {
                 config_path: config_path.clone(),
@@ -81,15 +106,6 @@ pub fn run() {
                 })
             };
 
-            // Cron scheduler thread — runs each cron's checks on their
-            // intervals; follows the active config path across switches.
-            {
-                let path = config_path.clone();
-                let results = cron_results.clone();
-                let sink = sink.clone();
-                std::thread::spawn(move || cron::scheduler(path, results, sink));
-            }
-
             // Config file watcher — emits `config-changed` when the ACTIVE
             // YAML is edited externally (vim in your repo, git checkout…)
             // so the UI reloads.
@@ -102,22 +118,12 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::reticle_ping,
-            commands::load_config,
+            commands::get_operational_graph,
+            commands::run_named_action,
+            commands::agent_chat,
             commands::save_config,
-            commands::get_cron_status,
-            commands::remove_cron_results,
-            commands::run_action,
-            commands::run_local,
-            commands::health_check,
-            commands::http_check,
             commands::get_config_path,
             commands::load_custom_layer,
-            commands::open_shell,
-            commands::write_shell,
-            commands::resize_shell,
-            commands::close_shell,
-            commands::open_kubectl_shell,
-            commands::list_pods,
             commands::list_workspaces,
             commands::switch_workspace,
             commands::delete_workspace,

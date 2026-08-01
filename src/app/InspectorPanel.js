@@ -1,9 +1,7 @@
 // app/InspectorPanel.js
 // Renders editable inspector content into the RightPanel: node title /
-// subtitle / kind / spec fields, plus full CRUD for actions (ad-hoc
-// scripts run over SSH, with inline output) and crons (scheduled scripts
-// whose results drive node health — the "alive" part). Edge cards get
-// label + kind + delete.
+// subtitle / kind / spec fields, health, and guarded named action descriptors.
+// Edge cards get label + kind + delete.
 
 import { h, clear } from "../core/dom.js";
 import { bus } from "../core/eventBus.js";
@@ -11,11 +9,7 @@ import { getSelectedIds, getState, removeNode, removeEdge, updateEdge, updateNod
 import { KINDS, ADDONS, kindMeta, isGroupKind } from "../canvas/nodes/kinds.js";
 import { EDGE_KINDS, EDGE_LABELS, EDGE_STYLES } from "../canvas/edges/styles.js";
 import { iconSvg } from "../canvas/nodes/icons.js";
-import { checkHealth, runAction, runCronNow, getCronResults, effectiveExec } from "../core/ops.js";
-import api from "../core/api.js";
-
-// Ad-hoc run output survives re-renders (keyed nodeId:kind:index).
-const runOutputs = new Map();
+import { checkHealth, runAction } from "../core/ops.js";
 
 export function mountInspectorContent(root) {
   function render() {
@@ -66,11 +60,6 @@ function card(n) {
 
   // Action buttons
   const actions = h("div", { class: "inspector-actions" });
-  if (!group && (meta.modes.includes("ssh") || meta.modes.includes("kubectl"))) {
-    const shellBtn = btn("Shell", "shell-btn", () => bus.emit("terminal:open", { nodeId: n.id }));
-    shellBtn.title = "Open an SSH/kubectl shell on this node (⌘⏎)";
-    actions.appendChild(shellBtn);
-  }
   if (!group) {
     actions.appendChild(btn("Check", "check-btn", async () => {
       const b = actions.querySelector(".check-btn"); b.disabled = true;
@@ -129,10 +118,41 @@ function card(n) {
     notesSection(n),
   );
   if (!group) {
-    el.append(scriptsSection(n, "actions"), scriptsSection(n, "crons"));
+    el.append(namedActionsSection(n));
   }
   el.append(healthRow);
   return el;
+}
+
+function namedActionsSection(n) {
+  const wrap = h("div", { class: "insp-section" },
+    h("div", { class: "insp-section-head" },
+      h("span", { class: "insp-section-title" }, "Named actions")));
+  if (!(n.actions ?? []).length) {
+    wrap.append(h("div", { class: "insp-section-empty" }, "No guarded actions configured."));
+    return wrap;
+  }
+  for (const action of n.actions) {
+    const row = h("div", { class: "insp-item" });
+    const run = h("button", {
+      class: "insp-icon-btn run-btn",
+      type: "button",
+      title: action.available ? "Run named action" : (action.unavailableReason || "Unavailable"),
+      disabled: !action.available,
+    }, "▶");
+    const output = h("div", { class: "insp-output" });
+    run.addEventListener("click", async () => {
+      run.disabled = true;
+      renderRunOutput(output, await runAction(n.id, action.name));
+      run.disabled = !action.available;
+    });
+    row.append(h("div", { class: "insp-item-row" },
+      h("span", { class: "insp-exec t-ssh" }, action.kind),
+      h("span", { class: "insp-item-name", title: `Target: ${action.target}` }, action.name),
+      run), output);
+    wrap.append(row);
+  }
+  return wrap;
 }
 
 /** Attached resources — GPU, disk, IP… Pure indicators with an optional
@@ -225,159 +245,6 @@ function kindSelect(n) {
   return sel;
 }
 
-/* ---- actions & crons ----
- * Same editing UI for both lists; crons add an interval field, a last
- * scheduled-run line, and their results drive node health. `kind` is
- * "actions" | "crons".
- */
-function scriptsSection(n, kind) {
-  const isCron = kind === "crons";
-  const items = n[kind] ?? [];
-  const wrap = h("div", { class: "insp-section" });
-
-  // "+ add" opens a one-step type chooser: what kind of execution?
-  //   actions:  ssh shell · local shell
-  //   crons:    ssh shell · local shell · http
-  const add = h("button", { class: "insp-btn add-btn", type: "button" }, "+ add");
-  const chooser = h("div", { class: "insp-add-choices" });
-  chooser.style.display = "none";
-  for (const t of ["ssh", "local", "http"]) {
-    const chip = h("button", { class: `insp-type-chip t-${t}`, type: "button" },
-      t === "http" ? "http check" : `${t} shell`);
-    chip.addEventListener("click", () => {
-      const base = isCron
-        ? { name: `check-${items.length + 1}`, interval: "60s", exec: t }
-        : { name: `action-${items.length + 1}`, exec: t };
-      const fresh = t === "http"
-        ? { ...base, url: "", status: "", jq: "" }
-        : { ...base, script: "" };
-      updateNodeMeta(n.id, { [kind]: [...items, fresh] });
-    });
-    chooser.append(chip);
-  }
-  add.addEventListener("click", () => {
-    chooser.style.display = chooser.style.display === "none" ? "" : "none";
-  });
-
-  wrap.append(h("div", { class: "insp-section-head" },
-    h("span", { class: "insp-section-title" }, isCron ? "Crons" : "Actions"),
-    add,
-  ), chooser);
-
-  if (!items.length) {
-    wrap.append(h("div", { class: "insp-section-empty" },
-      isCron ? "Scheduled checks — results drive this node's health." : "Scripts you run on demand."));
-    return wrap;
-  }
-
-  items.forEach((item, i) => wrap.append(scriptRow(n, kind, item, i)));
-  return wrap;
-}
-
-function scriptRow(n, kind, item, i) {
-  const isCron = kind === "crons";
-  const outKey = `${n.id}:${kind}:${i}`;
-  const row = h("div", { class: "insp-item" });
-  const exec = effectiveExec(n, item);
-
-  const patch = (p) => {
-    const list = (n[kind] ?? []).map((it, idx) => (idx === i ? { ...it, ...p } : it));
-    updateNodeMeta(n.id, { [kind]: list });
-  };
-
-  // Execution type chip — a select disguised as a badge, so the type can
-  // be changed after creation too.
-  const typeSel = h("select", { class: `insp-exec t-${exec}`, title: "Where this runs" },
-    h("option", { value: "ssh" }, "ssh"),
-    h("option", { value: "local" }, "local"),
-    h("option", { value: "http" }, "http"),
-  );
-  typeSel.value = exec;
-  typeSel.addEventListener("change", () => patch({ exec: typeSel.value }));
-
-  const name = editableField(item.name, (val) => patch({ name: val }), "name");
-  name.classList.add("insp-item-name");
-
-  const topRow = h("div", { class: "insp-item-row" }, typeSel, name);
-  if (isCron) {
-    const interval = editableField(item.interval || "60s", (val) => patch({ interval: val }), "60s");
-    interval.classList.add("insp-interval");
-    interval.title = "Interval: 30s / 5m / 1h";
-    topRow.append(interval);
-  }
-
-  const run = h("button", { class: "insp-icon-btn run-btn", type: "button", title: "Run now" }, "▶");
-  const del = h("button", { class: "insp-icon-btn del-icon-btn", type: "button", title: "Delete" }, "×");
-  del.addEventListener("click", () => {
-    const list = [...(n[kind] ?? [])];
-    list.splice(i, 1);
-    runOutputs.delete(outKey);
-    updateNodeMeta(n.id, { [kind]: list });
-  });
-  topRow.append(run, del);
-  row.append(topRow);
-
-  if (exec === "http") {
-    // url on its own line; status + jq side by side
-    const url = editableField(item.url || "", (v) => patch({ url: v }), "https://host/healthz");
-    url.classList.add("insp-http-url");
-    const status = editableField(item.status || "", (v) => patch({ status: v }), "2xx");
-    status.classList.add("insp-http-status");
-    status.title = "Healthy status: 2xx · 200 · 200-204 · 200,204";
-    const jq = editableField(item.jq || "", (v) => patch({ jq: v }), 'jq: .status == "ok"');
-    jq.classList.add("insp-http-jq");
-    jq.title = "Optional jq over the JSON body — truthy = healthy";
-    row.append(url, h("div", { class: "insp-http-row" }, status, jq));
-  } else {
-    const script = h("textarea", {
-      class: "inspector-input insp-script",
-      rows: Math.min(5, Math.max(1, (item.script || "").split("\n").length)),
-      placeholder: exec === "local" ? "runs on this host…" : "runs over ssh…",
-      spellcheck: false,
-    });
-    script.value = item.script || "";
-    script.addEventListener("change", () => patch({ script: script.value }));
-    script.addEventListener("keydown", (e) => {
-      e.stopPropagation();
-      if (e.key === "Escape") { script.value = item.script || ""; script.blur(); }
-    });
-    row.append(script);
-  }
-
-  // Last scheduled run (crons only) — fed by cron-result events / status.
-  if (isCron) {
-    const last = getCronResults(n.id)?.get(item.name);
-    if (last) {
-      row.append(h("div", { class: "insp-last" + (last.success ? " ok" : " err") },
-        h("span", { class: "dot" }),
-        last.success ? "last run ok" : `last run exit ${last.exit_code ?? "?"}`,
-        h("span", { class: "insp-last-time" }, timeAgo(last.timestamp)),
-      ));
-    }
-  }
-
-  const outWrap = h("div", { class: "insp-output" });
-  renderRunOutput(outWrap, runOutputs.get(outKey));
-  row.append(outWrap);
-
-  const readonly = api.ready && !api.canWrite;
-  if (readonly) {
-    run.disabled = true;
-    run.title = "read-only access";
-  }
-  run.addEventListener("click", async () => {
-    run.disabled = true;
-    runOutputs.set(outKey, { running: true });
-    renderRunOutput(outWrap, runOutputs.get(outKey));
-    const res = isCron ? await runCronNow(n.id, item.name) : await runAction(n.id, item.name);
-    runOutputs.set(outKey, res ?? { success: false, exitCode: -1, stdout: "", stderr: "not found" });
-    renderRunOutput(outWrap, runOutputs.get(outKey));
-    run.disabled = false;
-  });
-
-  return row;
-}
-
 function renderRunOutput(el, res) {
   clear(el);
   if (!res) { el.style.display = "none"; return; }
@@ -397,16 +264,6 @@ function renderRunOutput(el, res) {
     h("div", { class: "insp-output-head" }, badge, h("span", { class: "sb-spacer", style: "flex:1" }), copy, close),
     h("pre", { class: "insp-output-pre" }, text || "(no output)"),
   );
-}
-
-function timeAgo(ts) {
-  if (!ts) return "";
-  const ms = Date.now() - (ts < 2e10 ? ts * 1000 : ts); // backend sends seconds
-  if (ms < 0) return "";
-  const s = Math.round(ms / 1000);
-  if (s < 60) return `${s}s ago`;
-  if (s < 3600) return `${Math.round(s / 60)}m ago`;
-  return `${Math.round(s / 3600)}h ago`;
 }
 
 /** Inspector card for a selected edge: editable label, kind picker, delete. */

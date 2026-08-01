@@ -42,7 +42,11 @@ pub struct Health {
 
 impl Default for Health {
     fn default() -> Self {
-        Health { state: String::new(), last_check: None, detail: None }
+        Health {
+            state: String::new(),
+            last_check: None,
+            detail: None,
+        }
     }
 }
 
@@ -88,7 +92,9 @@ pub struct Node {
     pub lng: Option<f64>,
 }
 
-fn default_kind() -> String { "server".into() }
+fn default_kind() -> String {
+    "server".into()
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Edge {
@@ -103,7 +109,9 @@ pub struct Edge {
     pub to: String,
 }
 
-fn default_edge_kind() -> String { "tcp".into() }
+fn default_edge_kind() -> String {
+    "tcp".into()
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CustomLayer {
@@ -121,8 +129,12 @@ pub struct CustomLayer {
     pub opacity: f64,
 }
 
-fn default_color() -> String { "#ff6600".into() }
-fn default_opacity() -> f64 { 0.7 }
+fn default_color() -> String {
+    "#ff6600".into()
+}
+fn default_opacity() -> f64 {
+    0.7
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Group {
@@ -136,7 +148,7 @@ pub struct Group {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Config {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub servers: Vec<Node>,          // v0 compat (migrated to nodes on load)
+    pub servers: Vec<Node>, // v0 compat (migrated to nodes on load)
     #[serde(default, skip_serializing_if = "serde_json::Map::is_empty")]
     pub nodes: serde_json::Map<String, Value>,
     #[serde(default, skip_serializing_if = "serde_json::Map::is_empty")]
@@ -177,15 +189,19 @@ pub struct CronStatus {
 pub fn parse_interval(s: &str) -> Result<u64, String> {
     let s = s.trim();
     if let Some(num) = s.strip_suffix('s') {
-        num.parse::<u64>().map_err(|e| format!("invalid seconds: {}", e))
+        num.parse::<u64>()
+            .map_err(|e| format!("invalid seconds: {}", e))
     } else if let Some(num) = s.strip_suffix('m') {
-        num.parse::<u64>().map(|n| n * 60).map_err(|e| format!("invalid minutes: {}", e))
+        num.parse::<u64>()
+            .map(|n| n * 60)
+            .map_err(|e| format!("invalid minutes: {}", e))
     } else if let Some(num) = s.strip_suffix('h') {
-        num.parse::<u64>().map(|n| n * 3600).map_err(|e| format!("invalid hours: {}", e))
+        num.parse::<u64>()
+            .map(|n| n * 3600)
+            .map_err(|e| format!("invalid hours: {}", e))
     } else {
-        s.parse::<u64>().map_err(|e| {
-            format!("invalid interval '{}': expected e.g. 30s, 5m, 1h", e)
-        })
+        s.parse::<u64>()
+            .map_err(|e| format!("invalid interval '{}': expected e.g. 30s, 5m, 1h", e))
     }
 }
 
@@ -206,13 +222,25 @@ pub fn default_config_yaml() -> &'static str {
 #       host: 10.0.1.4
 #       port: 22
 #       user: deploy
-#     actions:
-#       - name: disk usage
-#         script: df -h
-#     crons:
-#       - name: nginx alive
-#         interval: 30s
-#         script: systemctl is-active nginx
+#
+# collectors:
+#   - id: web-http
+#     nodeId: web-01
+#     name: web health
+#     kind: http
+#     url: https://web-01.example/healthz
+#     status: 2xx
+#     timeoutSeconds: 8
+# actions:
+#   - id: restart-web
+#     nodeId: web-01
+#     name: Restart web
+#     kind: service.restart
+#     service: nginx.service
+#     requiresSignal: web-http
+#     requiresState: err
+#     requiresApproval: true
+#     timeoutSeconds: 20
 #
 # edges:
 #   e1:
@@ -228,6 +256,8 @@ nodes: {}
 edges: {}
 groups: []
 layers: []
+collectors: []
+actions: []
 "#
 }
 
@@ -246,17 +276,32 @@ pub fn ensure_config(path: &Path) -> Result<(), String> {
 /// Read the config YAML as raw JSON. The frontend does its own shape
 /// migration (v0 → v1), so both shells pass the document through opaquely.
 pub fn load_raw(path: &Path) -> Result<Value, String> {
-    let content = fs::read_to_string(path)
-        .map_err(|e| format!("failed to read config: {}", e))?;
+    let content = fs::read_to_string(path).map_err(|e| format!("failed to read config: {}", e))?;
     serde_yaml::from_str(&content).map_err(|e| format!("failed to parse config: {}", e))
 }
 
 /// Write a raw JSON document back as YAML (creating the file/dirs first).
 pub fn save_raw(path: &Path, config: &Value) -> Result<(), String> {
     ensure_config(path)?;
-    let content = serde_yaml::to_string(config)
-        .map_err(|e| format!("failed to serialize config: {}", e))?;
+    let content =
+        serde_yaml::to_string(config).map_err(|e| format!("failed to serialize config: {}", e))?;
     fs::write(path, content).map_err(|e| format!("failed to write config: {}", e))
+}
+
+/// Persist canvas-owned topology fields while preserving collector and named
+/// action configuration that is intentionally absent from graph responses.
+pub fn save_topology(path: &Path, topology: &Value) -> Result<(), String> {
+    let mut document = load_raw(path).unwrap_or_else(|_| serde_json::json!({}));
+    let object = document
+        .as_object_mut()
+        .ok_or_else(|| "config root must be an object".to_string())?;
+    for key in ["version", "nodes", "edges"] {
+        if let Some(value) = topology.get(key) {
+            object.insert(key.into(), value.clone());
+        }
+    }
+    object.remove("servers");
+    save_raw(path, &document)
 }
 
 pub fn now_timestamp() -> i64 {
@@ -264,4 +309,40 @@ pub fn now_timestamp() -> i64 {
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap_or_default()
         .as_secs() as i64
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn topology_save_preserves_collectors_and_named_actions() {
+        let unique = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!("reticle-config-{unique}.yaml"));
+        fs::write(
+            &path,
+            "nodes: {}\nedges: {}\ncollectors:\n  - id: check\nactions:\n  - id: restart\nlayers:\n  - name: boundaries\nextension:\n  owner: platform\n",
+        )
+        .unwrap();
+
+        save_topology(
+            &path,
+            &serde_json::json!({
+                "version": 1,
+                "nodes": { "api": { "title": "API" } },
+                "edges": {}
+            }),
+        )
+        .unwrap();
+        let saved = load_raw(&path).unwrap();
+        assert_eq!(saved["collectors"][0]["id"], "check");
+        assert_eq!(saved["actions"][0]["id"], "restart");
+        assert_eq!(saved["layers"][0]["name"], "boundaries");
+        assert_eq!(saved["extension"]["owner"], "platform");
+        assert_eq!(saved["nodes"]["api"]["title"], "API");
+        let _ = fs::remove_file(path);
+    }
 }

@@ -16,7 +16,7 @@ import { ResizeDrag } from "./canvas/ResizeDrag.js";
 import { Connection } from "./canvas/Connection.js";
 import { Persistence } from "./core/persistence.js";
 import { applyTheme, getTheme } from "./core/theme.js";
-import { checkAll, initCronHealth } from "./core/ops.js";
+import { checkAll } from "./core/ops.js";
 
 // UI scale — zooms the entire app (not just the canvas) for accessibility.
 // Persisted to localStorage.
@@ -111,18 +111,10 @@ window.addEventListener("DOMContentLoaded", async () => {
     await persistence.load();
   });
 
-  // Health polling: check all nodes every 30s — EXCEPT on the daemon
-  // transport, where the server sweeps once for everyone and broadcasts
-  // health-result events (phase 3c). N clients probing independently
-  // from N laptops was both wasteful and semantically wrong.
-  if (api.transport !== "ws") {
-    checkAll();
-    setInterval(() => checkAll(), 30000);
-  }
-
-  // Cron results from the backend scheduler feed node health + the
-  // inspector's last-run info — the map stays alive.
-  initCronHealth();
+  // Refresh through the canonical graph service. The UI never probes a host
+  // directly or maintains a second health truth.
+  checkAll();
+  setInterval(() => checkAll(), 30000);
 
   // Only in mock mode (no Tauri, no daemon), seed a demo so the canvas
   // isn't blank. Daemon mode shows the shared config, even when empty.
@@ -130,8 +122,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     seedDemo();
   }
 
-  // Tiny transient toast — surfaces events that used to vanish silently
-  // (⌘⏎ on a node that can't shell, a save refused as stale, …).
+  // Tiny transient toast for conflicts and other cross-module events.
   let toastEl = null, toastTimer = null;
   function toast(msg) {
     if (!toastEl) {
@@ -144,7 +135,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toastEl.classList.remove("is-visible"), 2600);
   }
-  bus.on("terminal:error", ({ error }) => toast(error));
   bus.on("config:conflict", () => toast("Someone else saved first — reloaded their version"));
 
   // Palette drag-and-drop → spawn a node of that kind at the drop world
@@ -275,11 +265,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "y") {
       e.preventDefault();
       redo();
-    } else if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-      e.preventDefault();
-      const ids = getSelectedIds();
-      if (ids.length === 1) bus.emit("terminal:open", { nodeId: ids[0] });
-      else toast(ids.length === 0 ? "Select a node first, then ⌘⏎ opens its shell" : "Select exactly ONE node to open a shell");
     }
   });
 });

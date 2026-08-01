@@ -1,62 +1,50 @@
-# Deploying the site (and a live demo) behind Caddy on EC2
+# Deploying the Reticle website
 
-The site is fully static (`index.html` + `styles.css`), so the easiest fit
-for your setup is **Caddy's file_server, no systemd daemon needed at all**:
+The marketing site is fully static. Deploy the complete `web/` directory so
+the `/team/` subroute, shared assets, and relative links remain intact:
 
 ```sh
-# from the repo
-rsync -av web/ ec2:/var/www/reticle-site/
+rsync -av --delete web/ ec2:/var/www/reticle-site/
 ```
 
+Serve the directory with clean index-file resolution. Caddy's `file_server`
+serves both `/` from `index.html` and `/team/` from `team/index.html`:
+
 ```caddyfile
-# Caddyfile
 reticle.example.com {
     root * /var/www/reticle-site
-    file_server
     encode gzip
+    file_server
 }
 ```
 
-`caddy reload` and done. Caddy handles TLS; updates are just another rsync.
+Verify both canonical routes after each deployment:
 
-## Live demo daemon (the "coming soon" stub on the site)
-
-When you're ready to hook up the live demo, run `reticle-daemon` as one of
-your usual port-listening systemd units and reverse-proxy it; Caddy
-proxies the WebSocket (`/ws`) transparently, nothing special needed:
-
-```ini
-# /etc/systemd/system/reticle-demo.service
-[Unit]
-Description=Reticle live demo daemon
-After=network.target
-
-[Service]
-# Read-only by default: with no --edit-token (and no --open), every
-# visitor is a viewer, no token needed in the demo URL at all.
-ExecStart=/opt/reticle/reticle-daemon --port 8790 \
-  --config /opt/reticle/demo-topology.yaml \
-  --audit-log /var/log/reticle-demo-audit.jsonl
-Restart=on-failure
-User=reticle
-DynamicUser=yes
-StateDirectory=reticle
-LogsDirectory=reticle-demo
-
-[Install]
-WantedBy=multi-user.target
+```sh
+curl --fail https://reticle.example.com/
+curl --fail https://reticle.example.com/team/
 ```
 
-```caddyfile
-demo.reticle.example.com {
-    reverse_proxy 127.0.0.1:8790
-}
-```
+## Live demo
 
-Then the site's "Live demo" card links to plain
-`https://demo.reticle.example.com/`, with no token in the URL. The daemon is
-read-only by default: every visitor is a viewer (live health included)
-and physically cannot change or run anything. If you want to edit the
-demo topology remotely, add `--edit-token <secret>` and keep the secret
-to yourself; everyone else stays a viewer. Never `--enable-terminal`
-(or `--open`) on a public demo.
+The homepage embeds `https://demo.reticle.live/`. Keep a public demo strictly
+read-only, place it behind TLS, and do not configure public edit credentials.
+Run the daemon as a dedicated least-privileged OS identity with network access
+only to its fixed probes. Use restricted SSH principals and expose only
+server-owned named actions; Team, API, MCP, and chat must never provide an
+arbitrary shell.
+
+If audit records are required, configure `--audit-log <path>` and manage the
+resulting JSONL file with normal host permissions and rotation. Without that
+flag, no JSONL audit file is written. Signal history is bounded in memory and
+resets whenever the daemon restarts; do not present it as durable storage.
+
+## Commercial deployment
+
+Reticle Desktop is MIT-licensed. Reticle Team Daemon is commercial software;
+an open-source Desktop release does not grant rights to deploy Team. Provision
+Team only under an active subscription and keep commercial binaries and license
+materials out of the public static site. Terminate TLS with Caddy or an approved
+internal proxy, require authentication for non-public deployments, and follow
+the organization's normal secret storage, access review, logging, and backup
+policies.

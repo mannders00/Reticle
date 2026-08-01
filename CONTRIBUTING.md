@@ -3,6 +3,10 @@
 Thanks for your interest in Reticle. Issues and pull requests are
 welcome.
 
+Reticle is a human-first live operational graph. The visual UI, JSON API, and
+read-only MCP are first-class lenses on the same graph; optional chat remains a
+read-only lens rather than a source of truth.
+
 ## How this repository works
 
 This repository is a curated mirror of an internal monorepo. The
@@ -43,6 +47,12 @@ DAEMON.md     daemon architecture and wire protocol
 - All backend access goes through `src/core/api.js`. The same UI runs
   under Tauri, under the daemon over WebSocket, and in a mock browser
   mode; changes must keep all three working.
+- Desktop remains standalone and local-only. Shared, always-on access, history,
+  team roles, and audit belong to Team Daemon.
+- JSON API, MCP, and optional chat must project the canonical graph rather than
+  create parallel state. MCP and chat remain read-only.
+- Team Daemon exposes fixed probes and server-owned named actions, never an
+  arbitrary shell or caller-provided command.
 - Colors and styles are semantic. Node categories and edge kinds map to
   fixed styles that match the PDF export legend.
 - Match the surrounding code style and comment density.

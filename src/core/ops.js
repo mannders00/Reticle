@@ -11,6 +11,7 @@ import { bus } from "./eventBus.js";
 import { getState, setNodeHealth } from "./store.js";
 import { kindMeta } from "../canvas/nodes/kinds.js";
 import api from "./api.js";
+import { projectGraphHealth } from "./operationalGraph.js";
 
 /* ---- combined health model (worst wins) ----
  * Independent signals per node:
@@ -120,31 +121,15 @@ export async function refreshCronStatus() {
 export async function checkHealth(nodeId) {
   const node = getState().topology.nodes[nodeId];
   if (!node) return;
-
-  // Set checking state immediately
   setNodeHealth(nodeId, { state: "warn", lastCheck: Date.now(), detail: "checking" });
-
   try {
     if (!api.ready) {
-      // Mock: simulate a delay then "unknown"
       await sleep(300);
       setNodeHealth(nodeId, { state: "unknown", lastCheck: Date.now(), detail: "preview" });
       return;
     }
-
-    // The browser poller only does the cheap TCP probe for instant
-    // feedback; ssh / local / http checks are crons run by the backend
-    // scheduler and streamed back as cron-results (see initCronHealth).
-    let probed = false;
-    if (node.spec?.host && node.spec?.port) {
-      tcpState.set(nodeId, await api.healthCheck(node.spec.host, node.spec.port));
-      probed = true;
-    }
-    if (probed || cronState.get(nodeId)?.size) {
-      applyCombined(nodeId);
-    } else {
-      setNodeHealth(nodeId, { state: "unknown", lastCheck: Date.now(), detail: "no endpoint" });
-    }
+    const graph = await api.getOperationalGraph();
+    applyGraphSignals(graph, nodeId);
   } catch (err) {
     setNodeHealth(nodeId, { state: "err", lastCheck: Date.now(), detail: String(err) });
   }
@@ -155,11 +140,20 @@ export async function checkHealth(nodeId) {
  * Called on a 30s interval by the HealthPoller.
  */
 export async function checkAll() {
-  const nodes = Object.values(getState().topology.nodes);
-  const promises = nodes
-    .filter((n) => n.spec?.host && n.spec?.port)
-    .map((n) => checkHealth(n.id));
-  await Promise.allSettled(promises);
+  if (!api.ready) return;
+  try {
+    const graph = await api.getOperationalGraph();
+    applyGraphSignals(graph);
+  } catch (err) {
+    console.error("[ops] graph refresh failed:", err);
+  }
+}
+
+function applyGraphSignals(graph, onlyNodeId = null) {
+  const healthByNode = projectGraphHealth(graph, Date.now());
+  for (const [nodeId, health] of Object.entries(healthByNode)) {
+    if (!onlyNodeId || nodeId === onlyNodeId) setNodeHealth(nodeId, health);
+  }
 }
 
 /* ---- global refresh (toolbar ⟳) ----
@@ -176,26 +170,7 @@ export async function refreshAll() {
   refreshInFlight = true;
   bus.emit("refresh:start", {});
   try {
-    const complete = (c) => (c.exec === "http" ? (c.url ?? "").trim() : (c.script ?? "").trim()) !== "";
-    const tasks = [];
-    for (const node of Object.values(getState().topology.nodes)) {
-      if (node.spec?.host && node.spec?.port) tasks.push(checkHealth(node.id));
-      for (const cron of (node.crons ?? []).filter(complete)) {
-        tasks.push(runItem(node, cron).then((r) => {
-          if (!r) return;
-          const payload = {
-            server: node.id, cron: cron.name, success: r.success,
-            exit_code: r.exitCode, timestamp: Math.floor(Date.now() / 1000),
-          };
-          const m = cronState.get(node.id) ?? new Map();
-          m.set(cron.name, { success: r.success, timestamp: payload.timestamp, exit_code: r.exitCode });
-          cronState.set(node.id, m);
-          applyCombined(node.id);
-          bus.emit("cron:result", payload);
-        }));
-      }
-    }
-    await Promise.allSettled(tasks);
+    await checkAll();
   } finally {
     refreshInFlight = false;
     bus.emit("refresh:done", { at: Date.now() });
@@ -211,63 +186,13 @@ export async function runAction(nodeId, actionName) {
   const node = getState().topology.nodes[nodeId];
   const action = node?.actions?.find((a) => a.name === actionName);
   if (!action) return null;
-  return runItem(node, action);
-}
-
-/**
- * Run a cron immediately (ad-hoc, not on schedule).
- */
-export async function runCronNow(nodeId, cronName) {
-  const node = getState().topology.nodes[nodeId];
-  const cron = node?.crons?.find((c) => c.name === cronName);
-  if (!cron) return null;
-  return runItem(node, cron);
-}
-
-/** Node-level default target (legacy spec.local / spec.exec). */
-export function isLocalExec(node) {
-  return node?.spec?.local === true || node?.spec?.exec === "local";
-}
-
-/** Effective execution type for an action/cron: the item's own `exec`
- *  wins; otherwise the node default (local when spec says so, ssh when a
- *  host exists, local as the last resort). */
-export function effectiveExec(node, item) {
-  if (item?.exec === "http" || item?.exec === "local" || item?.exec === "ssh") return item.exec;
-  if (item?.url) return "http";
-  if (isLocalExec(node)) return "local";
-  return node?.spec?.host ? "ssh" : "local";
-}
-
-/**
- * Run one action/cron item — over SSH, locally on the daemon/desktop
- * host, or as an HTTP check — honoring the node's optional interpreter.
- * Returns { success, exitCode, stdout, stderr }.
- */
-async function runItem(node, item) {
-  if (!node) return null;
-  const exec = effectiveExec(node, item);
-  const interp = node.spec?.interpreter || undefined;
-
-  if (!api.ready) {
-    const where = exec === "http" ? (item.url || "url") : exec === "local" ? "this host" : (node.spec?.host || "host");
-    const what = exec === "http" ? `GET ${item.url || "…"}` : `$ ${item.script}`;
-    return { success: true, exitCode: 0, stdout: `[preview] Would run on ${where}:\n${what}\n(output simulated)`, stderr: "" };
+  if (!action.available) {
+    return { success: false, exitCode: -1, stdout: "", stderr: action.unavailableReason || "action unavailable" };
   }
-
   try {
-    if (exec === "http") {
-      const r = await api.httpCheck(item.url || "", item.status ?? "", item.jq ?? "");
-      return {
-        success: !!r?.ok,
-        exitCode: r?.ok ? 0 : 1,
-        stdout: `GET ${item.url}\n${r?.detail ?? "?"}`,
-        stderr: "",
-      };
-    }
-    const result = exec === "local"
-      ? await api.runLocal(item.script || "", interp)
-      : await api.runAction(node.spec?.host, node.spec?.port ?? 22, node.spec?.user ?? "", item.script || "", interp);
+    const approved = !action.requiresApproval || window.confirm(`Approve action “${action.name}”?`);
+    if (!approved) return { success: false, exitCode: -1, stdout: "", stderr: "approval declined" };
+    const result = await api.runNamedAction(action.id, approved);
     return { success: result.success, exitCode: result.exit_code, stdout: result.stdout, stderr: result.stderr };
   } catch (err) {
     return { success: false, exitCode: -1, stdout: "", stderr: String(err) };
