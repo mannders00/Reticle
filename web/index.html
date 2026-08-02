@@ -3,20 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Reticle: the live operational graph for humans, APIs, and agents</title>
-  <meta name="description" content="Reticle gives teams one current picture of topology, health, dependencies, and freshness to inspect before anyone touches production." />
+  <title>Reticle: one live infrastructure graph for your team and its agents</title>
+  <meta name="description" content="Define topology once in Git-tracked YAML, add current health evidence, and serve the same operating picture to the visual map, JSON API, and read-only MCP." />
   <link rel="canonical" href="https://reticle.live/" />
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="The live operational graph for humans, APIs, and agents" />
-  <meta property="og:description" content="See the same current operational picture during normal work and incidents, before anyone touches production." />
+  <meta property="og:title" content="One live infrastructure graph for your team and its agents" />
+  <meta property="og:description" content="One Git-tracked operational model, served locally by Desktop or continuously by a customer-hosted Team Daemon." />
   <meta property="og:url" content="https://reticle.live/" />
   <meta property="og:image" content="https://reticle.live/assets/og-card.jpg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:site_name" content="Reticle" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="The live operational graph for humans, APIs, and agents" />
-  <meta name="twitter:description" content="One current picture to inspect during normal work and incidents, before anyone touches production." />
+  <meta name="twitter:title" content="One live infrastructure graph for your team and its agents" />
+  <meta name="twitter:description" content="The same current operating picture for the visual map, JSON API, and read-only MCP." />
   <meta name="twitter:image" content="https://reticle.live/assets/og-card.jpg" />
   <meta name="theme-color" content="#0b0e14" media="(prefers-color-scheme: dark)" />
   <meta name="theme-color" content="#f7f8fb" media="(prefers-color-scheme: light)" />
@@ -78,8 +78,9 @@
       <a class="brand" href="/"><img class="brand-mark" src="reticle.svg" alt="" width="22" height="22" />Reticle</a>
       <nav class="nav-links" aria-label="Primary navigation">
         <a href="#live">Live demo</a>
-        <a href="#products">Local first</a>
-        <a href="#lenses">Safe inspection</a>
+        <a href="#products">Products</a>
+        <a href="#same-graph">One graph</a>
+        <a href="#context-control">Security</a>
         <a href="/team/">Team</a>
       </nav>
       <span class="nav-spacer"></span>
@@ -88,8 +89,9 @@
       <button class="nav-menu-btn" id="nav-menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="nav-menu">☰</button>
       <nav class="nav-menu" id="nav-menu" aria-label="Mobile navigation" hidden>
         <a href="#live">Live demo</a>
-        <a href="#products">Local first</a>
-        <a href="#lenses">Safe inspection</a>
+        <a href="#products">Products</a>
+        <a href="#same-graph">One graph</a>
+        <a href="#context-control">Security</a>
         <a class="btn btn-primary btn-small" href="/team/">Explore Team</a>
       </nav>
     </div>
@@ -98,17 +100,14 @@
   <main>
     <section class="hero">
       <div class="wrap hero-solo">
-        <div class="hero-badges">
-          <span class="pill accent">Team: shared and always on</span>
-          <span class="pill">Desktop: free and local only</span>
-        </div>
-        <h1>The live operational graph for humans, APIs, and agents.</h1>
-        <p class="lede">Reticle keeps topology, health, dependencies, and freshness in one live picture for daily work and incidents, before anyone touches production.</p>
+        <span class="kicker">CUSTOMER-HOSTED OPERATIONAL CONTEXT</span>
+        <h1>One live infrastructure graph for your team and its agents.</h1>
+        <p class="lede">Define your topology once in Git-tracked YAML. Reticle adds current health evidence, then serves the same operating picture to the visual map, JSON API, and read-only MCP—locally in the free desktop app or continuously from one Team Daemon inside your network.</p>
         <div class="hero-ctas">
-          <a class="btn btn-primary" href="/team/">Explore Team Daemon</a>
+          <a class="btn btn-primary" href="#live">Explore the live Team demo</a>
           <a class="btn btn-ghost" href="https://github.com/mannders00/reticle/releases/latest">Download free Desktop</a>
         </div>
-        <p class="hero-note">Team is shared and always on; Desktop is a standalone, local-only app.</p>
+        <p class="hero-note">One YAML · One customer-hosted daemon · Unlimited teammates · No agent shell access</p>
       </div>
     </section>
 
@@ -129,37 +128,52 @@
 
     <section id="products">
       <div class="wrap">
-        <div class="section-head centered-head"><span class="kicker">LOCAL BY DESIGN</span><h2>One graph, one YAML, local first.</h2><p class="lede">The same simple YAML defines the graph in Desktop and Team Daemon. Keep it in Git and run Reticle on your own machine or infrastructure: no SaaS account, forced cloud sync, or separate diagram format.</p></div>
+        <div class="section-head centered-head"><span class="kicker">START LOCAL. SHARE WHEN IT MATTERS.</span><h2>One model, two deployment paths.</h2></div>
         <div class="plans">
           <article class="plan">
-            <div><div class="plan-name">Reticle Desktop</div><div class="plan-price"><strong>Open source and local first</strong></div></div>
-            <p class="plan-summary">For homelabs, solo operations, and evaluation. The app, YAML, and observations stay on your machine.</p>
-            <div class="plan-cta"><a class="btn btn-ghost" href="https://github.com/mannders00/reticle/releases/latest">Download free Desktop</a></div>
+            <div><div class="plan-name">Free Desktop</div><div class="plan-price"><strong>Open source and local only</strong></div></div>
+            <p class="plan-summary">Map a homelab or environment in one YAML file. Keep it in Git, edit it visually or in your editor, and query it locally through JSON or read-only MCP. No account or Reticle cloud service required.</p>
+            <div class="plan-cta"><a class="btn btn-ghost" href="https://github.com/mannders00/reticle/releases/latest">Download Desktop</a></div>
           </article>
           <article class="plan featured">
-            <span class="plan-tag">For teams</span>
-            <div><div class="plan-name">Reticle Team Daemon</div><div class="plan-price"><strong>Self-hosted and shared</strong></div></div>
-            <p class="plan-summary">Runs inside your environment and serves the same graph through the browser UI, authenticated JSON API, and read-only MCP for agents.</p>
-            <div class="plan-cta"><a class="btn btn-primary" href="/team/">See Team pricing and details</a></div>
+            <span class="plan-tag">For organizations</span>
+            <div><div class="plan-name">Team Daemon</div><div class="plan-price"><strong>Customer-hosted and always on</strong></div></div>
+            <p class="plan-summary">Run one commercial daemon from a trusted host inside your network. It continuously updates the graph and serves authorized teammates, internal integrations, and read-only agents through the browser, JSON API, and MCP.</p>
+            <div class="plan-cta"><a class="btn btn-primary" href="/team/">Explore Team</a></div>
           </article>
         </div>
-        <p class="subordinate-note"><strong>Inspection comes before action.</strong> MCP is read-only by design, so agents can inspect current context without gaining shell or action access.</p>
       </div>
     </section>
 
-    <section id="lenses">
+    <section id="same-graph">
       <div class="wrap">
         <div class="section-head">
-          <span class="kicker">CURRENT CONTEXT, EXPLICIT LIMITS</span>
-          <h2>Know what you are looking at before you act.</h2>
-          <p class="lede">Reticle keeps configured topology beside timestamped observations and clear execution boundaries. It complements your metrics and logs; it does not replace them.</p>
+          <span class="kicker">ONE OPERATING PICTURE</span>
+          <h2>Your map, internal tools, and AI agents should not disagree.</h2>
+          <p class="lede">Reticle builds one canonical graph from configured topology and current health evidence. The canvas, JSON API, and read-only MCP all inspect that same snapshot—so an operator looking at a failure and an agent investigating it receive the same nodes, relationships, health state, and observation times.</p>
         </div>
         <div class="cards-3 lens-cards">
-          <article class="card"><span class="card-icon" aria-hidden="true">◎</span><h3>Current observations</h3><p>Health evidence carries observation times, so its age and unknown state stay visible.</p></article>
-          <article class="card"><span class="card-icon" aria-hidden="true">{ }</span><h3>Configured context</h3><p>Dependencies, notes, checks, and guarded actions stay with the Git-friendly YAML.</p></article>
-          <article class="card"><span class="card-icon" aria-hidden="true">M</span><h3>Safe inspection</h3><p>Humans, APIs, and agents can inspect the graph without receiving implicit execution access.</p></article>
+          <article class="card"><span class="card-icon" aria-hidden="true">◎</span><h3>Visual map</h3><p>Understand dependencies and current health at a glance.</p></article>
+          <article class="card"><span class="card-icon" aria-hidden="true">{ }</span><h3>JSON API</h3><p>Feed the graph into internal tools, incident workflows, and automation.</p></article>
+          <article class="card"><span class="card-icon" aria-hidden="true">M</span><h3>Read-only MCP</h3><p>Let agents inspect production context without granting shell or action access.</p></article>
         </div>
-        <p class="subordinate-note"><strong>Read-only is a security feature.</strong> JSON, MCP, and optional chat do not gain shell or named-action access.</p>
+        <div class="architecture-flow" role="img" aria-label="Git-tracked YAML and health collectors feed the shared Reticle core and canonical graph, which run through Free Desktop or a customer-hosted Team Daemon and serve the visual UI, JSON API, and read-only MCP without shell or action access.">
+          <div class="architecture-stage"><span class="architecture-label">Configured input</span><strong>Git-tracked YAML</strong><span>+ health collectors</span></div>
+          <span class="architecture-arrow" aria-hidden="true">→</span>
+          <div class="architecture-stage architecture-core"><span class="architecture-label">Shared Reticle core</span><strong>Canonical graph</strong><span>current snapshot</span></div>
+          <span class="architecture-arrow" aria-hidden="true">→</span>
+          <div class="architecture-stage"><span class="architecture-label">Run it your way</span><div class="architecture-options"><strong>Free Desktop</strong><span>or</span><strong>Team Daemon</strong></div><span>customer-hosted</span></div>
+          <span class="architecture-arrow" aria-hidden="true">→</span>
+          <div class="architecture-stage"><span class="architecture-label">Shared consumers</span><div class="architecture-chips"><span>Visual UI</span><span>JSON API</span><span>Read-only MCP</span></div><strong class="architecture-deny">No MCP shell or actions</strong></div>
+        </div>
+        <p class="media-caption">Reticle complements your metrics and logs; it does not replace them.</p>
+      </div>
+    </section>
+
+    <section id="context-control">
+      <div class="wrap">
+        <div class="section-head"><span class="kicker">CONTEXT BEFORE CONTROL</span><h2>Let agents investigate production without letting them operate it.</h2><p class="lede">Reticle’s MCP server is intentionally read-only. Agents can inspect topology, dependencies, current signals, and bounded history, but they cannot open a shell, submit commands, or execute named actions. Human operators retain the execution boundary through server-configured actions, approvals, preconditions, and timeouts.</p></div>
+        <p class="subordinate-note"><strong>Read-only is not a missing feature. It is the trust boundary.</strong></p>
       </div>
     </section>
 

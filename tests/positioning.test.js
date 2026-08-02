@@ -8,14 +8,14 @@ const homepage = read("web/index.html");
 const teamPage = read("web/team/index.html");
 
 test("website leads with current context, local operation, and safe inspection", () => {
-  assert.ok(homepage.includes("The live operational graph for humans, APIs, and agents."));
-  assert.ok(homepage.includes("before anyone touches production"));
-  for (const phrase of ["One graph, one YAML, local first", "JSON API", "Read-only MCP", "Read-only is a security feature"]) {
+  assert.ok(homepage.includes("One live infrastructure graph for your team and its agents."));
+  assert.ok(homepage.includes("CUSTOMER-HOSTED OPERATIONAL CONTEXT"));
+  for (const phrase of ["Git-tracked YAML", "JSON API", "read-only MCP", "Read-only is not a missing feature"]) {
     assert.match(homepage, new RegExp(phrase, "i"));
   }
-  assert.match(homepage, /standalone, local-only/i);
-  assert.match(homepage, /shared and always on/i);
-  assert.match(homepage, /Read-only is a security feature/i);
+  assert.match(homepage, /Open source and local only/i);
+  assert.match(homepage, /Customer-hosted and always on/i);
+  assert.match(homepage, /No agent shell access/i);
   assert.match(homepage, /href="\/team\/"/);
   assert.ok(homepage.indexOf('<section class="hero">') < homepage.indexOf('<section id="live">'));
   assert.ok(homepage.indexOf('<section id="live">') < homepage.indexOf('<section id="products">'));
@@ -23,24 +23,29 @@ test("website leads with current context, local operation, and safe inspection",
 
 test("approved homepage copy remains intact", () => {
   const approved = [
-    "Team: shared and always on",
-    "Desktop: free and local only",
-    "The live operational graph for humans, APIs, and agents.",
-    "Reticle keeps topology, health, dependencies, and freshness in one live picture for daily work and incidents, before anyone touches production.",
-    "Explore Team Daemon",
+    "CUSTOMER-HOSTED OPERATIONAL CONTEXT",
+    "One live infrastructure graph for your team and its agents.",
+    "Define your topology once in Git-tracked YAML. Reticle adds current health evidence, then serves the same operating picture to the visual map, JSON API, and read-only MCP—locally in the free desktop app or continuously from one Team Daemon inside your network.",
+    "Explore the live Team demo",
     "Download free Desktop",
-    "Team is shared and always on; Desktop is a standalone, local-only app.",
+    "One YAML · One customer-hosted daemon · Unlimited teammates · No agent shell access",
     "LIVE TEAM DAEMON",
     "See the graph humans operate.",
     "Explore the read-only graph behind reticle.live, served live from one shared daemon.",
     "Click to explore the live map",
     "Pan, inspect, and export. This public view cannot edit or run actions.",
-    "One graph, one YAML, local first.",
-    "no SaaS account, forced cloud sync, or separate diagram format",
-    "Open source and local first",
-    "Self-hosted and shared",
-    "Inspection comes before action.",
-    "Read-only is a security feature.",
+    "START LOCAL. SHARE WHEN IT MATTERS.",
+    "One model, two deployment paths.",
+    "Free Desktop",
+    "Open source and local only",
+    "No account or Reticle cloud service required.",
+    "Team Daemon",
+    "Customer-hosted and always on",
+    "ONE OPERATING PICTURE",
+    "Your map, internal tools, and AI agents should not disagree.",
+    "CONTEXT BEFORE CONTROL",
+    "Let agents investigate production without letting them operate it.",
+    "Read-only is not a missing feature. It is the trust boundary.",
     "Evidence first. Guarded action second.",
     "Team has no browser or ad-hoc shell.",
     "Give the incident one shared map.",
