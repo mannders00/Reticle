@@ -1,8 +1,8 @@
 # Desktop release builds — free GitHub-hosted runners, all three platforms.
 #
 # Cut a release by pushing a version tag to this repo:
-#   git tag v1.2.0 && git push origin v1.2.0
-# (from the internal repo: `make release-oss VERSION=1.2.0`)
+#   git tag v1.2.1 && git push origin v1.2.1
+# (from the internal repo: `make release-oss VERSION=1.2.1`)
 #
 # Matrix jobs build workflow artifacts; the publish job verifies and attaches
 # the complete set to one draft GitHub Release:

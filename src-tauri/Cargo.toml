@@ -1,6 +1,6 @@
 [package]
 name = "reticle"
-version = "1.2.0"
+version = "1.2.1"
 description = "A local-first infra operations canvas"
 authors = ["Matt Anderson <matt@masoftware.net>"]
 edition = "2021"

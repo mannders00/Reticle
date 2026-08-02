@@ -3,7 +3,7 @@
 // subtitle / kind / spec fields, health, and guarded named action descriptors.
 // Edge cards get label + kind + delete.
 
-import { h, clear } from "../core/dom.js";
+import { h } from "../core/dom.js";
 import { bus } from "../core/eventBus.js";
 import { clearHistory, getSelectedIds, getState, removeNode, removeEdge, updateEdge, updateNodeDetails, updateNodeMeta } from "../core/store.js";
 import { KINDS, ADDONS, kindMeta, isGroupKind } from "../canvas/nodes/kinds.js";
@@ -29,6 +29,8 @@ bus.on("workspace:switched", () => {
 });
 
 export function mountInspectorContent(root) {
+  let renderedSelectionKey = null;
+
   function render() {
     // Don't clobber an in-progress edit: background events (health ticks,
     // cron results, other users' saves) re-render the panel, which would
@@ -39,19 +41,24 @@ export function mountInspectorContent(root) {
     if (root.querySelector(".inspector-card.is-dirty")) return;
 
     const ids = getSelectedIds();
-    clear(root);
+    const selectionKey = JSON.stringify(ids);
+    const scrollTop = selectionKey === renderedSelectionKey ? root.scrollTop : 0;
+    let content = null;
     if (ids.length === 0) {
-      root.append(h("div", { class: "inspector-empty" }, "Nothing selected"));
-      return;
+      content = h("div", { class: "inspector-empty" }, "Nothing selected");
+    } else if (ids.length > 1) {
+      content = h("div", { class: "inspector-empty" }, `${ids.length} selected`);
+    } else {
+      const n = getState().topology.nodes[ids[0]];
+      if (n) content = card(n);
+      else {
+        const e = getState().topology.edges[ids[0]];
+        if (e) content = edgeCard(e);
+      }
     }
-    if (ids.length > 1) {
-      root.append(h("div", { class: "inspector-empty" }, `${ids.length} selected`));
-      return;
-    }
-    const n = getState().topology.nodes[ids[0]];
-    if (n) { root.append(card(n)); return; }
-    const e = getState().topology.edges[ids[0]];
-    if (e) root.append(edgeCard(e));
+    root.replaceChildren(...(content ? [content] : []));
+    root.scrollTop = scrollTop;
+    renderedSelectionKey = selectionKey;
   }
 
   bus.on("selection:changed", render);

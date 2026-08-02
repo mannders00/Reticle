@@ -84,6 +84,14 @@ test("Team page contains exact pricing and an accessible comparison table", () =
   assert.match(teamPage, /No Team shell/i);
 });
 
+test("product proof uses truthful viewer and PDF media", () => {
+  assert.match(teamPage, /demo-overview\.webp/);
+  assert.match(teamPage, /real Team viewer session/i);
+  assert.match(homepage, /demo-pdf-preview\.webp/);
+  assert.match(homepage, /assets\/demo-pdf\.pdf/);
+  assert.doesNotMatch(`${homepage}\n${teamPage}`, /demo-shell/);
+});
+
 test("custom command checks preserve the gated execution boundary", () => {
   const architecture = [
     homepage,

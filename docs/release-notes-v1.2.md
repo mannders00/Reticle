@@ -4,6 +4,16 @@ Reticle v1.2 makes persisted checks and named actions manageable in the visual
 UI while preserving explicit execution boundaries. Review the
 [migration guide](migration-v1.2.md) before upgrading Team Daemon.
 
+## v1.2.1
+
+- Inspector refreshes now preserve scroll position while the same graph item
+  remains selected. Selecting a different item still starts its Inspector at
+  the top.
+- Product pages now include authentic Team viewer and vector PDF examples and
+  remove obsolete imagery that could imply Team provides a browser shell.
+
+There are no configuration, API, or data-format changes from v1.2.0.
+
 ## Highlights
 
 - UI-created `ssh.command` and `shell.command` checks now default to

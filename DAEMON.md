@@ -119,7 +119,7 @@ version. Terminal capability is always false.
     "terminal": false,
     "connId": 3,
     "rev": 7,
-    "version": "1.2.0"
+    "version": "1.2.1"
   }
 }
 ```
