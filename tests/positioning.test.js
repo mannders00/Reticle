@@ -88,8 +88,8 @@ test("Team page contains exact pricing and an accessible comparison table", () =
 });
 
 test("product proof uses truthful viewer and PDF media", () => {
-  assert.match(teamPage, /demo-overview\.webp/);
-  assert.match(teamPage, /real Team viewer session/i);
+  assert.match(teamPage, /<iframe src="https:\/\/demo\.reticle\.live\/"/);
+  assert.match(teamPage, /Read-only access is enforced by the daemon/i);
   assert.match(homepage, /demo-pdf-preview\.webp/);
   assert.match(homepage, /assets\/demo-pdf\.pdf/);
   assert.doesNotMatch(`${homepage}\n${teamPage}`, /demo-shell/);

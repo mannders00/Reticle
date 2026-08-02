@@ -23,7 +23,7 @@ forced cloud sync, or separate diagram format.
 
 | Reticle Desktop | Reticle Team Daemon |
 |---|---|
-| **Open source and local first.** For homelabs, solo operations, and evaluation. The app, YAML, and observations stay on your machine unless you explicitly use an external model. | **Self-hosted and team focused.** Runs inside your environment and serves the same graph through the browser UI, authenticated JSON API, and read-only MCP for agents. |
+| **Open source and local first.** For homelabs, solo operations, and evaluation. The app, YAML, and observations stay on your machine. | **Self-hosted and team focused.** Runs inside your environment and serves the same graph through the browser UI, authenticated JSON API, and read-only MCP for agents. |
 
 **Inspection comes before action.** MCP is read-only by design, so agents can
 inspect current context without gaining shell or action access.
