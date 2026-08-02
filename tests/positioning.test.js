@@ -8,7 +8,7 @@ const homepage = read("web/index.html");
 const teamPage = read("web/team/index.html");
 
 test("website leads with current context, local operation, and safe inspection", () => {
-  assert.ok(homepage.includes("One live operational graph for humans, APIs, and agents."));
+  assert.ok(homepage.includes("The live operational graph for humans, APIs, and agents."));
   assert.ok(homepage.includes("before anyone touches production"));
   for (const phrase of ["One graph, one YAML, local first", "JSON API", "Read-only MCP", "Read-only is a security feature"]) {
     assert.match(homepage, new RegExp(phrase, "i"));
@@ -17,13 +17,15 @@ test("website leads with current context, local operation, and safe inspection",
   assert.match(homepage, /shared and always on/i);
   assert.match(homepage, /Read-only is a security feature/i);
   assert.match(homepage, /href="\/team\/"/);
+  assert.ok(homepage.indexOf('<section class="hero">') < homepage.indexOf('<section id="live">'));
+  assert.ok(homepage.indexOf('<section id="live">') < homepage.indexOf('<section id="products">'));
 });
 
 test("approved homepage copy remains intact", () => {
   const approved = [
     "Team: shared and always on",
     "Desktop: free and local only",
-    "One live operational graph for humans, APIs, and agents.",
+    "The live operational graph for humans, APIs, and agents.",
     "Reticle keeps topology, health, dependencies, and freshness in one live picture for daily work and incidents, before anyone touches production.",
     "Explore Team Daemon",
     "Download free Desktop",
@@ -124,8 +126,8 @@ test("custom command checks preserve the gated execution boundary", () => {
 
 test("privileged mode is positioned as flexible operator power with read-only viewers", () => {
   const readme = read("README.md");
-  assert.match(homepage, /global privileged toggle enables persisted remote SSH commands, local Bash on Unix, and guarded named actions/i);
-  assert.match(homepage, /Desktop offers a separately warned live shell/i);
+  assert.match(homepage, /Deeper diagnostics require Desktop's global privileged toggle, or Team's daemon flag and editor authorization/i);
+  assert.match(homepage, /Desktop offers a warned operator shell/i);
   assert.match(teamPage, /Viewers receive bounded results, never command text or execution controls/i);
   assert.match(readme, /Safe by default, precise when you choose/i);
   assert.match(readme, /Enable privileged mode/);

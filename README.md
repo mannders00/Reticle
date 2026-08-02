@@ -4,7 +4,7 @@
 
 # Reticle
 
-**One live operational graph for humans, APIs, and agents.**
+**The live operational graph for humans, APIs, and agents.**
 
 Reticle keeps topology, health, dependencies, and freshness in one live picture
 for daily work and incidents, before anyone touches production.
