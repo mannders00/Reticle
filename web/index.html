@@ -109,7 +109,7 @@
       <div class="wrap hero-solo">
         <span class="kicker">CUSTOMER-HOSTED OPERATIONAL CONTEXT</span>
         <h1>One live infrastructure graph for your team and its agents.</h1>
-        <p class="lede">Define your topology once in Git-tracked YAML. Reticle adds current health evidence, then serves the same operating picture to the visual map, JSON API, and read-only MCP—locally in the free desktop app or continuously from one Team Daemon inside your network.</p>
+        <p class="lede">Define your topology once in Git-tracked YAML. Reticle adds current health evidence, then serves the same operating picture to the visual map, JSON API, and read-only MCP, locally in the free desktop app or continuously from one Team Daemon inside your network.</p>
         <div class="hero-ctas">
           <a class="btn btn-primary" href="#live">Explore the live Team demo</a>
           <a class="btn btn-ghost" href="https://github.com/mannders00/reticle/releases/latest">Download free Desktop</a>
@@ -157,19 +157,19 @@
         <div class="section-head">
           <span class="kicker">ONE OPERATING PICTURE</span>
           <h2>Your map, internal tools, and AI agents should not disagree.</h2>
-          <p class="lede">Reticle builds one canonical graph from configured topology and current health evidence. The canvas, JSON API, and read-only MCP all inspect that same snapshot—so an operator looking at a failure and an agent investigating it receive the same nodes, relationships, health state, and observation times.</p>
+          <p class="lede">Reticle builds one canonical graph from configured topology and current health evidence. The canvas, JSON API, and read-only MCP all inspect that same snapshot. An operator looking at a failure and an agent investigating it receive the same nodes, relationships, health state, and observation times.</p>
         </div>
         <div class="cards-3 lens-cards">
           <article class="card"><span class="card-icon" aria-hidden="true">◎</span><h3>Visual map</h3><p>Understand dependencies and current health at a glance.</p></article>
           <article class="card"><span class="card-icon" aria-hidden="true">{ }</span><h3>JSON API</h3><p>Feed the graph into internal tools, incident workflows, and automation.</p></article>
           <article class="card"><span class="card-icon" aria-hidden="true">M</span><h3>Read-only MCP</h3><p>Let agents inspect production context without granting shell or action access.</p></article>
         </div>
-        <div class="architecture-flow" role="img" aria-label="Git-tracked YAML and health collectors feed the shared Reticle core and canonical graph, which run through Free Desktop or a customer-hosted Team Daemon and serve the visual UI, JSON API, and read-only MCP without shell or action access.">
+        <div class="architecture-flow" role="img" aria-label="Git-tracked YAML and health collectors feed the shared Reticle core and canonical graph. Run it through local-only Free Desktop or a customer-hosted, always-on Team Daemon. Both serve the visual UI, JSON API, and read-only MCP without shell or action access.">
           <div class="architecture-stage"><span class="architecture-label">Configured input</span><strong>Git-tracked YAML</strong><span>+ health collectors</span></div>
           <span class="architecture-arrow" aria-hidden="true">→</span>
           <div class="architecture-stage architecture-core"><span class="architecture-label">Shared Reticle core</span><strong>Canonical graph</strong><span>current snapshot</span></div>
           <span class="architecture-arrow" aria-hidden="true">→</span>
-          <div class="architecture-stage"><span class="architecture-label">Run it your way</span><div class="architecture-options"><strong>Free Desktop</strong><span>or</span><strong>Team Daemon</strong></div><span>customer-hosted</span></div>
+          <div class="architecture-stage"><span class="architecture-label">Deployment</span><div class="architecture-options"><div class="architecture-choice"><strong>Free Desktop</strong><span>local only</span></div><span class="architecture-or">or</span><div class="architecture-choice"><strong>Team Daemon</strong><span>customer-hosted, always on</span></div></div></div>
           <span class="architecture-arrow" aria-hidden="true">→</span>
           <div class="architecture-stage"><span class="architecture-label">Shared consumers</span><div class="architecture-chips"><span>Visual UI</span><span>JSON API</span><span>Read-only MCP</span></div><strong class="architecture-deny">No MCP shell or actions</strong></div>
         </div>
@@ -180,7 +180,6 @@
     <section id="context-control">
       <div class="wrap">
         <div class="section-head"><span class="kicker">CONTEXT BEFORE CONTROL</span><h2>Let agents investigate production without letting them operate it.</h2><p class="lede">Reticle’s MCP server is intentionally read-only. Agents can inspect topology, dependencies, current signals, and bounded history, but they cannot open a shell, submit commands, or execute named actions. Human operators retain the execution boundary through server-configured actions, approvals, preconditions, and timeouts.</p></div>
-        <p class="subordinate-note"><strong>Read-only is not a missing feature. It is the trust boundary.</strong></p>
       </div>
     </section>
 

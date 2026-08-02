@@ -720,8 +720,11 @@ footer {
 .architecture-core { border-color: color-mix(in srgb, var(--accent) 55%, var(--stroke)); background: var(--accent-soft); }
 .architecture-label { color: var(--text-2); font: 700 10px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
 .architecture-arrow { align-self: center; color: var(--accent); font: 700 20px var(--font-mono); }
-.architecture-options { display: grid; grid-template-columns: 1fr auto 1fr; gap: 6px; align-items: center; color: var(--text-2); }
-.architecture-options strong { color: var(--text-0); font-size: 13px; }
+.architecture-options { display: flex; flex-direction: column; gap: 6px; color: var(--text-2); }
+.architecture-choice { padding: 8px 10px; border: 1px solid var(--stroke); border-radius: 7px; background: var(--bg-2); display: flex; flex-direction: column; gap: 2px; }
+.architecture-choice strong { color: var(--text-0); font-size: 13px; }
+.architecture-choice span { font: 600 10px var(--font-mono); }
+.architecture-or { align-self: center; color: var(--text-2); font: 600 10px var(--font-mono); text-transform: uppercase; }
 .architecture-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .architecture-chips span { padding: 5px 7px; border: 1px solid var(--stroke); border-radius: 6px; background: var(--bg-2); color: var(--text-0); font: 600 10px var(--font-mono); }
 .architecture-deny { color: var(--err) !important; font: 700 10px var(--font-mono) !important; letter-spacing: 0.04em; text-transform: uppercase; }

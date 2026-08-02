@@ -38,7 +38,7 @@ inspect current context without gaining shell or action access.
 
 [<img src="web/assets/reticle-demo-poster.jpg" alt="Two-minute demo: draw the map, attach real hosts, watch live health, and export the PDF" width="100%" />](web/assets/reticle-demo.mp4)
 
-**[▶ Watch the two-minute demo](web/assets/reticle-demo.mp4)** — draw the map → attach real hosts → checks go live → export the PDF
+**[▶ Watch the two-minute demo](web/assets/reticle-demo.mp4):** draw the map → attach real hosts → checks go live → export the PDF
 
 </div>
 

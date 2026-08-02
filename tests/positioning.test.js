@@ -10,7 +10,7 @@ const teamPage = read("web/team/index.html");
 test("website leads with current context, local operation, and safe inspection", () => {
   assert.ok(homepage.includes("One live infrastructure graph for your team and its agents."));
   assert.ok(homepage.includes("CUSTOMER-HOSTED OPERATIONAL CONTEXT"));
-  for (const phrase of ["Git-tracked YAML", "JSON API", "read-only MCP", "Read-only is not a missing feature"]) {
+  for (const phrase of ["Git-tracked YAML", "JSON API", "read-only MCP", "CONTEXT BEFORE CONTROL"]) {
     assert.match(homepage, new RegExp(phrase, "i"));
   }
   assert.match(homepage, /Open source and local only/i);
@@ -26,7 +26,7 @@ test("approved homepage copy remains intact", () => {
   const approved = [
     "CUSTOMER-HOSTED OPERATIONAL CONTEXT",
     "One live infrastructure graph for your team and its agents.",
-    "Define your topology once in Git-tracked YAML. Reticle adds current health evidence, then serves the same operating picture to the visual map, JSON API, and read-only MCP—locally in the free desktop app or continuously from one Team Daemon inside your network.",
+    "Define your topology once in Git-tracked YAML. Reticle adds current health evidence, then serves the same operating picture to the visual map, JSON API, and read-only MCP, locally in the free desktop app or continuously from one Team Daemon inside your network.",
     "Explore the live Team demo",
     "Download free Desktop",
     "One YAML · One customer-hosted daemon · Unlimited teammates · No agent shell access",
@@ -46,7 +46,6 @@ test("approved homepage copy remains intact", () => {
     "Your map, internal tools, and AI agents should not disagree.",
     "CONTEXT BEFORE CONTROL",
     "Let agents investigate production without letting them operate it.",
-    "Read-only is not a missing feature. It is the trust boundary.",
     "Evidence first. Guarded action second.",
     "Team has no browser or ad-hoc shell.",
     "TEAM PRICING",
