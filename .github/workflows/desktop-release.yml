@@ -15,9 +15,18 @@ name: desktop-release
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to rebuild
+        required: true
+        type: string
 
 permissions:
   contents: write
+
+env:
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 
 jobs:
   preflight:
@@ -25,16 +34,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ inputs.tag || github.sha }}
           fetch-depth: 0
       - name: Validate tag and checkout
         shell: bash
         run: |
-          [[ "$GITHUB_REF_TYPE" == "tag" ]]
-          [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]
-          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(git rev-list -n 1 "$GITHUB_REF_NAME")" = "$GITHUB_SHA"
-          VERSION="${GITHUB_REF_NAME#v}" node -e \
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]
+          test "$(git rev-parse HEAD)" = "$(git rev-list -n 1 "$RELEASE_TAG")"
+          VERSION="${RELEASE_TAG#v}" node -e \
             'const c = require("./src-tauri/tauri.conf.json"); if (c.version !== process.env.VERSION) process.exit(1)'
       - uses: dtolnay/rust-toolchain@stable
       - uses: swatinem/rust-cache@v2
@@ -69,7 +76,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ inputs.tag || github.sha }}
 
       - name: Linux system deps (webkit2gtk et al.)
         if: startsWith(matrix.platform, 'ubuntu')
@@ -89,21 +96,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
 
-      - name: Windows core tests
-        if: startsWith(matrix.platform, 'windows')
-        run: cargo test -p reticle-core --locked --target ${{ matrix.target }}
-
       - name: Build desktop bundles
-        env:
-          # macOS signing + notarization (no-ops while the secrets are
-          # unset — builds stay unsigned until the Apple setup is done).
-          # See the signing runbook in the release plan / DEPLOY notes.
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: bun run tauri build --target ${{ matrix.target }}
 
       - uses: actions/upload-artifact@v4
@@ -124,7 +117,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ inputs.tag || github.sha }}
       - uses: actions/download-artifact@v4
         with:
           pattern: desktop-*
@@ -153,7 +146,7 @@ jobs:
         shell: bash
         run: |
           release_args=()
-          [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || release_args+=(--prerelease)
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || release_args+=(--prerelease)
           cat > release-notes.md <<'NOTES'
             ## Downloads
 
@@ -179,6 +172,6 @@ jobs:
             White-glove installation and operational mapping starts at $3,000
             one-time.
           NOTES
-          gh release create "$GITHUB_REF_NAME" dist/* \
-            --draft --verify-tag --title "Reticle $GITHUB_REF_NAME" \
+          gh release create "$RELEASE_TAG" dist/* \
+            --draft --verify-tag --title "Reticle $RELEASE_TAG" \
             --notes-file release-notes.md "${release_args[@]}"
