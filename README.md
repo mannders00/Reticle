@@ -4,20 +4,31 @@
 
 # Reticle
 
-**The live operational graph your whole team can see.**
+**One live operational graph for humans, APIs, and agents.**
 
-Reticle turns topology and fixed health checks into one human-first map of
-production. The visual UI, JSON API, and read-only MCP are first-class lenses on
-the same graph, so people and tools work from the same truth.
-
-The free Desktop is standalone and local-only for individuals and homelabs. The
-paid Team Daemon provides the shared, always-on graph described above.
-
-Desktop requires no Reticle account or hosted service. No lock-in.
+Reticle keeps topology, health, dependencies, and freshness in one live picture
+for daily work and incidents, before anyone touches production.
 
 [**↓ Download free Desktop**](https://github.com/mannders00/reticle/releases/latest) · [**Live demo**](https://demo.reticle.live) · [**Discord**](https://discord.gg/x6hY9GYyph) · [**Team Daemon →**](https://reticle.live/team/)
 
 MIT-licensed desktop app · macOS / Linux / Windows
+
+</div>
+
+## One graph, one YAML, local first
+
+The same simple YAML defines the graph in Desktop and Team Daemon. Keep it in
+Git and run Reticle on your own machine or infrastructure: no SaaS account,
+forced cloud sync, or separate diagram format.
+
+| Reticle Desktop | Reticle Team Daemon |
+|---|---|
+| **Open source and local first.** For homelabs, solo operations, and evaluation. The app, YAML, and observations stay on your machine unless you explicitly use an external model. | **Self-hosted and team focused.** Runs inside your environment and serves the same graph through the browser UI, authenticated JSON API, and read-only MCP for agents. |
+
+**Inspection comes before action.** MCP is read-only by design, so agents can
+inspect current context without gaining shell or action access.
+
+<div align="center">
 
 <br/>
 
@@ -33,14 +44,18 @@ MIT-licensed desktop app · macOS / Linux / Windows
 
 ---
 
-## One truth during an incident
+## One current picture during an incident
 
 Every box is connected to current evidence. When something goes red, operators
-and tools can inspect the same topology and health truth instead of reconciling
-a stale diagram, a dashboard, and terminal folklore.
+and tools can inspect the same topology, observation times, and configured
+context instead of reconciling a stale diagram, a dashboard, and terminal
+folklore.
 
-- **Canonical graph**: normalized nodes, edges, signals, collectors, and named
-  action descriptors, assembled in the shared Rust core
+The YAML configuration is authoritative. Runtime health is a timestamped,
+ephemeral observation, not a replacement for metrics, logs, or durable history.
+
+- **Current snapshot**: normalized nodes, edges, timestamped signals, collector
+  state, and named-action descriptors, assembled in the shared Rust core
 - **Safe collector defaults**: static YAML topology, HTTP status/JSON assertions,
   and fixed read-only SSH probes for uptime or systemd service state
 - **Gated custom checks**: UI-created remote `ssh.command` and local
@@ -213,8 +228,8 @@ per daemon**. White-glove installation and operational mapping starts at
 ## Optional chat lens
 
 The optional chat panel can use OpenAI or a loopback Ollama instance to answer
-questions from the current graph. It is a read-only lens, not the product or a
-source of truth. It receives only read-only graph inspection tools and cannot
+questions from the current graph. It is a read-only lens, not the product or an
+authoritative system. It receives only read-only graph inspection tools and cannot
 save topology, open a shell, or run a named action.
 OpenAI keys are request-scoped, sent to the daemon when applicable and then to
 OpenAI's official API, and are never persisted or logged. Ollama endpoints are

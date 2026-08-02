@@ -7,15 +7,15 @@ const read = (path) => readFileSync(path, "utf8");
 const homepage = read("web/index.html");
 const teamPage = read("web/team/index.html");
 
-test("website presents the canonical graph lenses and product boundary", () => {
-  assert.ok(homepage.includes("The live operational graph your whole team can see."));
-  assert.ok(homepage.includes("Reticle turns topology and fixed health checks into one human-first map of production."));
-  for (const phrase of ["human-first", "Visual UI", "JSON API", "Read-only MCP"]) {
+test("website leads with current context, local operation, and safe inspection", () => {
+  assert.ok(homepage.includes("One live operational graph for humans, APIs, and agents."));
+  assert.ok(homepage.includes("before anyone touches production"));
+  for (const phrase of ["One graph, one YAML, local first", "JSON API", "Read-only MCP", "Read-only is a security feature"]) {
     assert.match(homepage, new RegExp(phrase, "i"));
   }
   assert.match(homepage, /standalone, local-only/i);
   assert.match(homepage, /shared and always on/i);
-  assert.match(homepage, /Optional chat is another read-only lens, not the product/i);
+  assert.match(homepage, /Read-only is a security feature/i);
   assert.match(homepage, /href="\/team\/"/);
 });
 
@@ -23,34 +23,26 @@ test("approved homepage copy remains intact", () => {
   const approved = [
     "Team: shared and always on",
     "Desktop: free and local only",
-    "The live operational graph your whole team can see.",
-    "Reticle turns topology and fixed health checks into one human-first map of production.",
-    "The visual UI, JSON API, and read-only MCP are first-class lenses on the same graph, so people and tools work from the same truth.",
+    "One live operational graph for humans, APIs, and agents.",
+    "Reticle keeps topology, health, dependencies, and freshness in one live picture for daily work and incidents, before anyone touches production.",
     "Explore Team Daemon",
     "Download free Desktop",
-    "Team is shared and always on. Desktop is a standalone, local-only app with no shared daemon.",
+    "Team is shared and always on; Desktop is a standalone, local-only app.",
     "LIVE TEAM DAEMON",
     "See the graph humans operate.",
-    "This read-only map shows the real infrastructure serving reticle.live, refreshed and served from one shared daemon.",
+    "Explore the read-only graph behind reticle.live, served live from one shared daemon.",
     "Click to explore the live map",
     "Pan, inspect, and export. This public view cannot edit or run actions.",
-    "ONE GRAPH, THREE PRIMARY LENSES",
-    "Human-first, without isolating the humans.",
-    "Each interface reads the same topology, relationships, and health evidence. Team adds authenticated shared access and configurable JSONL audit logging.",
-    "Visual UI",
-    "The primary operating surface: a live canvas that makes dependencies and failures legible during an incident.",
-    "JSON API",
-    "A structured lens for integrations that need the same graph and health truth. Team uses shared bearer tokens; Desktop remains loopback-only.",
-    "Read-only MCP",
-    "A constrained lens for agents to inspect evidence and relationships without gaining execution access.",
-    "Optional chat is another read-only lens, not the product.",
+    "One graph, one YAML, local first.",
+    "no SaaS account, forced cloud sync, or separate diagram format",
+    "Open source and local first",
+    "Self-hosted and shared",
+    "Inspection comes before action.",
+    "Read-only is a security feature.",
     "Evidence first. Guarded action second.",
     "Team has no browser or ad-hoc shell.",
-    "Choose where the graph needs to live.",
-    "One trusted network vantage point for the whole team, with configurable JSONL audit logging, browser UI, authenticated JSON API, and read-only MCP.",
-    "A complete standalone application for one person. It runs locally from your machine and does not provide a shared or always-on daemon.",
     "Give the incident one shared map.",
-    "Deploy a Team Daemon to serve one live graph to authorized teammates and integrations from a trusted network vantage point.",
+    "Serve one live graph to authorized teammates and integrations from a trusted network vantage point.",
   ];
   for (const phrase of approved) {
     assert.ok(homepage.includes(phrase), `Homepage lost approved copy: ${phrase}`);
@@ -73,6 +65,14 @@ test("outcome messaging sells reduced ambiguity without numeric ROI claims", () 
   assert.doesNotMatch(outcomeCopy, /guarantee(?:d|s)?\s+(?:ROI|recovery|reduction)|\d+%\s+(?:faster|reduction|improvement)/i);
 });
 
+test("public pitch avoids operational truth and hype claims", () => {
+  const publicCopy = [homepage, teamPage, read("README.md")].join("\n");
+  assert.doesNotMatch(publicCopy, /source of truth|provenance/i);
+  assert.match(publicCopy, /YAML configuration is authoritative/i);
+  assert.match(publicCopy, /timestamped,?\s+ephemeral observation/i);
+  assert.match(publicCopy, /does not replace (?:them|metrics, logs, or durable history)/i);
+});
+
 test("Team page contains exact pricing and an accessible comparison table", () => {
   for (const price of ["$199", "$1,999", "$3,000"]) {
     assert.ok(teamPage.includes(price), `Team page is missing ${price}`);
@@ -82,6 +82,7 @@ test("Team page contains exact pricing and an accessible comparison table", () =
   assert.match(teamPage, /<th scope="col">Team Daemon<\/th>/);
   assert.match(teamPage, /<th scope="row">Audit logs<\/th>/);
   assert.match(teamPage, /No Team shell/i);
+  assert.match(teamPage, /Runs on your own infrastructure from a local YAML configuration/i);
 });
 
 test("product proof uses truthful viewer and PDF media", () => {
@@ -123,8 +124,8 @@ test("custom command checks preserve the gated execution boundary", () => {
 
 test("privileged mode is positioned as flexible operator power with read-only viewers", () => {
   const readme = read("README.md");
-  assert.match(homepage, /one global privileged toggle can enable reviewed remote SSH commands, or local Bash on Unix hosts, as persisted checks or guarded named actions/i);
-  assert.match(homepage, /Desktop may also open a separately warned live shell/i);
+  assert.match(homepage, /global privileged toggle enables persisted remote SSH commands, local Bash on Unix, and guarded named actions/i);
+  assert.match(homepage, /Desktop offers a separately warned live shell/i);
   assert.match(teamPage, /Viewers receive bounded results, never command text or execution controls/i);
   assert.match(readme, /Safe by default, precise when you choose/i);
   assert.match(readme, /Enable privileged mode/);
