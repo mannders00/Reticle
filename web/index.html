@@ -61,12 +61,19 @@
         "name": "Reticle Team Daemon",
         "applicationCategory": "DeveloperApplication",
         "description": "Self-hosted software serving the live operational graph through a browser UI, JSON API, and read-only MCP.",
-        "url": "https://reticle.live/team/",
+        "url": "https://reticle.live/#pricing",
         "offers": [
-          { "@type": "Offer", "name": "Monthly per running daemon", "price": "199", "priceCurrency": "USD" },
-          { "@type": "Offer", "name": "Annual per running daemon", "price": "1999", "priceCurrency": "USD" }
+          { "@type": "Offer", "name": "Monthly per running daemon", "price": "199", "priceCurrency": "USD", "url": "https://reticle.live/#pricing" },
+          { "@type": "Offer", "name": "Annual per running daemon", "price": "1999", "priceCurrency": "USD", "url": "https://reticle.live/#pricing" }
         ],
         "author": { "@id": "https://reticle.live/#organization" }
+      },
+      {
+        "@type": "Service",
+        "name": "Reticle white-glove installation and mapping",
+        "description": "Team Daemon deployment, least-privilege access, TLS, authentication, collectors, and initial operational mapping.",
+        "provider": { "@id": "https://reticle.live/#organization" },
+        "offers": { "@type": "AggregateOffer", "lowPrice": "3000", "priceCurrency": "USD", "offerCount": "1", "url": "https://reticle.live/#pricing" }
       }
     ]
   }
@@ -81,18 +88,18 @@
         <a href="#products">Products</a>
         <a href="#same-graph">One graph</a>
         <a href="#context-control">Security</a>
-        <a href="/team/">Team</a>
+        <a href="#pricing">Pricing</a>
       </nav>
       <span class="nav-spacer"></span>
       <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark" aria-label="Toggle theme">☾</button>
-      <a class="btn btn-primary btn-small nav-cta" href="/team/">Explore Team</a>
+      <a class="btn btn-primary btn-small nav-cta" href="#pricing">See pricing</a>
       <button class="nav-menu-btn" id="nav-menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="nav-menu">☰</button>
       <nav class="nav-menu" id="nav-menu" aria-label="Mobile navigation" hidden>
         <a href="#live">Live demo</a>
         <a href="#products">Products</a>
         <a href="#same-graph">One graph</a>
         <a href="#context-control">Security</a>
-        <a class="btn btn-primary btn-small" href="/team/">Explore Team</a>
+        <a class="btn btn-primary btn-small" href="#pricing">See pricing</a>
       </nav>
     </div>
   </header>
@@ -139,7 +146,7 @@
             <span class="plan-tag">For organizations</span>
             <div><div class="plan-name">Team Daemon</div><div class="plan-price"><strong>Customer-hosted and always on</strong></div></div>
             <p class="plan-summary">Run one commercial daemon from a trusted host inside your network. It continuously updates the graph and serves authorized teammates, internal integrations, and read-only agents through the browser, JSON API, and MCP.</p>
-            <div class="plan-cta"><a class="btn btn-primary" href="/team/">Explore Team</a></div>
+            <div class="plan-cta"><a class="btn btn-primary" href="#pricing">Explore Team</a></div>
           </article>
         </div>
       </div>
@@ -205,8 +212,17 @@
       </div>
     </section>
 
-    <section>
-      <div class="wrap"><div class="cta-panel"><h2>Give the incident one shared map.</h2><p class="lede">Serve one live graph to authorized teammates and integrations from a trusted network vantage point.</p><div class="hero-ctas"><a class="btn btn-primary" href="/team/">Explore Team Daemon</a><a class="btn btn-ghost" href="mailto:matt@masoftware.net?subject=Reticle%20Team%20Daemon">Talk to us</a></div></div></div>
+    <section id="pricing">
+      <div class="wrap">
+        <div class="section-head"><span class="kicker">TEAM PRICING</span><h2>One topology. Unlimited teammates.</h2><p class="lede">Each subscription covers one customer-hosted Team Daemon and one shared topology. Team adds an always-on network vantage point, server-enforced viewer/editor access, and configurable JSONL audit logging.</p></div>
+        <div class="pricing-grid">
+          <article class="price-card"><span class="pill">Monthly</span><p class="price"><strong>$199</strong><span>/month</span></p><p>Per running Team Daemon, billed monthly.</p></article>
+          <article class="price-card featured"><span class="plan-tag">Save $389</span><span class="pill accent">Annual</span><p class="price"><strong>$1,999</strong><span>/year</span></p><p>Per running Team Daemon, billed annually.</p></article>
+          <article class="price-card"><span class="pill">Implementation</span><p class="price service-price"><strong>$3,000</strong><span>one-time</span></p><p>White-glove deployment and initial operational mapping starts at $3,000.</p></article>
+        </div>
+        <div class="pricing-cta"><a class="btn btn-primary" href="mailto:matt@masoftware.net?subject=Reticle%20Team%20Daemon">Start with Team</a><p>We reply within one business day. Card, ACH, or bank transfer.</p></div>
+        <div class="qualification"><h3>Deployment boundaries</h3><p>One daemon serves one topology. Access uses shared viewer and editor tokens; SSO and individual attribution are not included. Before production use, confirm TLS, token rotation, least-privilege access, audit-log handling, topology backups, support expectations, and any required SLA.</p></div>
+      </div>
     </section>
   </main>
 

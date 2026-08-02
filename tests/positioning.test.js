@@ -16,7 +16,8 @@ test("website leads with current context, local operation, and safe inspection",
   assert.match(homepage, /Open source and local only/i);
   assert.match(homepage, /Customer-hosted and always on/i);
   assert.match(homepage, /No agent shell access/i);
-  assert.match(homepage, /href="\/team\/"/);
+  assert.doesNotMatch(homepage, /href="\/team\/"/);
+  assert.match(homepage, /href="#pricing"/);
   assert.ok(homepage.indexOf('<section class="hero">') < homepage.indexOf('<section id="live">'));
   assert.ok(homepage.indexOf('<section id="live">') < homepage.indexOf('<section id="products">'));
 });
@@ -48,11 +49,27 @@ test("approved homepage copy remains intact", () => {
     "Read-only is not a missing feature. It is the trust boundary.",
     "Evidence first. Guarded action second.",
     "Team has no browser or ad-hoc shell.",
-    "Give the incident one shared map.",
-    "Serve one live graph to authorized teammates and integrations from a trusted network vantage point.",
+    "TEAM PRICING",
+    "One topology. Unlimited teammates.",
+    "Start with Team",
   ];
   for (const phrase of approved) {
     assert.ok(homepage.includes(phrase), `Homepage lost approved copy: ${phrase}`);
+  }
+});
+
+test("homepage converts Desktop and Team visitors without a Team-page detour", () => {
+  assert.doesNotMatch(homepage, /href="\/team\/?(?:#.*?)?"/);
+  for (const price of ["$199", "$1,999", "$3,000"]) {
+    assert.ok(homepage.includes(price), `Homepage is missing ${price}`);
+  }
+  assert.match(homepage, /Download Desktop/);
+  assert.match(homepage, /Start with Team/);
+  assert.match(homepage, /configurable JSONL audit logging/i);
+  assert.ok(homepage.lastIndexOf('<section id="pricing">') > homepage.indexOf('<section id="product">'));
+  const structuredData = JSON.stringify(JSON.parse(homepage.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]));
+  for (const price of ['"price":"199"', '"price":"1999"', '"lowPrice":"3000"']) {
+    assert.ok(structuredData.includes(price), `Homepage structured data is missing ${price}`);
   }
 });
 
