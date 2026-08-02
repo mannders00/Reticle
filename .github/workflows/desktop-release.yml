@@ -21,6 +21,10 @@ on:
         description: Existing release tag to rebuild
         required: true
         type: string
+      artifact_run_id:
+        description: Prior successful build-matrix run to reuse
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -59,6 +63,7 @@ jobs:
 
   build:
     needs: preflight
+    if: ${{ inputs.artifact_run_id == '' }}
     strategy:
       fail-fast: false
       matrix:
@@ -112,7 +117,8 @@ jobs:
             target/${{ matrix.target }}/release/bundle/nsis/*.exe
 
   publish:
-    needs: build
+    needs: [preflight, build]
+    if: ${{ always() && needs.preflight.result == 'success' && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -123,10 +129,20 @@ jobs:
           pattern: desktop-*
           path: dist
           merge-multiple: true
+          run-id: ${{ inputs.artifact_run_id || github.run_id }}
+          github-token: ${{ github.token }}
       - name: Verify and complete release inventory
         shell: bash
         run: |
           set -euo pipefail
+          mkdir release-dist
+          while IFS= read -r -d '' file; do
+            name="$(basename "$file")"
+            test ! -e "release-dist/$name"
+            cp "$file" "release-dist/$name"
+          done < <(find dist -type f -print0)
+          rm -rf dist
+          mv release-dist dist
           test "$(find dist -maxdepth 1 -type f -name '*.dmg' | wc -l)" -eq 2
           for pattern in '*.AppImage' '*.deb' '*.rpm' '*.msi' '*.exe'; do
             test "$(find dist -maxdepth 1 -type f -name "$pattern" | wc -l)" -ge 1
