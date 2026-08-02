@@ -134,3 +134,20 @@
   pointer-events: none;
   z-index: 4;
 }
+.canvas-empty-state {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  top: 50%;
+  width: min(420px, calc(100% - 40px));
+  padding: 24px;
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--stroke-1);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--bg-1) 92%, transparent);
+  box-shadow: var(--shadow-2);
+  text-align: center;
+}
+.canvas-empty-state[hidden] { display: none; }
+.canvas-empty-state h2 { margin: 0 0 8px; font-size: 17px; }
+.canvas-empty-state p { margin: 0 0 16px; color: var(--text-2); line-height: 1.5; }

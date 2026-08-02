@@ -41,15 +41,53 @@ a stale diagram, a dashboard, and terminal folklore.
 
 - **Canonical graph**: normalized nodes, edges, signals, collectors, and named
   action descriptors, assembled in the shared Rust core
-- **Narrow collectors**: static YAML topology, HTTP status/JSON assertions,
+- **Safe collector defaults**: static YAML topology, HTTP status/JSON assertions,
   and fixed read-only SSH probes for uptime or systemd service state
-- **Guarded actions**: only named `service.restart` and `service.reload`
-  actions, with validated targets, timeouts, preconditions, optional approval,
-  and daemon audit logging. No caller-provided shell
+- **Gated custom checks**: UI-created remote `ssh.command` and local
+  `shell.command` checks default to enabled and viewer-visible, but execute only
+  while privileged mode is active. Team additionally requires daemon operator
+  `--allow-custom-commands` and editor authorization to manage definitions
+- **Guarded actions**: persisted secure-shell or local-shell commands with bounded
+  execution, optional signal preconditions, approval by default, editor-only
+  invocation, and daemon audit logging. Team callers submit only a stable action
+  ID, expected configuration revision, and approval decision
 - **Shared consumers**: the UI, `GET /api/graph`, and read-only MCP tools read
   the same snapshot
 - **Local-only Desktop**: commit topology beside infrastructure code and review
   it in pull requests. Credentials stay in your existing SSH configuration
+
+## Safe by default, precise when you choose
+
+Reticle starts with fixed, read-only evidence: HTTP status and JSON assertions,
+host uptime, and systemd service state. That is enough for many maps and remains
+the default for every workspace and Team daemon.
+
+When a fixed probe cannot express the exact question, an operator can explicitly
+enable the Desktop's single global **privileged mode** control. For the active
+workspace, it unlocks all persisted remote SSH and local shell checks,
+so the same one-liners already used during diagnosis can become named, repeatable
+signals: `curl` plus `jq`, `systemctl status`, release/version assertions, queue
+depth checks, certificate inspection, or a tightly scoped diagnostic script.
+The shell makes the check model deliberately flexible; it also makes these checks
+arbitrary commands, not inherently read-only operations.
+
+The escalation is intentionally visible:
+
+- Desktop has one bottom-status-bar privileged toggle, not a per-check risk
+  acknowledgment. Its trust applies to all custom checks and actions in the
+  active workspace for the current app session and can be revoked without restarting.
+- Team requires the daemon operator's `--allow-custom-commands` flag and an editor.
+- New custom checks default to enabled and viewer-visible; the form keeps the
+  command-risk warning visible without adding another acknowledgment gate.
+- Non-interactive checks have bounded time and output; SSH checks receive no PTY or stdin.
+- Named actions require approval by default and may require a fresh signal state.
+- Desktop can open a separately warned live SSH/kubectl shell for the local operator.
+- Team viewers see the resulting graph evidence, but not command text, edit controls,
+  action controls, or an interactive shell. JSON, MCP, and chat remain read-only.
+
+Use restricted SSH principals and a least-privileged Desktop/daemon OS account.
+Reticle's warnings and timeouts are guardrails; the operating-system and remote
+identity permissions remain the real security boundary.
 
 ## Reduce the cost of ambiguity
 
@@ -67,8 +105,8 @@ deciding what is safe. Reticle is designed to help teams improve:
   to recover when the original author is not present.
 - **Operational handoff time**: give the next shift or escalation path the same
   live graph instead of a partial verbal summary.
-- **Operational memory**: preserve context in topology, bounded history, audit
-  records, and exported incident snapshots.
+- **Operational context**: preserve context in topology, JSONL audit records,
+  and exported incident snapshots.
 
 These are outcomes Reticle helps move by reducing incident ambiguity; they are
 not fixed ROI promises.
@@ -78,7 +116,7 @@ not fixed ROI promises.
 | Best for | Individuals and homelabs | Teams sharing one operational view |
 | Runtime | Standalone, local-only | Shared, always-on daemon with browser access |
 | API and MCP | Loopback JSON API and read-only MCP | Authenticated JSON API and read-only MCP |
-| History and audit | No retained history or audit log | Bounded in-memory history; configured JSONL audit log |
+| Audit logging | Not a shared service | Configurable JSONL audit log |
 | Price | Free and MIT licensed | $199/month or $1,999/year per daemon |
 
 ## Hand the map to anyone
@@ -98,7 +136,7 @@ in the customer deck, print it:
 **[Download the latest release](https://github.com/mannders00/reticle/releases/latest)**: .dmg (macOS, Apple Silicon + Intel), .AppImage/.deb/.rpm (Linux), .msi/.exe (Windows).
 
 > macOS builds are unsigned for now: right-click → Open the first time.
-> Named actions require a configured SSH target. Checks, graph inspection,
+> SSH actions require a configured SSH target and privileged mode. Fixed checks, graph inspection,
 > and PDF export work without enabling an action.
 
 Or build from source (Rust + [Bun](https://bun.sh)):
@@ -137,14 +175,36 @@ binary that serves this exact app to every browser on your network:
 
 - Nothing to install for teammates, just a browser and a link
 - Always-on collection from one shared network vantage point
-- Bounded signal history through JSON and read-only MCP
 - **Read-only by default**: strict editor/viewer tokens, enforced server-side
 - Credentials stay on one host; nobody distributes SSH keys
-- Configured JSONL audit logging for named-action attempts
+- Configured JSONL audit logging for connection lifecycle, selected privileged
+  requests and refusals, save failures, and named-action outcomes
 - Optional editor-authorized, read-only chat lens with request-scoped credentials
+- Optional custom command checks gated by `--allow-custom-commands`; UI/API
+  definitions require editor authorization and default to enabled and viewer-visible
 
 The live demo at **[demo.reticle.live](https://demo.reticle.live)** is the
 daemon serving its own real infrastructure, read-only. Go poke it.
+
+Custom checks are arbitrary commands and cannot be guaranteed read-only.
+`ssh.command` runs remotely without a PTY or stdin; `shell.command` runs through
+non-interactive Bash on a Unix Desktop or daemon host. Neither is exposed as a
+viewer graph API, MCP, chat, or one-off ad-hoc tool.
+Viewers cannot see command text, manage definitions, or run checks, and command
+text is not written to audit logs. Use restricted SSH principals and run Reticle
+itself as a dedicated, least-privileged OS account. Named actions use the same
+SSH/host execution boundary and remain persisted definitions, never ad-hoc
+requests. Team invocation includes the action ID, expected configuration
+revision, and approval decision.
+
+Desktop does not execute persisted shell commands merely by opening a YAML file.
+Use the one **Enable privileged mode** control in the bottom status bar to trust
+all custom checks and actions in the selected workspace for the current app
+session; there is no per-check acknowledgment. Turn it off there to revoke trust
+and close operator shells. Managed deployments may instead launch with
+`RETICLE_ALLOW_CUSTOM_COMMANDS=1`, a process-wide override that trusts every YAML
+opened by that Desktop process. The loopback JSON/MCP server and chat lens never
+initiate persisted shell commands.
 
 The [Team Daemon](https://reticle.live/team/) is **$199/month or $1,999/year
 per daemon**. White-glove installation and operational mapping starts at
@@ -154,8 +214,8 @@ per daemon**. White-glove installation and operational mapping starts at
 
 The optional chat panel can use OpenAI or a loopback Ollama instance to answer
 questions from the current graph. It is a read-only lens, not the product or a
-source of truth. It receives only graph/node tools (plus bounded signal history
-on the daemon) and cannot save topology, open a shell, or run a named action.
+source of truth. It receives only read-only graph inspection tools and cannot
+save topology, open a shell, or run a named action.
 OpenAI keys are request-scoped, sent to the daemon when applicable and then to
 OpenAI's official API, and are never persisted or logged. Ollama endpoints are
 restricted to `localhost` or literal loopback IPs.
@@ -170,6 +230,9 @@ restricted to `localhost` or literal loopback IPs.
 | [Keyboard shortcuts](docs/shortcuts.md) | Canvas, editing, and operating keys |
 | [The Team Daemon](https://reticle.live/team/) | Pricing, licensing, and team deployment |
 | [Daemon operations](docs/daemon.md) | Flags, access model, audit log, deployment |
+| [v1.2 release and migration](docs/release-notes-v1.2.md) | Behavior changes and upgrade checklist |
+| [Capabilities and limitations](docs/capabilities-and-limitations.md) | Current product boundary and unsupported claims |
+| [Production deployment](docs/production-deployment.md) | Linux, systemd, Caddy, rotation, backup, and rollback |
 | [DAEMON.md](DAEMON.md) | Full architecture and wire protocol |
 | [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Discord](https://discord.gg/x6hY9GYyph) | |
 
@@ -185,5 +248,8 @@ DAEMON.md     team-daemon design: sharing model, roles, wire protocol
 
 ## License
 
-Everything in this repository is **[MIT](LICENSE)**. The
-[Team Daemon](https://reticle.live/team/) is a separate commercial binary.
+The Desktop, shared core, frontend, and their documentation are provided under
+the repository **[MIT license](LICENSE)**. The `daemon/` directory is expressly
+excluded and is proprietary commercial software governed by
+the Team license distributed with it and the applicable Team agreement. An MIT
+Desktop release does not grant a right to use or distribute Team Daemon.

@@ -1,9 +1,15 @@
 [package]
 name = "reticle"
-version = "1.1.0"
+version = "1.2.0"
 description = "A local-first infra operations canvas"
-authors = ["you"]
+authors = ["Matt Anderson <matt@masoftware.net>"]
 edition = "2021"
+license = "MIT"
+repository = "https://github.com/mannders00/reticle"
+homepage = "https://reticle.live"
+readme = "../README.md"
+keywords = ["infrastructure", "operations", "topology", "tauri"]
+categories = ["visualization"]
 
 [lib]
 name = "reticle_lib"

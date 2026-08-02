@@ -188,9 +188,10 @@ async fn collect_graph(state: &HttpState) -> Result<graph::OperationalGraph, Str
         .await
         .map_err(|_| "local graph API is shutting down".to_string())?;
     let path = state.config_path.lock().unwrap().clone();
-    let result = tokio::task::spawn_blocking(move || graph::collect_yaml(&path))
-        .await
-        .map_err(|error| format!("graph collection task failed: {error}"))?;
+    let result =
+        tokio::task::spawn_blocking(move || graph::collect_yaml_with_custom_checks(&path, false))
+            .await
+            .map_err(|error| format!("graph collection task failed: {error}"))?;
     drop(permit);
     result
 }

@@ -632,6 +632,15 @@ footer {
 }
 @keyframes livepulse { 50% { opacity: 0.4; } }
 
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* ---------- text-only hero ---------- */
 .hero-solo {
   max-width: 800px;
@@ -712,6 +721,23 @@ footer {
 .qualification h3 { margin-bottom: 6px; }
 .qualification p { color: var(--text-1); font-size: 14.5px; }
 .qualification code { font-size: 13px; }
+
+.gate-cards code, .warning code { font-size: 12px; }
+.gate-number {
+  color: var(--accent);
+  font: 700 12px var(--font-mono);
+  letter-spacing: 0.1em;
+}
+.warning {
+  margin-top: 24px;
+  padding: 24px 26px;
+  border: 1px solid color-mix(in srgb, var(--warn) 65%, var(--stroke));
+  border-left: 4px solid var(--warn);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--warn) 8%, var(--bg-1));
+}
+.warning h3 { margin-bottom: 6px; }
+.warning p { color: var(--text-1); font-size: 14.5px; }
 
 .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; }
 .price-card {

@@ -13,7 +13,8 @@
 use std::io::Write;
 use std::net::{TcpStream, ToSocketAddrs};
 use std::process::{Command, Stdio};
-use std::time::Duration;
+use std::thread;
+use std::time::{Duration, Instant};
 
 use serde::Serialize;
 
@@ -71,6 +72,7 @@ pub fn http_check_with_timeout(
     let out = match Command::new("curl")
         .args(["-sS", "-L", "--max-time"])
         .arg(timeout_seconds.clamp(1, 120).to_string())
+        .args(["--max-filesize", "1048576"])
         .args(["-o", "-", "-w", "\nRETICLE_HTTP_STATUS:%{http_code}", url])
         .output()
     {
@@ -116,7 +118,11 @@ pub fn http_check_with_timeout(
     let jq_ok = if jq_expr.trim().is_empty() {
         true
     } else {
-        match run_jq(body, jq_expr) {
+        match run_jq(
+            body,
+            jq_expr,
+            Duration::from_secs(timeout_seconds.clamp(1, 120)),
+        ) {
             Ok(true) => {
                 detail.push_str(" · jq ✓");
                 true
@@ -142,7 +148,7 @@ pub fn http_check_with_timeout(
 /// Pipe `body` through `jq -e <expr>`; Ok(true) if jq's last output is
 /// truthy (jq exit 0), Ok(false) if falsy (exit 1). Err for jq missing /
 /// parse errors (exit >1 / spawn failure).
-fn run_jq(body: &str, expr: &str) -> Result<bool, String> {
+fn run_jq(body: &str, expr: &str, timeout: Duration) -> Result<bool, String> {
     let mut child = Command::new("jq")
         .args(["-e", expr])
         .stdin(Stdio::piped())
@@ -150,8 +156,33 @@ fn run_jq(body: &str, expr: &str) -> Result<bool, String> {
         .stderr(Stdio::piped())
         .spawn()
         .map_err(|_| "jq not found".to_string())?;
-    if let Some(mut stdin) = child.stdin.take() {
-        let _ = stdin.write_all(body.as_bytes());
+    let body = body.as_bytes().to_vec();
+    let writer = child.stdin.take().map(|mut stdin| {
+        thread::spawn(move || {
+            let _ = stdin.write_all(&body);
+        })
+    });
+    let started = Instant::now();
+    loop {
+        if child
+            .try_wait()
+            .map_err(|error| format!("jq: {error}"))?
+            .is_some()
+        {
+            break;
+        }
+        if started.elapsed() >= timeout {
+            let _ = child.kill();
+            let _ = child.wait();
+            if let Some(writer) = writer {
+                let _ = writer.join();
+            }
+            return Err(format!("jq timed out after {}s", timeout.as_secs()));
+        }
+        thread::sleep(Duration::from_millis(25));
+    }
+    if let Some(writer) = writer {
+        let _ = writer.join();
     }
     let out = child.wait_with_output().map_err(|e| format!("jq: {e}"))?;
     match out.status.code() {

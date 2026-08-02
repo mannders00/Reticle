@@ -5,13 +5,17 @@ Reticle's canonical operational graph. One daemon serves one topology to
 browsers, an authenticated JSON API, and read-only MCP. These are first-class
 lenses on the same graph. It is not a remote shell service.
 
+One licensed daemon serves one topology. Access is seat-unlimited through shared
+editor/viewer bearer tokens; SSO, individual identities, and per-user audit
+attribution are not included.
+
 ## Repository boundaries
 
 ```text
 src/          one frontend used by desktop, daemon, and browser mock
 core/         transport-neutral graph, collectors, named actions, config
 src-tauri/    MIT desktop shell and opt-in loopback read API
-daemon/       commercial shared shell: HTTP, WebSocket, auth, history, audit
+daemon/       proprietary commercial runtime: HTTP, WebSocket, auth, audit
 ```
 
 `reticle-core` depends on neither Tauri nor Axum. Both shells call the same
@@ -31,18 +35,22 @@ The initial inputs are deliberately narrow:
 - static topology from local YAML;
 - HTTP status and optional `jq` checks;
 - fixed SSH probes: `host.uptime` and `service.status`;
-- named `service.restart` and `service.reload` actions.
+- optional, gated remote `ssh.command` and Unix-only local `shell.command` checks;
+- named secure-shell and local-shell command actions.
 
-Raw configuration, arbitrary health destinations, local scripts, interpreters,
-interactive terminals, kubectl shells, and caller-provided SSH commands are not
-exposed through the [Team Daemon](https://reticle.live/team/), JSON API, MCP, or
-optional chat. Deploy it with least-privilege network and SSH access.
+Raw configuration, custom command text, local scripts, interpreters, interactive
+terminals, kubectl shells, and caller-provided one-off SSH commands are not
+exposed through the viewer graph API, MCP, or optional chat. Deploy the
+[Team Daemon](https://reticle.live/team/) with least-privilege network and SSH
+access.
 
 ## Daemon collection
 
 One background owner collects immediately at startup, every 30 seconds, and
-after accepted saves or external YAML changes. API, MCP, WebSocket, and browser
-clients read the resulting cache; they never launch duplicate probes.
+after accepted saves or external YAML changes. API and MCP clients and viewers
+read the resulting cache. An editor may request one generation-tracked refresh;
+the background owner still performs and coalesces collection, so clients never
+launch duplicate probe workers.
 
 Collection publication is revision-aware:
 
@@ -54,9 +62,11 @@ Collection publication is revision-aware:
 A stale cache is invalidated before `config-changed` is broadcast. Readers wait
 for a current-revision snapshot rather than receiving old topology or signals.
 
-## Signal history
+## Transient signal observations
 
-The daemon retains a bounded in-memory observation ring:
+The daemon retains a bounded in-memory observation ring for short-term inspection.
+This is an implementation convenience, not durable history or a commercial
+retention feature:
 
 - maximum 10,000 observations;
 - unchanged observations are deduplicated;
@@ -109,7 +119,7 @@ version. Terminal capability is always false.
     "terminal": false,
     "connId": 3,
     "rev": 7,
-    "version": "1.1.0"
+    "version": "1.2.0"
   }
 }
 ```
@@ -147,15 +157,53 @@ Tokens in query strings are authorization credentials, not transport security.
 Query-token deployments require TLS; deploy behind TLS outside a trusted local
 network.
 
+## Custom command checks
+
+Fixed HTTP checks and the fixed, read-only `host.uptime` and `service.status`
+SSH probes remain the default. Team permits persisted remote `ssh.command` and
+Unix-only local `shell.command` collectors only when both control-plane gates are present:
+
+1. The daemon operator starts it with `--allow-custom-commands`.
+2. Definitions created through the UI/API require editor authorization. New
+   custom checks default to enabled and publish bounded output to viewers.
+
+Direct filesystem access to the YAML is an operator trust boundary, not a third
+untrusted input path. An enabled custom check written directly to disk may run
+while the daemon flag is active; restrict config-file writers accordingly.
+
+Before execution, the daemon validates the definition and enforces its 1-120
+second timeout. Remote commands run over SSH without a PTY or stdin. Local
+commands run in non-interactive Bash on the daemon host with `pipefail`, making
+commands such as `curl -fsS ... | jq -e ...` fail on either HTTP or predicate
+failure. No custom check accepts a caller-supplied one-off command.
+`publishOutput: false` keeps
+stdout and stderr out of the graph; command text is always omitted from graph
+responses and audit logs. Viewers cannot see command text, manage definitions,
+or run custom checks. Custom checks are never API, MCP, or chat tools.
+
+Custom definitions contain arbitrary commands and therefore cannot be guaranteed
+read-only. Restricted SSH principals and the daemon's least-privileged OS
+account, environment, filesystem, and network access are the actual security
+boundaries, not Reticle's collector label or UI. Named actions use those same
+execution boundaries and remain persisted definitions rather than ad-hoc requests.
+
 ## Named actions
 
-Action callers submit only an action ID and approval decision. The daemon loads
-the server-owned definition, validates its service target, enforces a 1-120
-second timeout, checks optional fresh-signal preconditions, requires approval by
-default, and executes a fixed SSH command.
+Action callers submit only an action ID, expected configuration revision
+(`baseRev` on the wire), and approval decision. The daemon loads
+the persisted definition, enforces a 1-120 second timeout, checks optional
+fresh-signal preconditions, requires approval by default, and executes either
+over the node's SSH identity or through non-interactive Bash on the daemon host.
 
-With `--audit-log`, connection, save, action-attempt, refusal, and action-result
-records are appended as JSONL. No raw command or keystroke exists to log.
+With `--audit-log`, the daemon appends JSONL for accepted and denied WebSocket
+connections, disconnects, selected privileged requests and viewer refusals,
+stale or invalid saves, and named-action outcomes. The initial
+`run_named_action` record contains action ID, approval decision, and `baseRev`;
+`named_action_result` contains an exit code or error string. Configuration-save
+records summarize changed collector and action IDs without command text. Refresh,
+chat provider/model, disabled legacy command routes, and cron-result removal are
+also among the selected privileged requests. It does not log shell keystrokes,
+command text, command output, prompts, credentials, or graph data.
 
 ## Desktop interoperability
 
@@ -174,10 +222,17 @@ open while the daemon addresses the shared access and governance problem.
 
 ```sh
 ./reticle-daemon --config /etc/reticle/prod.yaml \
+  --bind 0.0.0.0 \
   --edit-token "$(openssl rand -hex 16)" \
   --view-token "$(openssl rand -hex 16)" \
+  --allow-custom-commands \
   --audit-log /var/log/reticle-audit.jsonl
 ```
+
+Omit `--allow-custom-commands` for the fixed-probe default.
+The listener defaults to `127.0.0.1`; non-loopback `--bind` requires a view
+token. Tokens can be supplied through `RETICLE_EDIT_TOKEN` and
+`RETICLE_VIEW_TOKEN` to keep them out of process arguments.
 
 The release binary embeds the frontend. `--root ../src` serves frontend files
 from disk during development. `make daemon-dev`, `make daemon`, and
@@ -186,7 +241,7 @@ from disk during development. `make daemon-dev`, `make daemon`, and
 ## Pricing and roadmap
 
 The current paid value is shared always-on collection, authenticated remote
-access, roles, bounded history, configured JSONL audit logging, and optional
+access, roles, configured JSONL audit logging, and optional
 paid installation. Planned capabilities are durable incident history and
 retention policy, SSO/OIDC, multiple managed topologies, and deployment
 lifecycle support. They are not claims about the current binary.

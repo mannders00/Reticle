@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Reticle Team Daemon: shared, always-on operational graph</title>
-  <meta name="description" content="Reticle Team Daemon gives your organization one shared, always-on operational graph with browser UI, bounded in-memory history, configurable JSONL audit logs, authenticated JSON API, and read-only MCP. $199/month or $1,999/year." />
+  <meta name="description" content="Reticle Team Daemon gives your organization one shared operational graph with browser UI, configurable JSONL audit logs, shared-token JSON API, and read-only MCP. $199/month or $1,999/year per running daemon." />
   <link rel="canonical" href="https://reticle.live/team/" />
   <meta property="og:type" content="product" />
   <meta property="og:title" content="Reticle Team Daemon" />
@@ -14,7 +14,7 @@
   <meta property="og:site_name" content="Reticle" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Reticle Team Daemon" />
-  <meta name="twitter:description" content="One shared, always-on operational graph. $199/month or $1,999/year." />
+  <meta name="twitter:description" content="One shared operational graph. $199/month or $1,999/year per running daemon." />
   <meta name="twitter:image" content="https://reticle.live/assets/og-card.jpg" />
   <meta name="theme-color" content="#0b0e14" media="(prefers-color-scheme: dark)" />
   <meta name="theme-color" content="#f7f8fb" media="(prefers-color-scheme: light)" />
@@ -33,11 +33,11 @@
         "@type": "SoftwareApplication",
         "name": "Reticle Team Daemon",
         "applicationCategory": "DeveloperApplication",
-        "description": "Commercial shared, always-on operational graph software with a browser UI, authenticated JSON API, and read-only MCP.",
+        "description": "Commercial shared operational graph software with a browser UI, shared-token JSON API, and read-only MCP.",
         "url": "https://reticle.live/team/",
         "offers": [
-          { "@type": "Offer", "name": "Monthly", "price": "199", "priceCurrency": "USD", "url": "https://reticle.live/team/#pricing" },
-          { "@type": "Offer", "name": "Annual", "price": "1999", "priceCurrency": "USD", "url": "https://reticle.live/team/#pricing" }
+          { "@type": "Offer", "name": "Monthly per running daemon", "price": "199", "priceCurrency": "USD", "url": "https://reticle.live/team/#pricing" },
+          { "@type": "Offer", "name": "Annual per running daemon", "price": "1999", "priceCurrency": "USD", "url": "https://reticle.live/team/#pricing" }
         ],
         "author": { "@type": "Organization", "name": "MA Software LLC", "email": "matt@masoftware.net" }
       },
@@ -46,7 +46,7 @@
         "name": "Reticle white-glove installation and mapping",
         "description": "Team Daemon deployment, least-privilege access, TLS, authentication, collectors, and initial operational mapping.",
         "provider": { "@type": "Organization", "name": "MA Software LLC" },
-        "offers": { "@type": "Offer", "price": "3000", "priceCurrency": "USD", "url": "https://reticle.live/team/#pricing" }
+        "offers": { "@type": "AggregateOffer", "lowPrice": "3000", "priceCurrency": "USD", "offerCount": "1", "url": "https://reticle.live/team/#pricing" }
       }
     ]
   }
@@ -61,7 +61,7 @@
       <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark" aria-label="Toggle theme">☾</button>
       <a class="btn btn-primary btn-small nav-cta" href="#pricing">See pricing</a>
       <button class="nav-menu-btn" id="nav-menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="nav-menu">☰</button>
-      <nav class="nav-menu" id="nav-menu" aria-label="Mobile navigation" hidden><a href="#capabilities">Capabilities</a><a href="#outcomes">Outcomes</a><a href="#compare">Compare</a><a href="#security">Security</a><a href="#faq">FAQ</a><a class="btn btn-primary btn-small" href="#pricing">See pricing</a></nav>
+      <nav class="nav-menu" id="nav-menu" aria-label="Mobile navigation" hidden><a href="#capabilities">Capabilities</a><a href="#outcomes">Outcomes</a><a href="#compare">Compare</a><a href="#controlled-escalation">Custom checks</a><a href="#security">Security</a><a href="#faq">FAQ</a><a class="btn btn-primary btn-small" href="#pricing">See pricing</a></nav>
     </div>
   </header>
 
@@ -72,7 +72,7 @@
         <h1>The live operational graph your whole team can see.</h1>
         <p class="lede">Reticle turns topology and fixed health checks into one human-first map of production. The visual UI, JSON API, and read-only MCP are first-class lenses on the same graph, so people and tools work from the same truth.</p>
         <div class="hero-ctas"><a class="btn btn-primary" href="#pricing">Get Team</a><a class="btn btn-ghost" href="mailto:matt@masoftware.net?subject=Reticle%20Team%20Daemon">Talk through your deployment</a></div>
-        <p class="hero-note">$199/month or $1,999/year per daemon. Unlimited team access.</p>
+        <p class="hero-note">$199/month or $1,999/year per running daemon. Seat-unlimited browser access to one topology.</p>
       </div>
     </section>
 
@@ -81,7 +81,7 @@
         <div class="section-head"><span class="kicker">HUMAN-FIRST, SHARED BY DESIGN</span><h2>Three first-class lenses. One canonical graph.</h2><p class="lede">The visual UI leads the incident. The authenticated JSON API and read-only MCP expose the same server-owned model without creating a second source of truth.</p></div>
         <div class="cards-3 lens-cards">
           <article class="card"><span class="card-icon" aria-hidden="true">◎</span><h3>Browser UI</h3><p>A live visual canvas for understanding topology, evidence, and dependencies. No desktop install for teammates.</p></article>
-          <article class="card"><span class="card-icon" aria-hidden="true">{ }</span><h3>Authenticated JSON API</h3><p>Structured graph, health, and bounded history for approved internal integrations.</p></article>
+          <article class="card"><span class="card-icon" aria-hidden="true">{ }</span><h3>Shared-token JSON API</h3><p>Token-gated graph and health evidence for internal integrations. Team currently uses shared viewer/editor tokens rather than individual identities.</p></article>
           <article class="card"><span class="card-icon" aria-hidden="true">M</span><h3>Read-only MCP</h3><p>Graph inspection for agents, intentionally separated from all named-action execution.</p></article>
         </div>
         <p class="subordinate-note"><strong>Chat is optional and subordinate.</strong> It is a read-only way to ask questions of the graph, not a separate product or an autonomous operator.</p>
@@ -94,7 +94,7 @@
         <div class="cards-3 outcome-cards">
           <article class="card"><span class="outcome-metric">TIME TO UNDERSTAND</span><h3>Build a shared incident model sooner.</h3><p>Topology, dependencies, live evidence, and freshness help responders reduce the time spent asking what is connected and why it is red.</p></article>
           <article class="card"><span class="outcome-metric">SAFE ACTION AND RECOVERY</span><h3>Move from evidence to a bounded response.</h3><p>Reticle is designed to improve time to safe next action and failed-deployment recovery time by keeping preconditions and named actions beside current graph context.</p></article>
-          <article class="card"><span class="outcome-metric">OPERATIONAL MEMORY</span><h3>Carry context across people and time.</h3><p>Shared history and one continuously available map help reduce change-context latency and operational handoff time during shifts, escalation, and review.</p></article>
+          <article class="card"><span class="outcome-metric">AUDITABLE OPERATIONS</span><h3>Keep a configurable activity record.</h3><p>Optional JSONL covers connection lifecycle, selected privileged requests and refusals, save failures, and named-action outcomes for your retention and review process.</p></article>
         </div>
       </div>
     </section>
@@ -109,11 +109,15 @@
             <tbody>
               <tr><th scope="row">Deployment</th><td>Standalone, local-only application</td><td>Shared, always-on daemon</td></tr>
               <tr><th scope="row">Access</th><td>One person on the local machine</td><td>Team access through the browser</td></tr>
+              <tr><th scope="row">Identity</th><td>Local OS user</td><td>Shared editor/viewer bearer tokens; SSO is not included</td></tr>
+              <tr><th scope="row">Topology scope</th><td>Switch among local workspaces</td><td>One topology per running licensed daemon</td></tr>
               <tr><th scope="row">Collection vantage point</th><td>Your machine and its network access</td><td>One trusted, continuously running host</td></tr>
               <tr><th scope="row">Visual UI</th><td>Local application</td><td>Shared browser UI</td></tr>
               <tr><th scope="row">JSON API</th><td>Opt-in, loopback only</td><td>Authenticated remote JSON API</td></tr>
               <tr><th scope="row">MCP</th><td>Local, read-only</td><td>Authenticated, read-only</td></tr>
-              <tr><th scope="row">History</th><td>No retained history</td><td>Bounded in-memory history; resets on daemon restart</td></tr>
+              <tr><th scope="row">Default checks</th><td>Fixed HTTP and read-only SSH probes</td><td>Fixed HTTP and read-only SSH probes</td></tr>
+              <tr><th scope="row">Custom command checks</th><td>Remote SSH on supported platforms; local Bash on Unix hosts</td><td>Optional on Unix hosts, with operator flag and editor authorization</td></tr>
+              <tr><th scope="row">Interactive or ad-hoc shell</th><td>Available to the local operator in privileged mode; never through API, MCP, or chat</td><td>Not exposed to browser users, JSON API, MCP, or chat</td></tr>
               <tr><th scope="row">Audit logs</th><td>Not a shared service</td><td>JSONL when <code>--audit-log</code> is configured</td></tr>
               <tr><th scope="row">License</th><td>Free, MIT</td><td>Commercial subscription</td></tr>
             </tbody>
@@ -122,27 +126,40 @@
       </div>
     </section>
 
+    <section id="controlled-escalation">
+      <div class="wrap">
+        <div class="section-head"><span class="kicker">CONTROLLED ESCALATION</span><h2>More diagnostic power, behind explicit gates.</h2><p class="lede">Fixed HTTP checks and read-only SSH probes remain the default. Privileged mode lets an operator turn precise remote SSH diagnostics, or local Bash on Unix hosts, into repeatable signals without giving viewers an ad-hoc shell.</p></div>
+        <div class="cards-3 gate-cards">
+          <article class="card"><span class="gate-number">01</span><h3>Operator opts in</h3><p>The daemon must start with <code>--allow-custom-commands</code>. Without that flag, custom definitions cannot run.</p></article>
+          <article class="card"><span class="gate-number">02</span><h3>Editor manages definitions</h3><p>Only an editor can manage definitions through Team. New custom checks default to enabled and viewer-visible, with no per-check risk acknowledgment; named actions require approval by default. Viewers cannot see command text, manage definitions, or run actions.</p></article>
+          <article class="card"><span class="gate-number">03</span><h3>Interaction is bounded</h3><p>Reticle validates definitions, bounds captured output, and limits how long it waits. Remote or detached workloads require OS- or server-side limits for guaranteed termination.</p></article>
+        </div>
+        <div class="warning"><h3>Custom commands are powerful because they are arbitrary.</h3><p>That flexibility can answer infrastructure-specific questions fixed probes cannot, but it is not inherently read-only. Restricted SSH principals and a dedicated, least-privileged daemon OS account are the actual security boundaries. Viewers receive bounded results, never command text or execution controls; custom checks are not one-off API, MCP, or chat tools.</p></div>
+      </div>
+    </section>
+
     <section id="security">
       <div class="wrap">
-        <div class="section-head"><span class="kicker">BOUNDED BY DESIGN</span><h2>Least privilege at every boundary.</h2><p class="lede">Reticle is an operational context layer, not a remote shell.</p></div>
+        <div class="section-head"><span class="kicker">CONTROLLED BY DESIGN</span><h2>Designed for least-privilege deployment.</h2><p class="lede">Reticle is an operational context layer, not a remote shell.</p></div>
         <div class="cards-3">
-          <article class="card"><span class="card-icon" aria-hidden="true">⊘</span><h3>Fixed probes</h3><p>Use explicit HTTP checks and fixed, read-only SSH probes. Give the daemon a restricted principal with only the access each check requires.</p></article>
-          <article class="card"><span class="card-icon" aria-hidden="true">⛨</span><h3>Server-owned actions</h3><p>Operators can request only named actions configured on the server, with preconditions and timeouts. Clients cannot submit arbitrary commands.</p></article>
-          <article class="card"><span class="card-icon" aria-hidden="true">≠</span><h3>No arbitrary shell</h3><p>No arbitrary shell is exposed through Team, the JSON API, MCP, or chat. MCP and chat remain read-only lenses.</p></article>
+          <article class="card"><span class="card-icon" aria-hidden="true">⊘</span><h3>Safe defaults</h3><p>Use a restricted SSH principal for remote checks, and a dedicated least-privileged daemon OS account with tightly scoped environment, filesystem, and network access for local checks.</p></article>
+          <article class="card"><span class="card-icon" aria-hidden="true">⛨</span><h3>Server-owned actions</h3><p>Editors may persist named commands, with preconditions and timeouts. Invocation clients submit only a stable action ID, expected configuration revision, and approval decision, never command text.</p></article>
+          <article class="card"><span class="card-icon" aria-hidden="true">≠</span><h3>No Team shell</h3><p>Team exposes no interactive browser terminal or ad-hoc command endpoint. The JSON graph API, MCP, and chat remain read-only lenses.</p></article>
         </div>
-        <div class="qualification"><h3>History and audit qualifications</h3><p>Team history is bounded and held in memory; it resets whenever the daemon restarts. Audit logging is not automatic: pass <code>--audit-log &lt;path&gt;</code> to append JSONL records for relevant access and action events.</p></div>
+        <div class="qualification"><h3>Configurable audit logging</h3><p>Pass <code>--audit-log &lt;path&gt;</code> to append JSONL for connection lifecycle, selected privileged requests and refusals, save failures, and named-action outcomes. Records omit command text and output but can contain peer addresses, IDs, revisions, policy decisions, and action errors. Protect and rotate the file according to your organization's retention policy.</p></div>
       </div>
     </section>
 
     <section id="pricing">
       <div class="wrap">
-        <div class="section-head"><span class="kicker">SIMPLE PRICING</span><h2>One daemon. Unlimited teammates.</h2><p class="lede">Choose monthly flexibility or save with an annual subscription.</p></div>
+        <div class="section-head"><span class="kicker">SIMPLE PRICING</span><h2>One topology. Seat-unlimited access.</h2><p class="lede">Each subscription covers one running daemon and one shared topology. Access uses shared editor/viewer tokens today; SSO and individual user attribution are not included.</p></div>
         <div class="pricing-grid">
           <article class="price-card"><span class="pill">Monthly</span><p class="price"><strong>$199</strong><span>/month</span></p><p>Per running Team Daemon, billed monthly.</p></article>
           <article class="price-card featured"><span class="plan-tag">Save $389</span><span class="pill accent">Annual</span><p class="price"><strong>$1,999</strong><span>/year</span></p><p>Per running Team Daemon, billed annually.</p></article>
           <article class="price-card"><span class="pill">Implementation</span><p class="price service-price"><strong>$3,000</strong><span>one-time</span></p><p>White-glove install and mapping starts at $3,000 one-time, scoped to your environment.</p></article>
         </div>
         <div class="pricing-cta"><a class="btn btn-primary" href="mailto:matt@masoftware.net?subject=Reticle%20Team%20Daemon">Start with Team</a><p>We reply within one business day. Card, ACH, or bank transfer.</p></div>
+        <div class="qualification"><h3>Enterprise evaluation checklist</h3><p>Before production use, confirm TLS termination, token rotation, restricted SSH principals, a dedicated daemon OS account, audit-log permissions and rotation, topology backup, and your required support process.</p></div>
       </div>
     </section>
 
@@ -150,11 +167,14 @@
       <div class="wrap">
         <div class="section-head"><span class="kicker">FAQ</span><h2>Deployment and product questions</h2></div>
         <div class="faq">
-          <details><summary>Is Team just a hosted desktop app?</summary><p>No. Desktop is standalone and local-only, with no shared daemon. Team is commercial server software that stays running from a trusted network vantage point and serves authorized browsers, API clients, and MCP clients.</p></details>
-          <details><summary>What exactly is retained?</summary><p>The daemon keeps bounded signal history in memory for incident context. It is not durable storage and resets on every restart. JSONL audit records are written only when you configure <code>--audit-log</code>.</p></details>
-          <details><summary>Can API, MCP, or chat execute commands?</summary><p>No. MCP and chat are read-only. The API does not expose an arbitrary shell. Any operator action is a server-owned named action, configured in advance and bounded by server-side controls.</p></details>
+          <details><summary>Is Team just a hosted desktop app?</summary><p>No. Desktop is standalone and local-only, with no shared daemon. Team is commercial server software designed to run continuously from a trusted network vantage point and serve authorized browsers, API clients, and MCP clients.</p></details>
+          <details><summary>How does audit logging work?</summary><p>Configure <code>--audit-log &lt;path&gt;</code> to append JSONL for connection lifecycle, selected privileged requests and refusals, save failures, and named-action outcomes. It omits command text and output. Logging is opt-in so you control destination, permissions, rotation, and retention.</p></details>
+          <details><summary>Can the JSON graph API, MCP, or chat execute commands?</summary><p>No. Those interfaces are read-only. An editor can invoke a persisted named action only through the authenticated Team operating interface; the request contains an action ID, revision, and approval decision, never command text.</p></details>
+          <details><summary>Are custom command checks read-only?</summary><p>Not necessarily. They are arbitrary remote or local commands, so Reticle cannot guarantee that they are read-only. Use <code>--allow-custom-commands</code> only with restricted SSH principals and a dedicated, least-privileged daemon OS account.</p></details>
+          <details><summary>How are custom command checks enabled?</summary><p>The daemon operator must pass <code>--allow-custom-commands</code>. UI/API changes require an editor, and new checks default to enabled and viewer-visible. Direct YAML writers are trusted operators, so restrict configuration-file access. Reticle validates definitions, bounds captured output, and limits how long it waits.</p></details>
           <details><summary>Where should the daemon run?</summary><p>On a least-privileged host that can reach only the systems and checks it needs. Put TLS and your normal network controls in front, use restricted SSH principals, and issue access only to authorized teammates and clients.</p></details>
           <details><summary>What does white-glove install and mapping include?</summary><p>Starting at $3,000 one-time, we help deploy the daemon, establish least-privilege access, configure TLS and authentication, and map the first agreed production scope. Final scope and price depend on the environment.</p></details>
+          <details><summary>Is an SLA included?</summary><p>No default SLA is published. Evaluation, update entitlement, support response, security review, and any SLA requirements must be agreed in the order before production adoption.</p></details>
           <details><summary>Is Team Daemon MIT-licensed?</summary><p>No. Reticle Desktop is free and MIT-licensed. Team Daemon is commercial software provided under a paid subscription.</p></details>
         </div>
       </div>

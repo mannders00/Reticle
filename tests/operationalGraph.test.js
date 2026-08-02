@@ -26,13 +26,13 @@ test("graph signals project the worst state onto each topology node", () => {
   });
 });
 
-test("action descriptors are mapped to their topology nodes unchanged", () => {
-  const restart = {
-    id: "restart-api",
+test("action descriptors remain outside persisted topology nodes", () => {
+  const action = {
+    id: "diagnose-api",
     nodeId: "api",
-    name: "Restart API",
-    kind: "service.restart",
-    target: "api.service",
+    name: "Diagnose API",
+    kind: "ssh.command",
+    target: "SSH",
     available: true,
     unavailableReason: null,
     requiresApproval: true,
@@ -41,20 +41,20 @@ test("action descriptors are mapped to their topology nodes unchanged", () => {
   };
   const topology = graphToTopology({
     nodes: { api: { id: "api" }, db: { id: "db" } },
-    actions: { "restart-api": restart },
+    actions: { "diagnose-api": action },
   });
 
-  assert.deepEqual(topology.nodes.api.actions, [restart]);
-  assert.deepEqual(topology.nodes.db.actions, []);
+  assert.equal(topology.nodes.api.actions, undefined);
+  assert.equal(topology.nodes.db.actions, undefined);
 });
 
-test("unavailable action descriptors retain their guard reason", () => {
+test("runtime action guards do not leak into persisted topology", () => {
   const blocked = {
-    id: "restart-api",
+    id: "diagnose-api",
     nodeId: "api",
-    name: "Restart API",
-    kind: "service.restart",
-    target: "api.service",
+    name: "Diagnose API",
+    kind: "ssh.command",
+    target: "SSH",
     available: false,
     unavailableReason: "required signal is unavailable",
     requiresApproval: true,
@@ -62,11 +62,10 @@ test("unavailable action descriptors retain their guard reason", () => {
 
   const topology = graphToTopology({
     nodes: { api: { id: "api" } },
-    actions: { "restart-api": blocked },
+    actions: { "diagnose-api": blocked },
   });
 
-  assert.equal(topology.nodes.api.actions[0].available, false);
-  assert.equal(topology.nodes.api.actions[0].unavailableReason, "required signal is unavailable");
+  assert.equal(topology.nodes.api.actions, undefined);
 });
 
 test("nodes without signals receive explicit unknown health", () => {

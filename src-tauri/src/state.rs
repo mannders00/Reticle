@@ -1,6 +1,7 @@
 // src-tauri/src/state.rs
 // Shared Tauri-managed state.
 
+use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
@@ -17,4 +18,11 @@ pub struct AppState {
     pub data_dir: PathBuf,
     pub cron_results: CronResultsMap,
     pub shells: ShellMap,
+    /// Serializes topology and operations writes to the active workspace.
+    pub save_lock: Mutex<()>,
+    /// Serializes workspace switches with action execution and PTY creation.
+    pub workspace_lock: Arc<Mutex<()>>,
+    /// Workspaces explicitly trusted for arbitrary commands during this app
+    /// session. Trust never follows an unrelated workspace switch.
+    pub trusted_command_workspaces: Arc<Mutex<HashSet<PathBuf>>>,
 }

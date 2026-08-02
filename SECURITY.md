@@ -15,8 +15,9 @@ security reports.
   hostnames, ports, and usernames, never secrets. Nothing in Reticle
   requires a secret to be written to it.
 - **Operational graph**: graph responses omit legacy scripts, interpreters,
-  and arbitrary command arguments. HTTP collectors can make outbound requests;
-  treat topology authors as trusted and restrict daemon egress where needed.
+  custom command text, and arbitrary command arguments. HTTP collectors can
+  make outbound requests; treat topology authors as trusted and restrict daemon
+  egress where needed.
 - **Desktop loopback API**: disabled unless `RETICLE_DESKTOP_HTTP_PORT` is set
   and always bound to `127.0.0.1`. It has no write or action routes, emits no
   CORS permission, limits request bodies, and bounds concurrent collection.
@@ -27,22 +28,53 @@ security reports.
   data returned through read-only tools at its fixed official API endpoint.
   Ollama endpoints must be HTTP(S) loopback addresses, with redirects disabled.
   The agent has no action, shell, save, or MCP mutation tool.
-- **SSH**: collectors use only fixed `host.uptime` and `service.status`
-  probes. Named actions resolve server-side to `service.restart` or
-  `service.reload`, validate service names, enforce timeouts and optional
-  preconditions/approval, and never accept shell text from a caller. Use a
-  restricted SSH principal or forced-command policy as defense in depth.
+- **SSH defaults**: fixed `host.uptime` and `service.status` probes remain the
+  default. Named actions are persisted secure-shell or local-shell commands with bounded
+  execution, optional preconditions, approval by default, and editor-only
+  invocation. Team callers submit only an action ID, expected configuration
+  revision, and approval decision.
+- **Custom command checks**: Team requires daemon operator
+  `--allow-custom-commands`. Definitions managed through the UI/API also require
+  editor authorization and default to enabled and viewer-visible. Direct YAML
+  writers are trusted operators; an enabled definition written to disk may execute
+  while the flag is active. Definitions are validated and bounded before execution.
+  Desktop requires explicit, session-scoped trust for the selected workspace;
+  one global privileged-mode toggle gates all checks and actions in the active
+  workspace, with no per-check risk acknowledgment. `RETICLE_ALLOW_CUSTOM_COMMANDS=1`
+  is an optional process-wide override.
+  Remote `ssh.command` checks receive no PTY or stdin. Local `shell.command`
+  checks are Unix-only and run through non-interactive Bash with the Reticle
+  process's OS account, environment, network, and filesystem access. Both are arbitrary commands and
+  cannot be guaranteed read-only. Restricted SSH principals and a dedicated,
+  least-privileged Reticle OS account are the actual security boundaries.
+  Configured timeouts bound Reticle's wait and output collection; detached local
+  or remote workloads require OS- or server-side supervision for guaranteed termination.
 - **[Team Daemon](https://reticle.live/team/)**: read-only by default. Viewer
   access can read the graph and bounded signal history through JSON and
-  read-only MCP but cannot save or execute. Named actions require the editor
+  read-only MCP but cannot save or execute. Viewers cannot see custom command
+  text, manage definitions, or run custom checks. Named actions require the editor
   role and are audit logged when `--audit-log` is configured. Optional chat also
   requires the editor role; its audit entry contains only provider and model,
-  never the prompt, response, API key, graph, or history.
-  Authorization tokens are not transport security: query tokens require TLS.
-- **Least privilege**: restrict topology authors, daemon egress, filesystem
-  access, and SSH principals. Only fixed probes and server-owned named actions
-  are supported. The [Team Daemon](https://reticle.live/team/), JSON API, MCP,
-  and chat never provide arbitrary shell access.
+  never the prompt, response, API key, graph, or history. Configuration-save
+  audit records also omit custom-check command text.
+  Audit records do include connection peer addresses, stable object IDs, policy
+  decisions, revisions, and action error or exit-code outcomes as applicable.
+  Authorization tokens are not transport security: browser query links require
+  TLS and proxy-log redaction, are scrubbed from the visible URL, and persist
+  only for the browser session. API/MCP clients should use bearer headers.
+- **Desktop workspace trust**: opening YAML never enables persisted shell
+  commands by itself. The owner uses one global privileged-mode control for all
+  custom checks and actions in the active workspace, not a per-check
+  acknowledgment. Trust lasts for the current app session and can be revoked from the bottom status
+  bar, which also closes active operator shells. Alternatively, use the process-wide
+  `RETICLE_ALLOW_CUSTOM_COMMANDS=1` override. Privileged mode can also open a
+  separately warned interactive SSH/kubectl shell for the local operator. The
+  Desktop loopback API/MCP and chat lens never initiate commands or shells.
+- **Least privilege**: restrict topology authors, daemon egress, environment
+  credentials, filesystem access, the Reticle OS account, and SSH principals.
+  Custom checks are never MCP/chat tools or one-off
+  ad-hoc requests. The [Team Daemon](https://reticle.live/team/) exposes no
+  interactive or ad-hoc shell through the viewer graph API, MCP, or chat.
 
 ## Scope notes
 

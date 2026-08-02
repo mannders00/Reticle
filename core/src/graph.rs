@@ -1,11 +1,12 @@
-use std::collections::{BTreeMap, HashSet};
+use std::collections::BTreeMap;
 use std::path::Path;
 use std::time::{Duration, Instant};
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::{json, Value};
 
-use crate::{actions, config, health, ssh};
+use crate::operations::CollectorDefinition;
+use crate::{actions, config, health, local, operations, ssh};
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -62,40 +63,21 @@ pub struct CollectorStatus {
     pub duration_ms: u64,
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct CollectorDefinition {
-    id: String,
-    node_id: String,
-    #[serde(default)]
-    name: String,
-    kind: String,
-    #[serde(default)]
-    url: String,
-    #[serde(default)]
-    status: String,
-    #[serde(default)]
-    jq: String,
-    #[serde(default)]
-    probe: String,
-    #[serde(default)]
-    service: String,
-    #[serde(default = "default_timeout")]
-    timeout_seconds: u64,
-}
-
-fn default_timeout() -> u64 {
-    10
-}
-
-/// Collect static topology, then execute only configured HTTP and fixed SSH
-/// probes. The graph response never contains executable command text.
+/// Collect static topology, then execute configured HTTP, SSH, and local probes.
+/// The graph response never contains executable command text.
 pub fn collect_yaml(path: &Path) -> Result<OperationalGraph, String> {
+    collect_yaml_with_custom_checks(path, false)
+}
+
+pub fn collect_yaml_with_custom_checks(
+    path: &Path,
+    custom_checks_enabled: bool,
+) -> Result<OperationalGraph, String> {
     let raw = config::load_raw(path)?;
     let collected_at = config::now_timestamp();
     let mut graph = collect_value(&raw, collected_at);
-    collect_signals(&raw, &mut graph);
-    project_actions(&raw, &mut graph)?;
+    collect_signals(&raw, &mut graph, custom_checks_enabled);
+    project_actions(&raw, &mut graph, custom_checks_enabled);
     Ok(graph)
 }
 
@@ -117,11 +99,17 @@ fn collect_value(raw: &Value, collected_at: i64) -> OperationalGraph {
                     id,
                     node_id: node_id.clone(),
                     name: "health".into(),
-                    state: health
+                    state: match health
                         .get("state")
                         .and_then(Value::as_str)
                         .unwrap_or("unknown")
-                        .into(),
+                    {
+                        "ok" => "ok",
+                        "warn" => "warn",
+                        "err" => "err",
+                        _ => "unknown",
+                    }
+                    .into(),
                     observed_at: health
                         .get("lastCheck")
                         .or_else(|| health.get("last_check"))
@@ -158,41 +146,71 @@ fn collect_value(raw: &Value, collected_at: i64) -> OperationalGraph {
     }
 }
 
-fn collect_signals(raw: &Value, graph: &mut OperationalGraph) {
-    let definitions: Vec<CollectorDefinition> =
-        match serde_json::from_value(raw.get("collectors").cloned().unwrap_or_else(|| json!([]))) {
-            Ok(value) => value,
-            Err(error) => {
-                graph
-                    .collectors
-                    .push(failed_configuration(error.to_string(), graph.generated_at));
-                return;
+fn collect_signals(raw: &Value, graph: &mut OperationalGraph, custom_checks_enabled: bool) {
+    let mut definitions = match operations::parse_collectors(raw) {
+        Ok(value) => value,
+        Err(error) => {
+            graph
+                .collectors
+                .push(failed_configuration(error, graph.generated_at));
+            return;
+        }
+    };
+    if !custom_checks_enabled {
+        for definition in &mut definitions {
+            if matches!(
+                (definition.kind.as_str(), definition.probe.as_str()),
+                ("ssh", "ssh.command") | ("local", "shell.command")
+            ) {
+                definition.enabled = false;
             }
-        };
-
-    let mut ids = HashSet::new();
-    if let Some(duplicate) = definitions
-        .iter()
-        .find(|definition| !ids.insert(definition.id.as_str()))
-    {
-        graph.collectors.push(failed_configuration(
-            format!("duplicate collector id '{}'", duplicate.id),
-            graph.generated_at,
-        ));
+        }
+    }
+    if let Err(error) = operations::validate_collectors(raw, &definitions, custom_checks_enabled) {
+        graph
+            .collectors
+            .push(failed_configuration(error, graph.generated_at));
         return;
     }
 
+    let collection_started = Instant::now();
+    let collection_budget = Duration::from_secs(120);
     for definition in definitions {
-        let started = Instant::now();
-        let result = run_collector(raw, &definition);
-        let (state, detail) = match result {
-            Ok(detail) => ("ok", detail),
-            Err(detail) => ("err", detail),
-        };
         let name = if definition.name.trim().is_empty() {
             definition.id.clone()
         } else {
             definition.name.clone()
+        };
+        if !definition.enabled {
+            graph.collectors.push(CollectorStatus {
+                id: definition.id,
+                name,
+                kind: definition.kind,
+                node_id: Some(definition.node_id),
+                state: "disabled".into(),
+                detail: None,
+                collected_at: graph.generated_at,
+                duration_ms: 0,
+            });
+            continue;
+        }
+        let remaining = collection_budget.saturating_sub(collection_started.elapsed());
+        if remaining.is_zero() {
+            graph.collectors.push(failed_configuration(
+                "collector execution budget exhausted".into(),
+                graph.generated_at,
+            ));
+            break;
+        }
+        let mut effective_definition = definition.clone();
+        effective_definition.timeout_seconds = effective_definition
+            .timeout_seconds
+            .min(remaining.as_secs().max(1));
+        let started = Instant::now();
+        let result = run_collector(raw, &effective_definition);
+        let (state, detail) = match result {
+            Ok(detail) => ("ok", detail),
+            Err(detail) => ("err", detail),
         };
         graph.signals.insert(
             definition.id.clone(),
@@ -220,19 +238,6 @@ fn collect_signals(raw: &Value, graph: &mut OperationalGraph) {
 }
 
 fn run_collector(raw: &Value, definition: &CollectorDefinition) -> Result<String, String> {
-    if definition.id.trim().is_empty()
-        || raw
-            .get("nodes")
-            .and_then(Value::as_object)
-            .and_then(|nodes| nodes.get(&definition.node_id))
-            .is_none()
-    {
-        return Err("collector requires a stable id and existing nodeId".into());
-    }
-    if !(1..=120).contains(&definition.timeout_seconds) {
-        return Err("collector timeout must be between 1 and 120 seconds".into());
-    }
-
     match definition.kind.as_str() {
         "http" => {
             let result = health::http_check_with_timeout(
@@ -252,16 +257,30 @@ fn run_collector(raw: &Value, definition: &CollectorDefinition) -> Result<String
             let host = node["spec"]["host"].as_str().unwrap_or("");
             let port = node["spec"]["port"].as_u64().unwrap_or(22) as u16;
             let user = node["spec"]["user"].as_str().unwrap_or("");
+            if definition.probe == "ssh.command" {
+                let result = ssh::run_persisted_command(
+                    host,
+                    port,
+                    user,
+                    &definition.command,
+                    Duration::from_secs(definition.timeout_seconds),
+                )?;
+                let detail = custom_command_detail(&result, definition.publish_output);
+                return if result.success {
+                    Ok(detail)
+                } else {
+                    Err(detail)
+                };
+            }
             let command = match definition.probe.as_str() {
                 "host.uptime" => vec!["uptime".into()],
-                "service.status" if valid_service(&definition.service) => vec![
+                "service.status" if operations::valid_service(&definition.service) => vec![
                     "systemctl".into(),
                     "is-active".into(),
                     "--".into(),
                     definition.service.clone(),
                 ],
-                "service.status" => return Err("invalid service name".into()),
-                _ => return Err("SSH probe must be host.uptime or service.status".into()),
+                _ => unreachable!("collector validation runs before execution"),
             };
             let result = ssh::run_fixed_command(
                 host,
@@ -283,16 +302,103 @@ fn run_collector(raw: &Value, definition: &CollectorDefinition) -> Result<String
                 Err(detail)
             }
         }
-        _ => Err("collector kind must be http or ssh".into()),
+        "local" => {
+            let result = local::run_persisted_command(
+                &definition.command,
+                Duration::from_secs(definition.timeout_seconds),
+            )?;
+            let detail = custom_command_detail(&result, definition.publish_output);
+            if result.success {
+                Ok(detail)
+            } else {
+                Err(detail)
+            }
+        }
+        _ => Err("collector kind must be http, ssh, or local".into()),
     }
 }
 
-fn project_actions(raw: &Value, graph: &mut OperationalGraph) -> Result<(), String> {
-    let definitions = actions::parse(raw)?;
+pub fn collect_signal(
+    raw: &Value,
+    signal_id: &str,
+    custom_checks_enabled: bool,
+) -> Result<Option<Signal>, String> {
+    let definitions = operations::parse_collectors(raw)?;
+    operations::validate_collectors(raw, &definitions, custom_checks_enabled)?;
+    let Some(definition) = definitions.into_iter().find(|item| item.id == signal_id) else {
+        return Ok(None);
+    };
+    if !definition.enabled {
+        return Ok(None);
+    }
+    let observed_at = config::now_timestamp();
+    let name = if definition.name.trim().is_empty() {
+        definition.id.clone()
+    } else {
+        definition.name.clone()
+    };
+    let (state, detail) = match run_collector(raw, &definition) {
+        Ok(detail) => ("ok", detail),
+        Err(detail) => ("err", detail),
+    };
+    Ok(Some(Signal {
+        id: definition.id.clone(),
+        node_id: definition.node_id,
+        name,
+        state: state.into(),
+        observed_at: Some(observed_at),
+        detail: Some(json!(detail)),
+        source: definition.id,
+    }))
+}
+
+fn project_actions(raw: &Value, graph: &mut OperationalGraph, custom_checks_enabled: bool) {
+    let definitions = match actions::parse(raw) {
+        Ok(actions) => actions,
+        Err(error) => {
+            graph.collectors.push(CollectorStatus {
+                id: "action-configuration".into(),
+                name: "Action configuration".into(),
+                kind: "configuration".into(),
+                node_id: None,
+                state: "err".into(),
+                detail: Some(error),
+                collected_at: graph.generated_at,
+                duration_ms: 0,
+            });
+            return;
+        }
+    };
     for action in definitions {
-        let unavailable_reason = actions::validate(&action).err().or_else(|| {
-            (!graph.nodes.contains_key(&action.node_id)).then(|| "node does not exist".into())
-        });
+        let target = if action.kind == "ssh.command" {
+            "SSH"
+        } else {
+            "Reticle host"
+        };
+        let unavailable_reason = (!custom_checks_enabled)
+            .then(|| "custom command actions are disabled by server policy".into())
+            .or_else(|| actions::validate(&action).err())
+            .or_else(|| actions::validate_target(raw, &action).err())
+            .or_else(|| {
+                (!graph.nodes.contains_key(&action.node_id)).then(|| "node does not exist".into())
+            })
+            .or_else(|| {
+                let signal_id = action.requires_signal.as_deref()?;
+                let signal = graph.signals.get(signal_id)?;
+                let expected = action.requires_state.as_deref().unwrap_or("err");
+                (signal.state != expected).then(|| {
+                    format!(
+                        "required signal is '{}', expected '{expected}'",
+                        signal.state
+                    )
+                })
+            })
+            .or_else(|| {
+                action.requires_signal.as_ref().and_then(|signal_id| {
+                    (!graph.signals.contains_key(signal_id))
+                        .then(|| format!("required signal '{signal_id}' is unavailable"))
+                })
+            });
         graph.actions.insert(
             action.id.clone(),
             ActionDescriptor {
@@ -300,7 +406,7 @@ fn project_actions(raw: &Value, graph: &mut OperationalGraph) -> Result<(), Stri
                 node_id: action.node_id,
                 name: action.name,
                 kind: action.kind,
-                target: action.service,
+                target: target.into(),
                 available: unavailable_reason.is_none(),
                 unavailable_reason,
                 requires_approval: action.requires_approval,
@@ -311,7 +417,6 @@ fn project_actions(raw: &Value, graph: &mut OperationalGraph) -> Result<(), Stri
             },
         );
     }
-    Ok(())
 }
 
 fn failed_configuration(detail: String, collected_at: i64) -> CollectorStatus {
@@ -327,11 +432,27 @@ fn failed_configuration(detail: String, collected_at: i64) -> CollectorStatus {
     }
 }
 
-fn valid_service(service: &str) -> bool {
-    !service.is_empty()
-        && service
-            .chars()
-            .all(|ch| ch.is_ascii_alphanumeric() || "_.@-".contains(ch))
+fn custom_command_detail(result: &config::ActionResult, publish_output: bool) -> String {
+    if !publish_output {
+        return format!("exit {}", result.exit_code);
+    }
+    let detail = if result.success || result.stderr.trim().is_empty() {
+        result.stdout.trim()
+    } else {
+        result.stderr.trim()
+    };
+    truncate_bytes(detail, 4096)
+}
+
+fn truncate_bytes(value: &str, max: usize) -> String {
+    if value.len() <= max {
+        return value.to_string();
+    }
+    let mut end = max;
+    while !value.is_char_boundary(end) {
+        end -= 1;
+    }
+    value[..end].to_string()
 }
 
 fn collect_nodes(raw: &Value) -> BTreeMap<String, Value> {
@@ -432,9 +553,21 @@ fn normalize_node(id: &str, node: &mut Value) {
     object.entry("parentId").or_insert(Value::Null);
     object.entry("spec").or_insert_with(|| json!({}));
     if let Some(spec) = object.get_mut("spec").and_then(Value::as_object_mut) {
-        for key in ["interpreter", "local", "exec", "script", "command"] {
-            spec.remove(key);
-        }
+        spec.retain(|key, value| {
+            matches!(
+                key.as_str(),
+                "host"
+                    | "port"
+                    | "user"
+                    | "kubeContext"
+                    | "namespace"
+                    | "name"
+                    | "pod"
+                    | "container"
+                    | "selector"
+            ) && !value.is_object()
+                && !value.is_array()
+        });
     }
     object.remove("actions");
     object.remove("crons");
@@ -464,6 +597,7 @@ mod tests {
             &json!({
                 "nodes": { "web": {
                     "title": "Web", "health": { "state": "ok" },
+                    "spec": { "host": "web.internal", "token": "graph-secret", "environment": { "KEY": "secret" } },
                     "actions": [{ "name": "legacy", "script": "reboot" }],
                     "crons": [{ "script": "anything" }]
                 }},
@@ -472,6 +606,9 @@ mod tests {
             100,
         );
         assert_eq!(graph.signals["web:health"].state, "ok");
+        assert_eq!(graph.nodes["web"]["spec"]["host"], "web.internal");
+        assert!(graph.nodes["web"]["spec"].get("token").is_none());
+        assert!(graph.nodes["web"]["spec"].get("environment").is_none());
         assert!(graph.nodes["web"].get("actions").is_none());
         assert!(graph.nodes["web"].get("crons").is_none());
         assert_eq!(graph.edges["route"]["id"], "route");
@@ -492,29 +629,105 @@ mod tests {
 
     #[test]
     fn service_names_cannot_contain_shell_syntax() {
-        assert!(valid_service("api.service"));
-        assert!(!valid_service("api; reboot"));
+        assert!(operations::valid_service("api.service"));
+        assert!(!operations::valid_service("api; reboot"));
     }
 
     #[test]
     fn projects_only_named_action_policy() {
         let raw = json!({
-            "nodes": { "api": { "title": "API" } },
+            "nodes": { "api": { "title": "API", "spec": { "host": "api.internal", "user": "probe" } } },
             "actions": [{
-                "id": "restart-api", "nodeId": "api", "name": "Restart API",
-                "kind": "service.restart", "service": "api.service",
+                "id": "diagnose-api", "nodeId": "api", "name": "Diagnose API",
+                "kind": "ssh.command", "command": "curl -fsS http://127.0.0.1",
                 "requiresApproval": true, "timeoutSeconds": 15
             }]
         });
         let mut graph = collect_value(&raw, 100);
-        project_actions(&raw, &mut graph).unwrap();
-        let action = &graph.actions["restart-api"];
+        project_actions(&raw, &mut graph, true);
+        let action = &graph.actions["diagnose-api"];
         assert!(action.available);
         assert!(action.requires_approval);
         assert_eq!(action.timeout_seconds, 15);
         let serialized = serde_json::to_value(action).unwrap();
-        assert_eq!(serialized["target"], "api.service");
+        assert_eq!(serialized["target"], "SSH");
         assert!(serialized.get("script").is_none());
+        assert!(serialized.get("command").is_none());
+    }
+
+    #[test]
+    fn action_is_unavailable_when_its_required_collector_is_disabled() {
+        let raw = json!({
+            "nodes": { "api": { "title": "API", "spec": {} } },
+            "collectors": [{
+                "id": "api-check", "nodeId": "api", "kind": "local",
+                "probe": "shell.command", "command": "true", "enabled": false
+            }],
+            "actions": [{
+                "id": "diagnose-api", "nodeId": "api", "name": "Diagnose API",
+                "kind": "shell.command", "command": "true",
+                "requiresSignal": "api-check", "requiresState": "err"
+            }]
+        });
+        let mut graph = collect_value(&raw, 100);
+        collect_signals(&raw, &mut graph, true);
+        project_actions(&raw, &mut graph, true);
+        let action = &graph.actions["diagnose-api"];
+        assert!(!action.available);
+        assert_eq!(
+            action.unavailable_reason.as_deref(),
+            Some("required signal 'api-check' is unavailable")
+        );
+    }
+
+    #[test]
+    fn command_policy_does_not_disable_fixed_collectors() {
+        let raw = json!({
+            "nodes": { "api": { "title": "API", "spec": {} } },
+            "collectors": [{
+                "id": "uptime", "nodeId": "api", "kind": "ssh", "probe": "host.uptime"
+            }, {
+                "id": "custom", "nodeId": "api", "kind": "local",
+                "probe": "shell.command", "command": "false", "enabled": true
+            }],
+            "actions": [{
+                "id": "diagnose", "nodeId": "api", "name": "Diagnose",
+                "kind": "shell.command", "command": "true"
+            }]
+        });
+        let mut graph = collect_value(&raw, 100);
+        collect_signals(&raw, &mut graph, false);
+        project_actions(&raw, &mut graph, false);
+        assert!(graph.signals.contains_key("uptime"));
+        assert!(!graph.signals.contains_key("custom"));
+        assert!(graph
+            .collectors
+            .iter()
+            .any(|collector| { collector.id == "custom" && collector.state == "disabled" }));
+        assert!(!graph.actions["diagnose"].available);
+        assert!(graph.actions["diagnose"]
+            .unavailable_reason
+            .as_deref()
+            .unwrap()
+            .contains("disabled by server policy"));
+    }
+
+    #[test]
+    fn malformed_actions_do_not_take_down_topology_or_collectors() {
+        let raw = json!({
+            "nodes": { "api": { "title": "API", "spec": {} } },
+            "actions": [{
+                "id": "legacy", "nodeId": "api", "name": "Legacy", "kind": "service.restart"
+            }]
+        });
+        let mut graph = collect_value(&raw, 100);
+        collect_signals(&raw, &mut graph, false);
+        project_actions(&raw, &mut graph, false);
+        assert!(graph.nodes.contains_key("api"));
+        assert!(graph.actions.is_empty());
+        assert!(graph.collectors.iter().any(|collector| {
+            collector.id == "action-configuration" && collector.state == "err"
+        }));
     }
 
     #[test]
@@ -527,7 +740,7 @@ mod tests {
             ]
         });
         let mut graph = collect_value(&raw, 100);
-        collect_signals(&raw, &mut graph);
+        collect_signals(&raw, &mut graph, true);
         assert!(!graph.signals.contains_key("api-health"));
         assert!(graph.collectors.iter().any(|collector| {
             collector.id == "collector-configuration"
@@ -537,6 +750,66 @@ mod tests {
                     .unwrap_or_default()
                     .contains("duplicate collector id")
         }));
+    }
+
+    #[test]
+    fn custom_output_is_private_and_bounded() {
+        let result = config::ActionResult {
+            success: false,
+            exit_code: 7,
+            stdout: "secret".into(),
+            stderr: "x".repeat(5000),
+        };
+        assert_eq!(custom_command_detail(&result, false), "exit 7");
+        assert_eq!(custom_command_detail(&result, true).len(), 4096);
+    }
+
+    #[test]
+    fn disabled_custom_collector_has_no_signal() {
+        let raw = json!({
+            "nodes": { "api": { "spec": {} } },
+            "collectors": [{
+                "id": "custom", "nodeId": "api", "kind": "ssh", "probe": "ssh.command"
+            }]
+        });
+        let mut graph = collect_value(&raw, 100);
+        collect_signals(&raw, &mut graph, true);
+        assert!(!graph.signals.contains_key("custom"));
+        assert_eq!(graph.collectors.last().unwrap().state, "disabled");
+    }
+
+    #[test]
+    fn custom_command_text_never_appears_in_graph_responses() {
+        let raw = json!({
+            "nodes": { "api": { "spec": { "host": "api", "user": "probe" } } },
+            "collectors": [{
+                "id": "custom", "nodeId": "api", "kind": "ssh",
+                "probe": "ssh.command", "command": "printf graph-secret", "enabled": false
+            }],
+            "actions": [{
+                "id": "diagnose", "nodeId": "api", "name": "Diagnose",
+                "kind": "shell.command", "command": "printf action-graph-secret"
+            }]
+        });
+        let mut graph = collect_value(&raw, 100);
+        collect_signals(&raw, &mut graph, true);
+        project_actions(&raw, &mut graph, true);
+        let serialized = serde_json::to_string(&graph).unwrap();
+        assert!(!serialized.contains("graph-secret"));
+        assert!(!serialized.contains("action-graph-secret"));
+    }
+
+    #[test]
+    fn local_command_exit_code_sets_collector_status() {
+        let raw = json!({
+            "nodes": { "api": { "spec": {} } },
+            "collectors": [{
+                "id": "local", "nodeId": "api", "kind": "local",
+                "probe": "shell.command", "command": "exit 7", "enabled": true
+            }]
+        });
+        let definition = operations::parse_collectors(&raw).unwrap().remove(0);
+        assert_eq!(run_collector(&raw, &definition), Err("exit 7".into()));
     }
 
     #[test]

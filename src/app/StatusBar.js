@@ -9,6 +9,12 @@ import {
   toggleSnapToGrid, toggleNaturalScroll,
 } from "../core/store.js";
 import api from "../core/api.js";
+import { checkAll } from "../core/ops.js";
+import {
+  getOperationsState,
+  revokeWorkspaceCommands,
+  trustWorkspaceCommands,
+} from "../core/operations.js";
 
 export function mountStatusBar(root) {
   // Brand → reticle.live. Plain target=_blank in the browser; on the
@@ -84,6 +90,36 @@ export function mountStatusBar(root) {
   const count = h("span", { class: "sb-item" });
   const path = h("span", { class: "sb-item sb-path" });
   const dirty = h("span", { class: "sb-item sb-dirty" });
+  let privilegeChange = null;
+  let activeShells = 0;
+  const runningActions = new Set();
+  const privileged = h("button", {
+    class: "sb-item sb-toggle sb-privileged",
+    type: "button",
+    hidden: true,
+    onClick: async () => {
+      const operations = getOperationsState();
+      if (operations.loading || privilegeChange) return;
+      if (operations.customChecksEnabled) {
+        const interruptions = [];
+        if (activeShells) interruptions.push(`${activeShells} active shell${activeShells === 1 ? "" : "s"} will close`);
+        if (runningActions.size) interruptions.push(`${runningActions.size} running action${runningActions.size === 1 ? "" : "s"} must finish first`);
+        if (interruptions.length && !window.confirm(`Turn off privileged mode? ${interruptions.join("; ")}.`)) return;
+        privilegeChange = "disabling";
+        renderPrivileged();
+        if (await revokeWorkspaceCommands()) bus.emit("terminal:close-all", {});
+        privilegeChange = null;
+        renderPrivileged();
+        return;
+      }
+      if (!window.confirm("Trust every persisted command in this workspace for this app session? Enabled checks may run automatically. Named actions still require approval by default. Commands use your Desktop OS account or configured SSH identity.")) return;
+      privilegeChange = "enabling";
+      renderPrivileged();
+      if (await trustWorkspaceCommands()) await checkAll();
+      privilegeChange = null;
+      renderPrivileged();
+    },
+  });
   // Last time ANY health signal landed (scheduled sweep, cron result, or
   // the toolbar's global refresh) — always UTC so screenshots/teammates
   // in different zones read the same clock.
@@ -128,13 +164,39 @@ export function mountStatusBar(root) {
     path.textContent = p ? "📁 " + shorten(p) : "";
     path.title = p || "";
   }
+  function renderPrivileged() {
+    if (api.transport !== "tauri") {
+      privileged.hidden = true;
+      return;
+    }
+    const operations = getOperationsState();
+    privileged.hidden = false;
+    privileged.disabled = operations.loading || privilegeChange !== null;
+    privileged.classList.toggle("is-active", operations.customChecksEnabled);
+    privileged.classList.toggle("is-loading", operations.loading || privilegeChange !== null);
+    if (privilegeChange) {
+      privileged.textContent = privilegeChange === "disabling"
+        ? "◆ privileged · disabling…"
+        : "◇ privileged · enabling…";
+      privileged.title = "Updating privileged-mode policy for this workspace";
+    } else if (operations.loading) {
+      privileged.textContent = "◆ privileged · loading";
+      privileged.title = "Loading privileged-mode policy for this workspace";
+    } else if (operations.customChecksEnabled) {
+      privileged.textContent = "◆ privileged · on";
+      privileged.title = "This workspace may run persisted shell checks, guarded actions, and live operator shells for this app session";
+    } else {
+      privileged.textContent = "◇ privileged · off";
+      privileged.title = "Enable shell checks, guarded actions, and live operator shells for this workspace session";
+    }
+  }
   function shorten(p) {
     if (p.length < 50) return p;
     const parts = p.split("/");
     return parts.length < 4 ? p : ".../" + parts.slice(-2).join("/");
   }
 
-  renderSnap(); renderScroll(); renderCount(); renderDirty(); renderPath();
+  renderSnap(); renderScroll(); renderCount(); renderDirty(); renderPath(); renderPrivileged();
 
   bus.on("ui:snap", renderSnap);
   bus.on("ui:natural-scroll", renderScroll);
@@ -142,13 +204,20 @@ export function mountStatusBar(root) {
   bus.on("selection:changed", renderCount);
   bus.on("session:dirty", renderDirty);
   bus.on("session:loaded", () => { renderDirty(); renderPath(); });
+  bus.on("operations:loading", renderPrivileged);
+  bus.on("operations:changed", renderPrivileged);
+  bus.on("operations:trusted", renderPrivileged);
+  bus.on("operations:revoked", renderPrivileged);
+  bus.on("operations:error", renderPrivileged);
+  bus.on("terminal:changed", ({ count: shellCount }) => { activeShells = shellCount; });
+  bus.on("action:running", ({ actionId, running }) => {
+    if (running) runningActions.add(actionId);
+    else runningActions.delete(actionId);
+  });
+  api.whenReady().then(renderPrivileged);
 
-  root.append(
-    brand,
-    snap, scroll, roleBadge,
-    h("span", { class: "sb-spacer" }),
-    count,
-    h("span", { class: "sb-spacer" }),
-    path, dirty, lastUpdate,
-  );
+  const left = h("span", { class: "sb-group sb-left" }, brand, snap, scroll, roleBadge, privileged);
+  const center = h("span", { class: "sb-group sb-center" }, count);
+  const right = h("span", { class: "sb-group sb-right" }, path, dirty, lastUpdate);
+  root.append(left, center, right);
 }

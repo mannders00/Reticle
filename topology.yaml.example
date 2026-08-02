@@ -1,7 +1,7 @@
 # Reticle operational graph example
 # Static topology is local and git-diffable. Collectors produce signals;
 # callers may request only server-owned named actions, never shell text.
-# Use least-privilege SSH credentials; JSON API, MCP, and chat expose no shell.
+# The viewer graph API, MCP, and chat expose no interactive or ad-hoc shell.
 version: 1
 
 nodes:
@@ -48,13 +48,26 @@ collectors:
     probe: service.status
     service: postgresql.service
     timeoutSeconds: 10
+  # WARNING: ssh.command is an arbitrary remote command and cannot be guaranteed
+  # read-only. Team requires daemon --allow-custom-commands plus editor
+  # management. The UI defaults enabled/publishOutput to true; this example
+  # explicitly disables both. Use a restricted SSH principal or forced command.
+  - id: postgres-replication-check
+    nodeId: db-primary
+    name: PostgreSQL replication check
+    kind: ssh
+    probe: ssh.command
+    command: /usr/local/libexec/reticle-check postgres-replication
+    enabled: false
+    publishOutput: false
+    timeoutSeconds: 10
 
 actions:
-  - id: restart-postgres
+  - id: inspect-postgres
     nodeId: db-primary
-    name: Restart PostgreSQL
-    kind: service.restart
-    service: postgresql.service
+    name: Inspect PostgreSQL
+    kind: ssh.command
+    command: pg_isready && psql -Atqc 'select now()'
     requiresSignal: postgres-service
     requiresState: err
     requiresApproval: true

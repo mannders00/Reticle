@@ -24,7 +24,7 @@ export class Palette {
     this.el.innerHTML = `
       <div class="palette-top">
         <button class="palette-collapse" title="Collapse palette">‹</button>
-        <input class="palette-search" type="search" placeholder="Filter" />
+        <input class="palette-search" type="search" placeholder="Filter" autocapitalize="none" autocorrect="off" autocomplete="off" spellcheck="false" />
       </div>
       <div class="palette-body"></div>
     `;
@@ -91,8 +91,8 @@ export class Palette {
       const body = h("div", { class: "palette-cat-body" });
       for (const k of items) body.appendChild(this._tile(k));
       const head = h(
-        "div",
-        { class: "palette-cat-head", "data-cat": g.id },
+        "button",
+        { class: "palette-cat-head", type: "button", "data-cat": g.id, "aria-expanded": "true" },
         h("span", { class: "palette-cat-dot", style: `background:${g.color}` }),
         h("span", { class: "palette-cat-label" }, g.label),
       );
@@ -100,6 +100,7 @@ export class Palette {
       head.addEventListener("click", () => {
         body.classList.toggle("is-hidden");
         head.classList.toggle("is-collapsed-h");
+        head.setAttribute("aria-expanded", String(!body.classList.contains("is-hidden")));
       });
     }
 
@@ -108,9 +109,10 @@ export class Palette {
   _tile(kind) {
     const meta = kindMeta(kind.id);
     const el = h(
-      "div",
+      "button",
       {
         class: "palette-tile",
+        type: "button",
         draggable: "true",
         title: meta.label,
         "data-kind": kind.id,

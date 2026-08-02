@@ -1,0 +1,16 @@
+Reticle Third-Party Notices
+===========================
+
+Reticle includes open-source software distributed under its respective
+licenses. Release channels may also provide an SPDX SBOM with dependency
+inventory and available license metadata.
+
+Bundled browser libraries include:
+
+- js-yaml, Copyright (c) 2011-2015 Vitaly Puzrin, MIT License
+- xterm.js and @xterm/addon-fit, Copyright (c) 2017-2019 The xterm.js authors,
+  MIT License
+
+The MIT License text for Reticle Desktop is included in the distribution as
+LICENSE. Copyright and license notices embedded in third-party source and
+binary components remain in effect.

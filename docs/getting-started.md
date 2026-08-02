@@ -22,7 +22,7 @@ Notes:
 - macOS builds are currently unsigned. The first time, right-click the
   app and choose Open, or run
   `xattr -dr com.apple.quarantine /Applications/Reticle.app`.
-- Named actions require a configured SSH target. Graph inspection and PDF
+- SSH actions require a configured SSH target. Graph inspection and PDF
   export remain useful without actions.
 - Desktop is free, standalone, and local-only for individuals and homelabs. It
   does not include a shared daemon.
@@ -55,6 +55,13 @@ server at `127.0.0.1:8786`; normal desktop startup leaves it disabled.
 4. Add an HTTP or fixed SSH collector using the example in
    [Operational graph](operational-graph.md). The resulting signal colors the
    node from the same snapshot exposed to API and MCP consumers.
+5. If fixed probes cannot express the diagnostic you need, choose **Enable
+   privileged mode** in the bottom status bar. This is Desktop's one global
+   privileged control: it gates every custom check and action in the active
+   workspace, with no per-check acknowledgment. Trust lasts for the current
+   Desktop session. Turn it off in the same place to revoke trust and close active
+   shells. While on, you can add bounded remote/local shell checks, guarded named
+   actions, or open a separately warned live operator shell.
 
 ## Where things live
 
@@ -63,6 +70,14 @@ server at `127.0.0.1:8786`; normal desktop startup leaves it disabled.
   your editor and the canvas reloads live.
 - Credentials are never stored. SSH probes and named actions use your existing
   OpenSSH configuration. Use a restricted remote account.
+- Desktop privileged mode is session-scoped to the selected workspace. Opening
+  YAML alone never executes its commands. The optional
+  `RETICLE_ALLOW_CUSTOM_COMMANDS=1` override trusts every workspace in that process.
+- Team custom remote SSH or local Bash checks require daemon `--allow-custom-commands` and editor
+  authorization. They are arbitrary remote commands, not guaranteed read-only;
+  new definitions default to enabled and viewer-visible, and should use a
+  restricted SSH principal or forced-command policy.
+- Local Bash checks and actions are available only on Unix hosts with Bash.
 
 ## Next steps
 

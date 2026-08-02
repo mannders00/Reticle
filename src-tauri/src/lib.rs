@@ -46,7 +46,8 @@ pub mod state;
 // Domain modules live in reticle-core (shared with reticle-daemon, see
 // DAEMON.md phases 1–2); re-export them so crate::config etc. keep working.
 pub use reticle_core::{
-    actions, agent, config, cron, custom_layer, graph, health, local, ssh, terminal, watcher,
+    actions, agent, config, cron, custom_layer, graph, health, local, operations, ssh, terminal,
+    watcher,
 };
 
 pub use commands::*;
@@ -93,6 +94,9 @@ pub fn run() {
                 data_dir: config_dir.clone(),
                 cron_results: cron_results.clone(),
                 shells,
+                save_lock: Mutex::new(()),
+                workspace_lock: Arc::new(Mutex::new(())),
+                trusted_command_workspaces: Arc::new(Mutex::new(std::collections::HashSet::new())),
             });
 
             // Domain modules emit UI events through an EventSink; the
@@ -122,6 +126,10 @@ pub fn run() {
             commands::run_named_action,
             commands::agent_chat,
             commands::save_config,
+            commands::get_editable_operations,
+            commands::save_editable_operations,
+            commands::trust_current_workspace_commands,
+            commands::revoke_current_workspace_commands,
             commands::get_config_path,
             commands::load_custom_layer,
             commands::list_workspaces,
@@ -129,6 +137,12 @@ pub fn run() {
             commands::delete_workspace,
             commands::import_workspace_file,
             commands::save_export_file,
+            commands::open_shell,
+            commands::write_shell,
+            commands::resize_shell,
+            commands::close_shell,
+            commands::open_kubectl_shell,
+            commands::list_pods,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

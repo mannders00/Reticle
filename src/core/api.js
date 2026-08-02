@@ -18,6 +18,8 @@ let connId = null;                          // ws: our id, tags our own saves
 let rev = 0;                                // ws: config revision we hold
 let deniedReason = null;                    // set when a daemon REFUSED us
 let serverVersion = null;                   // daemon's version (from hello)
+let workspacePath = null;                   // exact workspace represented by the UI
+let writeQueue = Promise.resolve();
 let socket = null;
 let nextId = 0;
 const pending = new Map();     // id → {resolve, reject}
@@ -44,7 +46,11 @@ const transportReady = (async () => {
         || "invalid or missing token";
       return (transport = "denied");
     }
-    return (transport = "mock"); // no daemon at all → browser demo
+    const explicitDemo = location.protocol === "file:"
+      || new URL(location.href).searchParams.get("demo") === "1";
+    if (explicitDemo) return (transport = "mock");
+    deniedReason = "Could not connect to the Reticle daemon. Check the service, proxy, and network, then reload.";
+    return (transport = "denied");
   }
 })();
 
@@ -52,8 +58,13 @@ const transportReady = (async () => {
 function wsToken() {
   try {
     const qp = new URL(location.href).searchParams.get("token");
-    if (qp) localStorage.setItem("reticle-token", qp);
-    return qp || localStorage.getItem("reticle-token") || "";
+    if (qp) {
+      sessionStorage.setItem("reticle-token", qp);
+      const clean = new URL(location.href);
+      clean.searchParams.delete("token");
+      history.replaceState(null, "", clean.toString());
+    }
+    return qp || sessionStorage.getItem("reticle-token") || "";
   } catch {
     return "";
   }
@@ -103,9 +114,6 @@ function wireWs(s) {
       if (msg.ok === false) p.reject(new Error(msg.error || "daemon error"));
       else p.resolve(msg.result);
     } else if (msg.type === "event") {
-      // Track the config revision from every broadcast so a later save
-      // carries the freshest baseRev even if persistence skipped a reload.
-      if (msg.event === "config-changed" && msg.payload?.rev) rev = msg.payload.rev;
       const handlers = wsHandlers.get(msg.event);
       if (handlers?.size) {
         for (const h of handlers) h({ payload: msg.payload });
@@ -135,6 +143,12 @@ async function invoke(cmd, args = {}) {
     });
   }
   return mock(cmd, args);
+}
+
+function serializeWrite(write) {
+  const result = writeQueue.then(write, write);
+  writeQueue = result.catch(() => {});
+  return result;
 }
 
 async function listen(event, handler) {
@@ -181,22 +195,40 @@ export const api = {
   /** Our ws connection id (null on tauri/mock) — used to recognize our
    *  own config-changed broadcasts and skip the self-reload. */
   get connId() { return connId; },
+  acceptRevision(value) { if (value != null) rev = value; },
+  acceptWorkspacePath(value) { workspacePath = value || null; },
 
   /* ---- config IO ---- */
   async getOperationalGraph() { return invoke("get_operational_graph"); },
+  async refreshOperationalGraph() {
+    const t = transport ?? (await transportReady);
+    return invoke(t === "ws" ? "refresh_operational_graph" : "get_operational_graph");
+  },
   async loadConfig() { return invoke("load_config"); },
   async saveConfig(config) {
-    const t = transport ?? (await transportReady);
-    if (t !== "ws") return invoke("save_config", { config });
-    // Daemon: optimistic concurrency — send the rev we hold; a stale
-    // save is refused and persistence reloads (see DAEMON.md phase 3).
-    const result = await invoke("save_config", { config, baseRev: rev });
-    if (result?.rev) rev = result.rev;
-    return result;
+    return serializeWrite(async () => {
+      const t = transport ?? (await transportReady);
+      if (t !== "ws") return invoke("save_config", { config });
+      const result = await invoke("save_config", { config, baseRev: rev });
+      if (result?.rev) rev = result.rev;
+      return result;
+    });
   },
   async getConfigPath() { return invoke("get_config_path"); },
   async getCronStatus() { return invoke("get_cron_status"); },
   async removeCronResults(server) { return invoke("remove_cron_results", { server }); },
+  async getEditableOperations() { return invoke("get_editable_operations"); },
+  async trustCurrentWorkspaceCommands() { return invoke("trust_current_workspace_commands"); },
+  async revokeCurrentWorkspaceCommands() { return invoke("revoke_current_workspace_commands"); },
+  async saveEditableOperations(operations) {
+    return serializeWrite(async () => {
+      const t = transport ?? (await transportReady);
+      const args = t === "ws" ? { operations, baseRev: rev } : { operations };
+      const result = await invoke("save_editable_operations", args);
+      if (result?.rev) rev = result.rev;
+      return result;
+    });
+  },
 
   /* ---- health + actions ---- */
   async healthCheck(host, port) { return invoke("health_check", { host, port }); },
@@ -205,7 +237,12 @@ export const api = {
     return invoke("run_action", { host, port, user, script, interpreter });
   },
   async runNamedAction(actionId, approved = false) {
-    return invoke("run_named_action", { actionId, approved });
+    await writeQueue;
+    const t = transport ?? (await transportReady);
+    const args = { actionId, approved };
+    if (t === "ws") args.baseRev = rev;
+    if (t === "tauri") args.workspacePath = workspacePath || await this.getConfigPath();
+    return invoke("run_named_action", args);
   },
   async runLocal(script, interpreter) { return invoke("run_local", { script, interpreter }); },
 
@@ -278,7 +315,11 @@ export const api = {
 export default api;
 
 /* -------- minimal mock for browser testing (not for production) -------- */
-const mockState = { workspace: "config" };
+const mockState = {
+  workspace: "config",
+  operationsRev: 1,
+  operations: { collectors: [], actions: [] },
+};
 const sampleCache = {};
 
 async function loadSampleData(name) {
@@ -338,6 +379,17 @@ async function mock(cmd, args) {
     case "get_config_path": return "(browser)";
     case "get_cron_status": return [];
     case "remove_cron_results": return null;
+    case "get_editable_operations": return {
+      baseRevision: mockState.operationsRev,
+      customChecksEnabled: true,
+      localChecksEnabled: true,
+      collectors: structuredClone(mockState.operations.collectors),
+      actions: structuredClone(mockState.operations.actions),
+    };
+    case "save_editable_operations":
+      if (args.baseRev !== mockState.operationsRev) throw new Error("stale save");
+      mockState.operations = structuredClone(args.operations);
+      return { rev: ++mockState.operationsRev };
     case "health_check": return false;
     case "http_check": return { ok: false, status: null, detail: "preview" };
     case "run_action":

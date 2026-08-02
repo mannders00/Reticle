@@ -31,13 +31,14 @@ The homepage embeds `https://demo.reticle.live/`. Keep a public demo strictly
 read-only, place it behind TLS, and do not configure public edit credentials.
 Run the daemon as a dedicated least-privileged OS identity with network access
 only to its fixed probes. Use restricted SSH principals and expose only
-server-owned named actions; Team, API, MCP, and chat must never provide an
-arbitrary shell.
+persisted named actions; the viewer graph API, MCP, and chat must never provide
+an interactive or ad-hoc shell.
 
 If audit records are required, configure `--audit-log <path>` and manage the
 resulting JSONL file with normal host permissions and rotation. Without that
-flag, no JSONL audit file is written. Signal history is bounded in memory and
-resets whenever the daemon restarts; do not present it as durable storage.
+flag, no JSONL audit file is written. Transient signal observations are bounded
+in memory and reset whenever the daemon restarts; do not present them as durable
+history or storage.
 
 ## Commercial deployment
 
@@ -48,3 +49,7 @@ materials out of the public static site. Terminate TLS with Caddy or an approved
 internal proxy, require authentication for non-public deployments, and follow
 the organization's normal secret storage, access review, logging, and backup
 policies.
+
+Use the [production deployment runbook](../docs/production-deployment.md) for the
+dedicated service account, systemd, Caddy, token and audit rotation, backup,
+restore, upgrade, rollback, uninstall, and checksum procedures.

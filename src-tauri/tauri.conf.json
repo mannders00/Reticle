@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Reticle",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "identifier": "com.matt.reticle",
   "build": {
     "frontendDist": "../src"
@@ -16,12 +16,19 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self' ipc: http://ipc.localhost; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'sha256-Cs7mh923zxQii2jp9qUGqJajK/ZobKSRL4hv7zMad30='; connect-src 'self' ipc: http://ipc.localhost"
     }
   },
   "bundle": {
     "active": true,
     "targets": "all",
+    "publisher": "MA Software LLC",
+    "copyright": "Copyright (c) 2026 Matt Anderson (MA Software LLC)",
+    "licenseFile": "../LICENSE",
+    "resources": {
+      "../LICENSE": "LICENSE",
+      "../THIRD_PARTY_NOTICES": "THIRD_PARTY_NOTICES"
+    },
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

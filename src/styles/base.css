@@ -174,22 +174,23 @@ textarea:focus {
   grid-template-columns: auto 1fr var(--panel-w, 340px);
   grid-template-rows: 44px 1fr 26px;
   height: 100vh;
+  height: 100dvh;
   width: 100vw;
   min-height: 100vh;
+  min-height: 100dvh;
   gap: 0;
   overflow: hidden;
 }
 .app-shell.is-panel-fullscreen {
   grid-template-areas:
     "rightpanel"
-    "rightpanel"
-    "rightpanel";
+    "statusbar";
   grid-template-columns: 1fr;
-  grid-template-rows: 1fr;
+  grid-template-rows: 1fr 26px;
 }
 .app-shell.is-panel-fullscreen > .toolbar,
 .app-shell.is-panel-fullscreen > #palette,
-.app-shell.is-panel-fullscreen > .statusbar {
+.app-shell.is-panel-fullscreen > .canvas-host {
   display: none;
 }
 .app-shell.is-panel-hidden {
@@ -236,6 +237,8 @@ textarea:focus {
   min-height: 0;
   overflow: hidden;
   position: relative;
+  container-type: inline-size;
+  container-name: inspector-panel;
 }
 .right-panel[hidden] { display: none; }
 
@@ -272,7 +275,8 @@ textarea:focus {
 
 .statusbar {
   grid-area: statusbar;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 10px;
   padding: 0 12px;
@@ -283,6 +287,8 @@ textarea:focus {
   z-index: 30;
   white-space: nowrap;
   overflow: hidden;
+  padding-left: max(12px, env(safe-area-inset-left));
+  padding-right: max(12px, env(safe-area-inset-right));
 }
 
 /* Make the inspector + terminal collapse gracefully when empty
@@ -292,6 +298,16 @@ textarea:focus {
 }
 .app-shell.is-terminal-hidden {
   --term-h: 0fr;
+}
+@media (max-width: 720px) {
+  .app-shell:not(.is-panel-hidden) {
+    grid-template-columns: 0 0 1fr;
+  }
+  .app-shell:not(.is-panel-hidden) > #palette,
+  .app-shell:not(.is-panel-hidden) > .canvas-host {
+    visibility: hidden;
+  }
+  .panel-resize-handle { display: none; }
 }
 /* ---- Viewer role (daemon read-only) — phase 3b lockout ----
  * The store refuses topology mutations and the daemon rejects writes;
@@ -317,7 +333,6 @@ textarea:focus {
 .statusbar .sb-role { color: var(--warn); font-weight: 600; }
 /* viewer: header buttons — Check (read-only probe) stays, the rest go */
 .app-shell.is-viewer .inspector-actions .shell-btn,
-.app-shell.is-viewer .inspector-actions .edit-btn,
 .app-shell.is-viewer .inspector-actions .del-btn { display: none !important; }
 
 /* ---- Access gate (daemon refused the connection) ---- */

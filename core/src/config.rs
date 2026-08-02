@@ -12,6 +12,7 @@
 // for forward compat.
 
 use std::fs;
+use std::io::Write;
 use std::path::Path;
 
 use serde::{Deserialize, Serialize};
@@ -232,11 +233,11 @@ pub fn default_config_yaml() -> &'static str {
 #     status: 2xx
 #     timeoutSeconds: 8
 # actions:
-#   - id: restart-web
+#   - id: diagnose-web
 #     nodeId: web-01
-#     name: Restart web
-#     kind: service.restart
-#     service: nginx.service
+#     name: Diagnose web
+#     kind: ssh.command
+#     command: curl -fsS http://127.0.0.1/health | jq -e '.status == "ok"'
 #     requiresSignal: web-http
 #     requiresState: err
 #     requiresApproval: true
@@ -285,13 +286,103 @@ pub fn save_raw(path: &Path, config: &Value) -> Result<(), String> {
     ensure_config(path)?;
     let content =
         serde_yaml::to_string(config).map_err(|e| format!("failed to serialize config: {}", e))?;
-    fs::write(path, content).map_err(|e| format!("failed to write config: {}", e))
+    let parent = path.parent().unwrap_or_else(|| Path::new("."));
+    let file_name = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("config.yaml");
+    let nonce = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    let temp = parent.join(format!(".{file_name}.{}.{nonce}.tmp", std::process::id()));
+    let permissions = fs::metadata(path)
+        .ok()
+        .map(|metadata| metadata.permissions());
+    let result = (|| {
+        let mut file = fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temp)
+            .map_err(|e| format!("failed to create temporary config: {e}"))?;
+        if let Some(permissions) = permissions {
+            fs::set_permissions(&temp, permissions)
+                .map_err(|e| format!("failed to preserve config permissions: {e}"))?;
+        }
+        file.write_all(content.as_bytes())
+            .and_then(|_| file.sync_all())
+            .map_err(|e| format!("failed to write temporary config: {e}"))?;
+        fs::rename(&temp, path).map_err(|e| format!("failed to replace config: {e}"))?;
+        #[cfg(unix)]
+        fs::File::open(parent)
+            .and_then(|directory| directory.sync_all())
+            .map_err(|e| format!("failed to sync config directory: {e}"))?;
+        Ok(())
+    })();
+    if result.is_err() {
+        let _ = fs::remove_file(&temp);
+    }
+    result
 }
 
 /// Persist canvas-owned topology fields while preserving collector and named
 /// action configuration that is intentionally absent from graph responses.
 pub fn save_topology(path: &Path, topology: &Value) -> Result<(), String> {
-    let mut document = load_raw(path).unwrap_or_else(|_| serde_json::json!({}));
+    let topology = topology
+        .as_object()
+        .ok_or_else(|| "topology must be an object".to_string())?;
+    let next_node_map = topology
+        .get("nodes")
+        .and_then(Value::as_object)
+        .ok_or_else(|| "topology nodes must be an object".to_string())?;
+    let next_edge_map = topology
+        .get("edges")
+        .and_then(Value::as_object)
+        .ok_or_else(|| "topology edges must be an object".to_string())?;
+    for (id, node) in next_node_map {
+        let node = node
+            .as_object()
+            .ok_or_else(|| format!("node '{id}' must be an object"))?;
+        if node.get("spec").is_some_and(|spec| !spec.is_object()) {
+            return Err(format!("node '{id}' spec must be an object"));
+        }
+    }
+    for (id, edge) in next_edge_map {
+        let edge = edge
+            .as_object()
+            .ok_or_else(|| format!("edge '{id}' must be an object"))?;
+        let from = edge
+            .get("from")
+            .and_then(Value::as_str)
+            .ok_or_else(|| format!("edge '{id}' requires from"))?;
+        let to = edge
+            .get("to")
+            .and_then(Value::as_str)
+            .ok_or_else(|| format!("edge '{id}' requires to"))?;
+        if !next_node_map.contains_key(from) || !next_node_map.contains_key(to) {
+            return Err(format!("edge '{id}' references a missing node"));
+        }
+    }
+
+    let mut document = load_raw(path)?;
+    let previous_nodes = document
+        .get("nodes")
+        .and_then(Value::as_object)
+        .map(|nodes| {
+            nodes
+                .keys()
+                .cloned()
+                .collect::<std::collections::HashSet<_>>()
+        })
+        .unwrap_or_default();
+    let next_nodes = next_node_map
+        .keys()
+        .cloned()
+        .collect::<std::collections::HashSet<_>>();
+    let removed_nodes = previous_nodes
+        .difference(&next_nodes)
+        .cloned()
+        .collect::<std::collections::HashSet<_>>();
     let object = document
         .as_object_mut()
         .ok_or_else(|| "config root must be an object".to_string())?;
@@ -299,6 +390,34 @@ pub fn save_topology(path: &Path, topology: &Value) -> Result<(), String> {
         if let Some(value) = topology.get(key) {
             object.insert(key.into(), value.clone());
         }
+    }
+    let mut removed_collectors = std::collections::HashSet::new();
+    if let Some(collectors) = object.get_mut("collectors").and_then(Value::as_array_mut) {
+        collectors.retain(|collector| {
+            let removed = collector
+                .get("nodeId")
+                .and_then(Value::as_str)
+                .is_some_and(|node_id| removed_nodes.contains(node_id));
+            if removed {
+                if let Some(id) = collector.get("id").and_then(Value::as_str) {
+                    removed_collectors.insert(id.to_string());
+                }
+            }
+            !removed
+        });
+    }
+    if let Some(actions) = object.get_mut("actions").and_then(Value::as_array_mut) {
+        actions.retain(|action| {
+            let removed_node = action
+                .get("nodeId")
+                .and_then(Value::as_str)
+                .is_some_and(|node_id| removed_nodes.contains(node_id));
+            let removed_signal = action
+                .get("requiresSignal")
+                .and_then(Value::as_str)
+                .is_some_and(|signal_id| removed_collectors.contains(signal_id));
+            !removed_node && !removed_signal
+        });
     }
     object.remove("servers");
     save_raw(path, &document)
@@ -343,6 +462,69 @@ mod tests {
         assert_eq!(saved["layers"][0]["name"], "boundaries");
         assert_eq!(saved["extension"]["owner"], "platform");
         assert_eq!(saved["nodes"]["api"]["title"], "API");
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn topology_save_atomically_prunes_operations_for_removed_nodes() {
+        let unique = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!("reticle-config-prune-{unique}.yaml"));
+        fs::write(
+            &path,
+            "nodes:\n  api: { title: API }\n  worker: { title: Worker }\nedges: {}\ncollectors:\n  - id: api-check\n    nodeId: api\n  - id: worker-check\n    nodeId: worker\nactions:\n  - id: restart-api\n    nodeId: api\n  - id: restart-worker-from-api\n    nodeId: worker\n    requiresSignal: api-check\n",
+        )
+        .unwrap();
+
+        save_topology(
+            &path,
+            &serde_json::json!({
+                "version": 1,
+                "nodes": { "worker": { "title": "Worker" } },
+                "edges": {}
+            }),
+        )
+        .unwrap();
+        let saved = load_raw(&path).unwrap();
+        assert_eq!(saved["collectors"].as_array().unwrap().len(), 1);
+        assert_eq!(saved["collectors"][0]["id"], "worker-check");
+        assert!(saved["actions"].as_array().unwrap().is_empty());
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn topology_save_rejects_malformed_input_without_touching_the_file() {
+        let unique = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!("reticle-config-invalid-{unique}.yaml"));
+        let original = "nodes:\n  api: { title: API }\nedges: {}\ncollectors:\n  - id: api-check\n    nodeId: api\n";
+        fs::write(&path, original).unwrap();
+
+        assert!(save_topology(&path, &serde_json::json!({})).is_err());
+        assert_eq!(fs::read_to_string(&path).unwrap(), original);
+        assert!(save_topology(
+            &path,
+            &serde_json::json!({ "nodes": {}, "edges": { "bad": { "from": "a", "to": "b" } } })
+        )
+        .is_err());
+        assert_eq!(fs::read_to_string(&path).unwrap(), original);
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn topology_save_refuses_to_replace_an_unreadable_document() {
+        let unique = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!("reticle-config-malformed-{unique}.yaml"));
+        fs::write(&path, "nodes: [unterminated").unwrap();
+        assert!(save_topology(&path, &serde_json::json!({ "nodes": {}, "edges": {} })).is_err());
+        assert_eq!(fs::read_to_string(&path).unwrap(), "nodes: [unterminated");
         let _ = fs::remove_file(path);
     }
 }

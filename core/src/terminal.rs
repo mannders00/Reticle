@@ -45,8 +45,8 @@ pub fn open(
     cols: Option<u16>,
     rows: Option<u16>,
 ) -> Result<(), String> {
+    crate::ssh::validate_target(&host, &user)?;
     let port_str = port.to_string();
-    let user_host = format!("{}@{}", user, host);
     let argv = vec![
         CString::new("ssh").unwrap(),
         CString::new("-o").unwrap(),
@@ -55,7 +55,10 @@ pub fn open(
         CString::new("StrictHostKeyChecking=accept-new").unwrap(),
         CString::new("-p").unwrap(),
         CString::new(port_str).unwrap(),
-        CString::new(user_host).unwrap(),
+        CString::new("-l").unwrap(),
+        CString::new(user).unwrap(),
+        CString::new("--").unwrap(),
+        CString::new(host).unwrap(),
     ];
     spawn_pty(sink, shells, server_name, argv, cols, rows)
 }
@@ -131,15 +134,32 @@ fn spawn_pty(
             std::process::exit(1);
         }
         ForkptyResult::Parent { child, master } => {
+            let child_pid = child.as_raw() as i32;
             let master_fd = master.as_raw_fd();
             let reader_fd = unsafe { libc::dup(master_fd) };
             if reader_fd == -1 {
+                unsafe {
+                    libc::kill(child_pid, libc::SIGKILL);
+                    libc::waitpid(child_pid, std::ptr::null_mut(), 0);
+                }
                 return Err("failed to dup master fd".to_string());
             }
 
             let event_name = format!("shell-output-{}", session_id);
             let sn_clone = session_id.clone();
             let shells_clone = shells.clone();
+
+            {
+                let mut sl = shells.lock().unwrap();
+                sl.insert(
+                    session_id,
+                    ShellHandle {
+                        master_fd,
+                        child_pid,
+                    },
+                );
+            }
+            std::mem::forget(master);
 
             thread::spawn(move || {
                 let file = unsafe { File::from_raw_fd(reader_fd) };
@@ -150,30 +170,36 @@ fn spawn_pty(
                         Ok(0) => break,
                         Ok(n) => {
                             let data = String::from_utf8_lossy(&buf[..n]).to_string();
+                            let sl = shells_clone.lock().unwrap();
+                            if !sl
+                                .get(&sn_clone)
+                                .is_some_and(|handle| handle.child_pid == child_pid)
+                            {
+                                break;
+                            }
                             sink(&event_name, serde_json::Value::String(data));
                         }
                         Err(_) => break,
                     }
                 }
-                sink(
-                    &event_name,
-                    serde_json::Value::String("\x1b[2J\x1b[H--- Disconnected ---\n".to_string()),
-                );
                 let mut sl = shells_clone.lock().unwrap();
-                sl.remove(&sn_clone);
+                if sl
+                    .get(&sn_clone)
+                    .is_some_and(|handle| handle.child_pid == child_pid)
+                {
+                    sink(
+                        &event_name,
+                        serde_json::Value::String(
+                            "\x1b[2J\x1b[H--- Disconnected ---\n".to_string(),
+                        ),
+                    );
+                    if let Some(handle) = sl.remove(&sn_clone) {
+                        unsafe { libc::close(handle.master_fd) };
+                    }
+                }
+                drop(sl);
+                unsafe { libc::waitpid(child_pid, std::ptr::null_mut(), 0) };
             });
-
-            {
-                let mut sl = shells.lock().unwrap();
-                sl.insert(
-                    session_id,
-                    ShellHandle {
-                        master_fd,
-                        child_pid: child.as_raw() as i32,
-                    },
-                );
-            }
-            std::mem::forget(master);
 
             Ok(())
         }
@@ -283,4 +309,42 @@ pub fn list_pods(
         .split_whitespace()
         .map(|s| s.to_string())
         .collect())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::{Arc, Mutex};
+    use std::time::Duration;
+
+    #[test]
+    fn stale_reader_cannot_remove_replacement_shell() {
+        let shells: ShellMap = Arc::new(Mutex::new(std::collections::HashMap::new()));
+        let sink: EventSink = Arc::new(|_, _| {});
+        let command = || {
+            vec![
+                CString::new("/bin/sh").unwrap(),
+                CString::new("-c").unwrap(),
+                CString::new("sleep 5").unwrap(),
+            ]
+        };
+
+        spawn_pty(
+            sink.clone(),
+            shells.clone(),
+            "test".into(),
+            command(),
+            None,
+            None,
+        )
+        .unwrap();
+        let first = shells.lock().unwrap()["test"].child_pid;
+        spawn_pty(sink, shells.clone(), "test".into(), command(), None, None).unwrap();
+        let second = shells.lock().unwrap()["test"].child_pid;
+        assert_ne!(first, second);
+
+        std::thread::sleep(Duration::from_millis(200));
+        assert_eq!(shells.lock().unwrap()["test"].child_pid, second);
+        kill_all(&shells);
+    }
 }

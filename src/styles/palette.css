@@ -85,6 +85,9 @@
 }
 
 .palette-cat-head {
+  width: 100%;
+  border: 0;
+  background: transparent;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -121,6 +124,10 @@
 }
 
 .palette-tile {
+  width: 100%;
+  background: transparent;
+  font: inherit;
+  text-align: left;
   display: flex;
   align-items: center;
   gap: 9px;

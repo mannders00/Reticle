@@ -161,6 +161,8 @@ function prettyDir(p) {
 
 function workspaceSwitcher() {
   const wrap = h("div", { class: "workspace-switcher" });
+  const label = h("span", { class: "ws-btn-label" }, "config");
+  const caret = h("span", { class: "ws-btn-caret", "aria-hidden": "true" }, "▾");
   const btn = h("button", {
     class: "ws-btn",
     type: "button",
@@ -172,7 +174,7 @@ function workspaceSwitcher() {
       wrap.classList.toggle("is-open");
       if (wrap.classList.contains("is-open")) refresh();
     },
-  }, "config ▾");
+  }, label, caret);
   // Daemon mode serves ONE fixed config: the switcher is not a control
   // there, so render it as a plain disabled label (no caret, no hover,
   // no cursor) instead of a button that silently does nothing.
@@ -180,17 +182,23 @@ function workspaceSwitcher() {
     if (api.transport !== "ws") return;
     btn.disabled = true;
     btn.classList.add("is-fixed");
-    btn.textContent = btn.textContent.replace(" ▾", "");
+    caret.remove();
     btn.title = "This daemon serves one fixed config";
   });
   bus.on("session:loaded", ({ fileName }) => {
     if (api.transport !== "ws" || !fileName) return;
     const base = String(fileName).split("/").pop().replace(/\.ya?ml$/i, "");
-    btn.textContent = base;
+    label.textContent = base;
     btn.title = `Shared config: ${fileName} (fixed by the daemon)`;
   });
   const dropdown = h("div", { class: "ws-dropdown" });
   wrap.append(btn, dropdown);
+  const runningActions = new Set();
+  let switchingWorkspace = false;
+  bus.on("action:running", ({ actionId, running }) => {
+    if (running) runningActions.add(actionId);
+    else runningActions.delete(actionId);
+  });
 
   // Close on outside click
   document.addEventListener("click", (e) => {
@@ -198,10 +206,18 @@ function workspaceSwitcher() {
   });
 
   async function openInPlace(path, name) {
+    if (runningActions.size) {
+      bus.emit("workspace:switch-blocked", { error: "Wait for the running action to finish before switching workspaces." });
+      return;
+    }
+    if (switchingWorkspace) return;
     wrap.classList.remove("is-open");
-    await api.switchWorkspace(path);
-    btn.textContent = name + " ▾";
-    bus.emit("workspace:switched", { path, name });
+    switchingWorkspace = true;
+    const switched = await new Promise((resolve) => {
+      bus.emit("workspace:switch-requested", { path, name, complete: resolve });
+    });
+    switchingWorkspace = false;
+    if (switched) label.textContent = name;
   }
 
   async function refresh() {
@@ -299,13 +315,13 @@ function workspaceSwitcher() {
 
   // Track active workspace name
   bus.on("workspace:switched", ({ name }) => {
-    btn.textContent = name + " ▾";
+    label.textContent = name;
   });
 
   // Load the active workspace name on boot
   refresh().then(() => {
     const active = dropdown.querySelector(".ws-item.is-active .ws-name");
-    if (active) btn.textContent = active.textContent + " ▾";
+    if (active) label.textContent = active.textContent;
   });
 
   return wrap;

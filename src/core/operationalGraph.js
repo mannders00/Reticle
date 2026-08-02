@@ -34,13 +34,8 @@ export function graphToTopology(graph) {
   const nodes = Object.fromEntries(Object.entries(graph?.nodes ?? {}).map(([id, node]) => [id, {
     ...node,
     health: health[id],
-    actions: [],
     crons: [],
   }]));
-
-  for (const action of Object.values(graph?.actions ?? {})) {
-    if (nodes[action.nodeId]) nodes[action.nodeId].actions.push(action);
-  }
 
   return {
     version: graph?.version ?? 1,

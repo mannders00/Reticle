@@ -10,9 +10,11 @@
 }
 .ws-btn {
   height: 28px;
+  max-width: 220px;
   padding: 0 12px;
   display: inline-flex;
   align-items: center;
+  flex-wrap: nowrap;
   gap: 4px;
   background: var(--bg-2);
   border: 1px solid var(--stroke-1);
@@ -20,8 +22,19 @@
   color: var(--text-1);
   font: 12px var(--font-sans);
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
   cursor: pointer;
 }
+.ws-btn-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ws-btn-caret { flex: 0 0 auto; }
 .ws-btn:hover { border-color: var(--stroke-strong); background: var(--bg-3); }
 
 .ws-dropdown {
@@ -178,6 +191,7 @@
    spins while the sweep is in flight. */
 .refresh-btn { padding: 0 7px; }
 .refresh-btn svg { display: block; }
+.theme-toggle { font-size: 17px; line-height: 1; }
 .refresh-btn.is-refreshing {
   color: var(--accent);
 }
@@ -196,7 +210,16 @@
   cursor: pointer;
 }
 .statusbar .sb-brand:hover { color: var(--accent); }
-.statusbar .sb-spacer { flex: 1 1 auto; }
+.statusbar .sb-group {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+.statusbar .sb-left { justify-content: flex-start; }
+.statusbar .sb-center { justify-content: center; }
+.statusbar .sb-right { justify-content: flex-end; }
 .statusbar .sb-item {
   display: inline-flex;
   align-items: center;
@@ -223,6 +246,23 @@
 .statusbar .sb-toggle.is-active {
   color: var(--text-2);
 }
+.statusbar .sb-privileged {
+  appearance: none;
+  border: 1px solid var(--stroke-1);
+  background: transparent;
+  color: var(--text-3);
+  line-height: 16px;
+}
+.statusbar .sb-privileged:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.statusbar .sb-privileged.is-active {
+  border-color: color-mix(in srgb, var(--warn) 55%, var(--stroke-1));
+  background: color-mix(in srgb, var(--warn) 11%, transparent);
+  color: var(--warn);
+}
+.statusbar .sb-privileged.is-loading { color: var(--text-3); }
 /* ----- Toolbar overflow ("⋯") — only lives on narrow screens ----- */
 .tb-overflow { position: relative; display: none; }
 .tb-more-btn { font-weight: 700; letter-spacing: 1px; }
@@ -267,14 +307,20 @@
   .toolbar-inner > .tool-btn { display: none; }
   .toolbar-inner > .tool-btn.tb-keep { display: inline-flex; }
   .tb-overflow { display: block; }
-  .ws-btn { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ws-btn { max-width: 130px; }
+  .ws-btn-label { max-width: 90px; }
 
   .statusbar .sb-snap,
   .statusbar .sb-scroll,
-  .statusbar .sb-path { display: none; }
+  .statusbar .sb-path,
+  .statusbar .sb-last-update,
+  .statusbar .sb-center { display: none; }
+  .statusbar { grid-template-columns: minmax(0, 1fr) auto; }
 }
 @media (max-width: 460px) {
-  .statusbar .sb-item:not(.sb-role):not(.sb-dirty) { display: none; } /* node/edge counts */
+  .statusbar .sb-brand { display: none; }
+  .statusbar .sb-group { gap: 6px; }
+  .statusbar .sb-privileged { padding-inline: 5px; }
 }
 
 /* Daemon mode: the workspace "button" is a fixed-config label, not a

@@ -8,10 +8,13 @@
 // explorable without a backend.
 
 import { bus } from "./eventBus.js";
+import { flushPendingPersistence } from "./persistence.js";
 import { getState, setNodeHealth } from "./store.js";
 import { kindMeta } from "../canvas/nodes/kinds.js";
 import api from "./api.js";
 import { projectGraphHealth } from "./operationalGraph.js";
+import { findActionById } from "./operationsModel.js";
+import { getOperationsState, recordRuntimeOperations } from "./operations.js";
 
 /* ---- combined health model (worst wins) ----
  * Independent signals per node:
@@ -128,7 +131,7 @@ export async function checkHealth(nodeId) {
       setNodeHealth(nodeId, { state: "unknown", lastCheck: Date.now(), detail: "preview" });
       return;
     }
-    const graph = await api.getOperationalGraph();
+    const graph = await collectGraph();
     applyGraphSignals(graph, nodeId);
   } catch (err) {
     setNodeHealth(nodeId, { state: "err", lastCheck: Date.now(), detail: String(err) });
@@ -142,14 +145,35 @@ export async function checkHealth(nodeId) {
 export async function checkAll() {
   if (!api.ready) return;
   try {
-    const graph = await api.getOperationalGraph();
+    const graph = await collectGraph();
     applyGraphSignals(graph);
   } catch (err) {
     console.error("[ops] graph refresh failed:", err);
   }
 }
 
+let graphRefreshPromise = null;
+let forcedGraphRefreshPromise = null;
+function collectGraph(force = false) {
+  if (force) {
+    if (!forcedGraphRefreshPromise) {
+      forcedGraphRefreshPromise = api.refreshOperationalGraph().finally(() => {
+        forcedGraphRefreshPromise = null;
+      });
+    }
+    return forcedGraphRefreshPromise;
+  }
+  if (forcedGraphRefreshPromise) return forcedGraphRefreshPromise;
+  if (!graphRefreshPromise) {
+    graphRefreshPromise = api.getOperationalGraph().finally(() => {
+      graphRefreshPromise = null;
+    });
+  }
+  return graphRefreshPromise;
+}
+
 function applyGraphSignals(graph, onlyNodeId = null) {
+  recordRuntimeOperations(graph);
   const healthByNode = projectGraphHealth(graph, Date.now());
   for (const [nodeId, health] of Object.entries(healthByNode)) {
     if (!onlyNodeId || nodeId === onlyNodeId) setNodeHealth(nodeId, health);
@@ -170,7 +194,8 @@ export async function refreshAll() {
   refreshInFlight = true;
   bus.emit("refresh:start", {});
   try {
-    await checkAll();
+    const graph = await collectGraph(true);
+    applyGraphSignals(graph);
   } finally {
     refreshInFlight = false;
     bus.emit("refresh:done", { at: Date.now() });
@@ -179,17 +204,20 @@ export async function refreshAll() {
 }
 
 /**
- * Run a named action (bash script) on a node via SSH.
+ * Run a persisted named command over SSH or on the Reticle host.
  * Returns { success, exitCode, stdout, stderr }.
  */
-export async function runAction(nodeId, actionName) {
-  const node = getState().topology.nodes[nodeId];
-  const action = node?.actions?.find((a) => a.name === actionName);
+export async function runAction(nodeId, actionId) {
+  const action = findActionById(getOperationsState().runtimeActions, actionId);
+  if (action?.nodeId !== nodeId) return null;
   if (!action) return null;
   if (!action.available) {
     return { success: false, exitCode: -1, stdout: "", stderr: action.unavailableReason || "action unavailable" };
   }
   try {
+    if (!await flushPendingPersistence()) {
+      return { success: false, exitCode: -1, stdout: "", stderr: "Could not persist node details; action was not run" };
+    }
     const approved = !action.requiresApproval || window.confirm(`Approve action “${action.name}”?`);
     if (!approved) return { success: false, exitCode: -1, stdout: "", stderr: "approval declined" };
     const result = await api.runNamedAction(action.id, approved);

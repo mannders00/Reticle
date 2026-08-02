@@ -15,6 +15,7 @@ pub mod events;
 pub mod graph;
 pub mod health;
 pub mod local;
+pub mod operations;
 pub mod shell;
 pub mod ssh;
 #[cfg(unix)]

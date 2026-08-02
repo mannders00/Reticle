@@ -26,11 +26,16 @@ jobs:
       - name: Rust format
         run: cargo fmt --all -- --check
       - name: Rust check
-        run: cargo check --workspace --all-targets
+        run: cargo check --workspace --all-targets --locked
       - name: Rust tests
-        run: cargo test --workspace
+        run: cargo test --workspace --locked
       - name: JavaScript tests
         run: bun run test
+      - name: Team daemon tests
+        if: ${{ hashFiles('daemon/Cargo.toml') != '' }}
+        run: |
+          cargo test --manifest-path daemon/Cargo.toml --locked
+          bash daemon/endpoint-smoke.sh
       - name: JavaScript syntax
         run: git ls-files -z -- '*.js' '*.mjs' | xargs -0 -r -n1 node --check
       - name: Shell syntax

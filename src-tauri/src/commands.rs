@@ -108,6 +108,7 @@ pub fn list_workspaces(state: State<'_, AppState>) -> Result<Vec<Workspace>, Str
 /// at a chosen path works. The path is remembered in recents.
 #[tauri::command]
 pub fn switch_workspace(state: State<'_, AppState>, path: String) -> Result<(), String> {
+    let _workspace_guard = state.workspace_lock.lock().unwrap();
     let p = PathBuf::from(&path);
     if !p.exists() {
         crate::config::ensure_config(&p)?;
@@ -116,6 +117,7 @@ pub fn switch_workspace(state: State<'_, AppState>, path: String) -> Result<(), 
     let content = fs::read_to_string(&p).map_err(|e| format!("read: {}", e))?;
     let _: serde_json::Value =
         serde_yaml::from_str(&content).map_err(|e| format!("invalid YAML: {}", e))?;
+    crate::terminal::kill_all(&state.shells);
     *state.config_path.lock().unwrap() = p;
     remember_recent(&state, &path);
     Ok(())
@@ -183,10 +185,12 @@ pub fn load_config(state: State<'_, AppState>) -> Result<serde_json::Value, Stri
 pub async fn get_operational_graph(
     state: State<'_, AppState>,
 ) -> Result<crate::graph::OperationalGraph, String> {
-    let path = state.config_path.lock().unwrap().clone();
-    tauri::async_runtime::spawn_blocking(move || crate::graph::collect_yaml(&path))
-        .await
-        .map_err(|e| format!("task failed: {e}"))?
+    let (path, allow_commands) = current_workspace_policy(&state);
+    tauri::async_runtime::spawn_blocking(move || {
+        crate::graph::collect_yaml_with_custom_checks(&path, allow_commands)
+    })
+    .await
+    .map_err(|e| format!("task failed: {e}"))?
 }
 
 #[tauri::command]
@@ -194,11 +198,24 @@ pub async fn run_named_action(
     state: State<'_, AppState>,
     action_id: String,
     approved: bool,
+    workspace_path: String,
 ) -> Result<crate::config::ActionResult, String> {
-    let path = state.config_path.lock().unwrap().clone();
-    tauri::async_runtime::spawn_blocking(move || crate::actions::run(&path, &action_id, approved))
-        .await
-        .map_err(|e| format!("task failed: {e}"))?
+    let config_path = state.config_path.clone();
+    let trusted = state.trusted_command_workspaces.clone();
+    let workspace_lock = state.workspace_lock.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let _workspace_guard = workspace_lock.lock().unwrap();
+        let path = config_path.lock().unwrap().clone();
+        if normalized_path(&path) != normalized_path(&PathBuf::from(workspace_path)) {
+            return Err(
+                "workspace changed before action execution; review and approve it again".into(),
+            );
+        }
+        let allow_commands = commands_enabled_for_path(&path, &trusted);
+        crate::actions::run_with_custom_checks(&path, &action_id, approved, allow_commands)
+    })
+    .await
+    .map_err(|e| format!("task failed: {e}"))?
 }
 
 #[tauri::command]
@@ -208,7 +225,7 @@ pub async fn agent_chat(
 ) -> Result<crate::agent::AgentResponse, String> {
     let path = state.config_path.lock().unwrap().clone();
     tauri::async_runtime::spawn_blocking(move || {
-        let graph = crate::graph::collect_yaml(&path)?;
+        let graph = crate::graph::collect_yaml_with_custom_checks(&path, false)?;
         crate::agent::run_request(request, &graph, None).map_err(|error| error.to_string())
     })
     .await
@@ -217,8 +234,105 @@ pub async fn agent_chat(
 
 #[tauri::command]
 pub fn save_config(state: State<'_, AppState>, config: serde_json::Value) -> Result<(), String> {
+    let _workspace_guard = state.workspace_lock.lock().unwrap();
+    let _guard = state.save_lock.lock().unwrap();
     let path = state.config_path.lock().unwrap().clone();
     crate::config::save_topology(&path, &config)
+}
+
+#[tauri::command]
+pub fn get_editable_operations(
+    state: State<'_, AppState>,
+) -> Result<crate::operations::EditableOperations, String> {
+    let _workspace_guard = state.workspace_lock.lock().unwrap();
+    let (path, allow_commands) = current_workspace_policy(&state);
+    crate::operations::editable(&path, None, allow_commands)
+}
+
+#[derive(Debug, serde::Serialize)]
+pub struct DesktopOperationsSave {
+    pub rev: Option<u64>,
+}
+
+#[tauri::command]
+pub fn save_editable_operations(
+    state: State<'_, AppState>,
+    operations: crate::operations::OperationsInput,
+) -> Result<DesktopOperationsSave, String> {
+    let _workspace_guard = state.workspace_lock.lock().unwrap();
+    let _guard = state.save_lock.lock().unwrap();
+    let path = state.config_path.lock().unwrap().clone();
+    crate::operations::save(
+        &path,
+        &operations,
+        commands_enabled_for_path(&path, &state.trusted_command_workspaces),
+    )?;
+    Ok(DesktopOperationsSave { rev: None })
+}
+
+fn command_override_enabled() -> bool {
+    if std::env::var("RETICLE_ALLOW_CUSTOM_COMMANDS")
+        .is_ok_and(|value| matches!(value.as_str(), "1" | "true" | "yes"))
+    {
+        return true;
+    }
+    false
+}
+
+fn normalized_path(path: &std::path::Path) -> PathBuf {
+    fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
+}
+
+fn commands_enabled_for_path(
+    path: &std::path::Path,
+    trusted: &std::sync::Mutex<std::collections::HashSet<PathBuf>>,
+) -> bool {
+    command_override_enabled() || trusted.lock().unwrap().contains(&normalized_path(path))
+}
+
+fn current_workspace_policy(state: &AppState) -> (PathBuf, bool) {
+    let path = state.config_path.lock().unwrap().clone();
+    let enabled = commands_enabled_for_path(&path, &state.trusted_command_workspaces);
+    (path, enabled)
+}
+
+pub fn desktop_commands_enabled(state: &AppState) -> bool {
+    current_workspace_policy(state).1
+}
+
+#[tauri::command]
+pub fn trust_current_workspace_commands(
+    state: State<'_, AppState>,
+) -> Result<crate::operations::EditableOperations, String> {
+    let _workspace_guard = state.workspace_lock.lock().unwrap();
+    let path = state.config_path.lock().unwrap().clone();
+    let path = fs::canonicalize(&path).map_err(|error| format!("resolve workspace: {error}"))?;
+    let editable = crate::operations::editable(&path, None, true)?;
+    state
+        .trusted_command_workspaces
+        .lock()
+        .unwrap()
+        .insert(path.clone());
+    Ok(editable)
+}
+
+#[tauri::command]
+pub fn revoke_current_workspace_commands(state: State<'_, AppState>) -> Result<(), String> {
+    if command_override_enabled() {
+        return Err(
+            "privileged mode is enforced by RETICLE_ALLOW_CUSTOM_COMMANDS for this process".into(),
+        );
+    }
+    let _workspace_guard = state.workspace_lock.lock().unwrap();
+    let path = state.config_path.lock().unwrap().clone();
+    let path = fs::canonicalize(&path).map_err(|error| format!("resolve workspace: {error}"))?;
+    state
+        .trusted_command_workspaces
+        .lock()
+        .unwrap()
+        .remove(&path);
+    crate::terminal::kill_all(&state.shells);
+    Ok(())
 }
 
 #[tauri::command]
@@ -332,6 +446,11 @@ pub fn open_shell(
     cols: Option<u16>,
     rows: Option<u16>,
 ) -> Result<(), String> {
+    let _workspace_guard = state.workspace_lock.lock().unwrap();
+    let (_path, enabled) = current_workspace_policy(&state);
+    if !enabled {
+        return Err("trust this Desktop workspace before opening an interactive shell".into());
+    }
     crate::terminal::open(
         emit_sink(app_handle),
         state.shells.clone(),
@@ -380,6 +499,11 @@ pub fn open_kubectl_shell(
     cols: Option<u16>,
     rows: Option<u16>,
 ) -> Result<(), String> {
+    let _workspace_guard = state.workspace_lock.lock().unwrap();
+    let (_path, enabled) = current_workspace_policy(&state);
+    if !enabled {
+        return Err("trust this Desktop workspace before opening an interactive shell".into());
+    }
     crate::terminal::open_kubectl(
         emit_sink(app_handle),
         state.shells.clone(),
@@ -397,11 +521,20 @@ pub fn open_kubectl_shell(
 /// frontend pod-picker before opening a kubectl exec shell.
 #[tauri::command]
 pub async fn list_pods(
+    state: State<'_, AppState>,
     context: Option<String>,
     namespace: Option<String>,
     selector: Option<String>,
 ) -> Result<Vec<String>, String> {
+    let config_path = state.config_path.clone();
+    let trusted = state.trusted_command_workspaces.clone();
+    let workspace_lock = state.workspace_lock.clone();
     tauri::async_runtime::spawn_blocking(move || {
+        let _workspace_guard = workspace_lock.lock().unwrap();
+        let path = config_path.lock().unwrap().clone();
+        if !commands_enabled_for_path(&path, &trusted) {
+            return Err("trust this Desktop workspace before querying kubectl".into());
+        }
         crate::terminal::list_pods(context, namespace, selector)
     })
     .await

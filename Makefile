@@ -79,7 +79,7 @@ deploy-pi: daemon-linux-arm64
 	scp dist/reticle-daemon-linux-arm64 $(PI):reticle/reticle-daemon
 	@echo "on the pi:  tmux new -s reticle"
 	@echo "            cd reticle && ./reticle-daemon --config ./topology.yaml \\"
-	@echo "              --edit-token <secret> --view-token <secret>"
+	@echo "              --bind 0.0.0.0 --edit-token <secret> --view-token <secret>"
 
 # ---- misc ----
 
@@ -92,7 +92,7 @@ publish-oss:
 	bash scripts/publish-oss.sh
 
 # Cut a public desktop release: sync the mirror, tag it, push tag →
-# GitHub Actions builds mac/linux/windows bundles onto the release.
+# GitHub Actions builds mac/linux/windows bundles into a draft release.
 #   make release-oss VERSION=0.1.0
 VERSION ?=
 release-oss:
@@ -119,7 +119,7 @@ release-oss:
 	    (echo "tag $$tag already exists" && exit 2); \
 	  git -C "$$mirror" tag -a "$$tag" -m "Reticle $$tag" && \
 	  git -C "$$mirror" push origin "refs/tags/$$tag"
-	@echo "→ watch the build: https://github.com/mannders00/reticle/actions"
+	@echo "→ watch the build, verify assets, then publish the draft: https://github.com/mannders00/reticle/actions"
 
 # Snapshot the daemon + its build deps (core + frontend) into
 # ../reticle-daemon and push to the PRIVATE GitHub repo. CI there builds
@@ -128,7 +128,7 @@ publish-daemon:
 	bash scripts/publish-daemon.sh
 
 # Cut a daemon release: sync the private mirror, tag it, push the tag →
-# GitHub Actions cross-compiles the static Linux binaries onto the release.
+# GitHub Actions cross-compiles the static Linux binaries into a draft release.
 #   make release-daemon VERSION=1.0.0
 release-daemon:
 	@test -n "$(VERSION)" || (echo "usage: make release-daemon VERSION=x.y.z" && exit 2)
@@ -150,21 +150,25 @@ release-daemon:
 	    (echo "tag $$tag already exists" && exit 2); \
 	  git -C "$$mirror" tag -a "$$tag" -m "reticle-daemon $$tag" && \
 	  git -C "$$mirror" push origin "refs/tags/$$tag"
-	@echo "→ watch the build: https://github.com/mannders00/reticle-daemon/actions"
+	@echo "→ watch the build, verify assets, then publish the draft: https://github.com/mannders00/reticle-daemon/actions"
 
 check:
-	cargo check --workspace
-	cd daemon && cargo check
+	cargo check --workspace --locked
+	cd daemon && cargo check --locked
 
 test:
-	cargo test --workspace
-	cd daemon && cargo test
+	cargo test --workspace --locked
+	@if [ "$$(uname -s)" = Darwin ]; then \
+	  cd daemon && cargo test --locked -- --skip tests::audit_write_failure_marks_it_unhealthy; \
+	else \
+	  cd daemon && cargo test --locked; \
+	fi
 	bash daemon/endpoint-smoke.sh
 
 # One-time setup for cross-compiling (zig + rust std for each target)
 toolchain:
 	@which zig >/dev/null || brew install zig
-	@which cargo-zigbuild >/dev/null || cargo install cargo-zigbuild
+	@which cargo-zigbuild >/dev/null || cargo install cargo-zigbuild --locked
 	rustup target add $(LINUX_TARGETS) $(MACOS_TARGETS)
 
 clean:

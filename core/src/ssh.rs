@@ -11,7 +11,7 @@
 // intact. `interp` defaults to `bash -s`; Windows targets can pass
 // `powershell` / `pwsh` (see shell::interp_argv).
 
-use std::io::Write;
+use std::io::{Read, Write};
 use std::process::{Command, Stdio};
 use std::thread;
 use std::time::{Duration, Instant};
@@ -26,8 +26,8 @@ pub fn run_ssh_command(
     script: &str,
     interp: Option<&str>,
 ) -> Result<ActionResult, String> {
+    validate_target(host, user)?;
     let port_str = port.to_string();
-    let user_host = format!("{}@{}", user, host);
 
     let mut args: Vec<String> = vec![
         "-o".into(),
@@ -38,7 +38,10 @@ pub fn run_ssh_command(
         "StrictHostKeyChecking=accept-new".into(),
         "-p".into(),
         port_str,
-        user_host,
+        "-l".into(),
+        user.to_string(),
+        "--".into(),
+        host.to_string(),
     ];
     args.extend(interp_argv(interp));
 
@@ -66,9 +69,8 @@ pub fn run_ssh_command(
     })
 }
 
-/// Run a command selected by Reticle itself, never command text supplied by
-/// an API caller. This is the only SSH primitive used by graph collectors and
-/// named actions.
+/// Run an argv command selected by Reticle itself, never command text supplied
+/// by an API caller. Used by fixed collectors and named actions.
 pub fn run_fixed_command(
     host: &str,
     port: u16,
@@ -76,12 +78,14 @@ pub fn run_fixed_command(
     command: &[String],
     timeout: Duration,
 ) -> Result<ActionResult, String> {
-    if host.trim().is_empty() || user.trim().is_empty() || command.is_empty() {
+    if command.is_empty() {
         return Err("SSH target and fixed command are required".into());
     }
+    validate_target(host, user)?;
 
     let mut child = Command::new("ssh")
         .args([
+            "-T",
             "-o",
             "BatchMode=yes",
             "-o",
@@ -90,7 +94,10 @@ pub fn run_fixed_command(
             &format!("ConnectTimeout={}", timeout.as_secs().max(1)),
             "-p",
             &port.to_string(),
-            &format!("{user}@{host}"),
+            "-l",
+            user,
+            "--",
+            host,
         ])
         .args(command)
         .stdin(Stdio::null())
@@ -129,5 +136,150 @@ pub fn run_fixed_command(
             });
         }
         thread::sleep(Duration::from_millis(25));
+    }
+}
+
+/// Run a persisted custom collector command through the remote login shell.
+/// The command is one SSH argument, preserving shell syntax, and no PTY or
+/// stdin is available to the remote process.
+pub fn run_persisted_command(
+    host: &str,
+    port: u16,
+    user: &str,
+    command: &str,
+    timeout: Duration,
+) -> Result<ActionResult, String> {
+    if command.trim().is_empty() {
+        return Err("SSH target and persisted command are required".into());
+    }
+    validate_target(host, user)?;
+    run_ssh_process(
+        host,
+        port,
+        user,
+        std::iter::once(command.to_string()).collect::<Vec<_>>(),
+        timeout,
+    )
+}
+
+fn run_ssh_process(
+    host: &str,
+    port: u16,
+    user: &str,
+    command: Vec<String>,
+    timeout: Duration,
+) -> Result<ActionResult, String> {
+    let mut child = Command::new("ssh")
+        .args([
+            "-T",
+            "-o",
+            "BatchMode=yes",
+            "-o",
+            "StrictHostKeyChecking=accept-new",
+            "-o",
+            &format!("ConnectTimeout={}", timeout.as_secs().max(1)),
+            "-p",
+            &port.to_string(),
+            "-l",
+            user,
+            "--",
+            host,
+        ])
+        .args(command)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| format!("failed to spawn ssh: {e}"))?;
+    let stdout = child.stdout.take().ok_or("failed to capture ssh stdout")?;
+    let stderr = child.stderr.take().ok_or("failed to capture ssh stderr")?;
+    let stdout_reader = thread::spawn(move || read_bounded(stdout, 4096));
+    let stderr_reader = thread::spawn(move || read_bounded(stderr, 4096));
+    let started = Instant::now();
+    loop {
+        if child
+            .try_wait()
+            .map_err(|e| format!("failed to poll ssh: {e}"))?
+            .is_some()
+        {
+            let status = child
+                .wait()
+                .map_err(|e| format!("failed to wait for ssh: {e}"))?;
+            return Ok(ActionResult {
+                success: status.success(),
+                exit_code: status.code().unwrap_or(-1),
+                stdout: stdout_reader.join().unwrap_or_default(),
+                stderr: stderr_reader.join().unwrap_or_default(),
+            });
+        }
+        if started.elapsed() >= timeout {
+            let _ = child.kill();
+            let _ = child.wait();
+            let _ = stdout_reader.join();
+            let _ = stderr_reader.join();
+            return Ok(ActionResult {
+                success: false,
+                exit_code: -1,
+                stdout: String::new(),
+                stderr: format!("timed out after {}s", timeout.as_secs()),
+            });
+        }
+        thread::sleep(Duration::from_millis(25));
+    }
+}
+
+pub fn validate_target(host: &str, user: &str) -> Result<(), String> {
+    let valid_host = !host.is_empty()
+        && !host.starts_with('-')
+        && host.chars().all(|ch| {
+            ch.is_ascii_alphanumeric() || matches!(ch, '.' | '-' | '_' | ':' | '[' | ']' | '%')
+        });
+    if !valid_host {
+        return Err("SSH host contains unsupported characters".into());
+    }
+    let valid_user = !user.is_empty()
+        && !user.starts_with('-')
+        && user
+            .chars()
+            .all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '.' | '-' | '_'));
+    if !valid_user {
+        return Err("SSH user contains unsupported characters".into());
+    }
+    Ok(())
+}
+
+fn read_bounded(mut reader: impl Read, max: usize) -> String {
+    let mut kept = Vec::with_capacity(max);
+    let mut buffer = [0_u8; 1024];
+    while let Ok(read) = reader.read(&mut buffer) {
+        if read == 0 {
+            break;
+        }
+        let remaining = max.saturating_sub(kept.len());
+        kept.extend_from_slice(&buffer[..read.min(remaining)]);
+    }
+    String::from_utf8_lossy(&kept).to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rejects_ssh_option_injection_targets() {
+        assert!(validate_target("api.internal", "reticle_probe").is_ok());
+        assert!(validate_target("2001:db8::1", "probe").is_ok());
+        for (host, user) in [
+            ("-oProxyCommand=touch /tmp/pwned", "probe"),
+            ("api.internal", "-oProxyCommand=touch_pwned"),
+            ("api@internal", "probe"),
+            ("api.internal", "root@other"),
+            ("api internal", "probe"),
+        ] {
+            assert!(
+                validate_target(host, user).is_err(),
+                "accepted {user}@{host}"
+            );
+        }
     }
 }

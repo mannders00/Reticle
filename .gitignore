@@ -7,10 +7,34 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+node_modules/
+dist/
+dist-ssr/
 *.local
+
+# Local environment, credentials, and temporary automation output
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.secret
+*.secrets
+secrets.*
+credentials.*
+id_rsa*
+id_ed25519*
+.npmrc
+.pypirc
+*.tmp
+*.temp
+.cache/
+.tmp/
+.temp/
+tmp/
+temp/
 
 # Editor directories and files
 .vscode/*
@@ -23,14 +47,13 @@ dist-ssr
 *.sln
 *.sw?
 
-# Rust build artifacts (workspace target at repo root)
-/target
-/core/target
-/daemon/target
-dist/
+# Rust build artifacts at any workspace depth
+target/
 
 # playwright-mcp session artifacts
-.playwright-mcp/
+.playwright*/
+playwright-report/
+test-results/
 
 # raw screen recordings (the compressed encode ships from web/assets/)
 reticle-demo.mov

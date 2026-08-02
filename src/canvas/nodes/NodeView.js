@@ -27,6 +27,8 @@ export class NodeView {
     this.card = document.createElement("div");
     this.card.className = "node-card";
     this.card.dataset.id = node.id;
+    this.card.tabIndex = 0;
+    this.card.setAttribute("role", "button");
     this.card.draggable = false;
     // Kill native HTML5 drag — WKWebView fires dragstart + synthetic
     // pointerup when cursor:grab is used, which kills our custom drag.
@@ -39,6 +41,12 @@ export class NodeView {
     // Listeners on the HTML card — always work in all webviews.
     this.card.addEventListener("pointerdown", (e) => this._onPointerDown(e));
     this.card.addEventListener("dblclick", (e) => this._onDoubleClick(e));
+    this.card.addEventListener("keydown", (event) => {
+      if (!['Enter', ' '].includes(event.key)) return;
+      event.preventDefault();
+      select([this.id], "replace");
+      bus.emit("panel:show-inspector", {});
+    });
     this.ports.addEventListener("pointerdown", (e) => this._onPortPointerDown(e));
     this.resizeHandles.addEventListener("pointerdown", (e) => this._onResizePointerDown(e));
 
@@ -47,6 +55,7 @@ export class NodeView {
 
   update() {
     const n = this.node;
+    this.card.setAttribute("aria-label", `${n.title || n.id}, ${n.kind}, health ${n.health?.state || "unknown"}`);
     this.el.style.left = n.x + "px";
     this.el.style.top = n.y + "px";
     this.el.style.width = n.w + "px";
@@ -173,7 +182,9 @@ export class NodeView {
     }
 
     const health = n.health || { state: "unknown" };
-    const hState = health.state || "unknown";
+    const hState = ["ok", "warn", "err", "unknown"].includes(health.state)
+      ? health.state
+      : "unknown";
     const hLabel = hState === "ok" ? "OK" : hState === "warn" ? "WARN" : hState === "err" ? "DOWN" : "—";
 
     const def = meta.modes.includes("ssh") && n.spec?.host

@@ -31,26 +31,26 @@ test("approved homepage copy remains intact", () => {
     "Team is shared and always on. Desktop is a standalone, local-only app with no shared daemon.",
     "LIVE TEAM DAEMON",
     "See the graph humans operate.",
-    "This read-only map shows the real infrastructure serving reticle.live, collected continuously and served from one shared daemon.",
+    "This read-only map shows the real infrastructure serving reticle.live, refreshed and served from one shared daemon.",
     "Click to explore the live map",
     "Pan, inspect, and export. This public view cannot edit or run actions.",
     "ONE GRAPH, THREE PRIMARY LENSES",
     "Human-first, without isolating the humans.",
-    "Each interface reads the same topology, relationships, health evidence, and bounded history.",
+    "Each interface reads the same topology, relationships, and health evidence. Team adds authenticated shared access and configurable JSONL audit logging.",
     "Visual UI",
     "The primary operating surface: a live canvas that makes dependencies and failures legible during an incident.",
     "JSON API",
-    "A structured, authenticated lens for integrations that need the same graph and health truth.",
+    "A structured lens for integrations that need the same graph and health truth. Team uses shared bearer tokens; Desktop remains loopback-only.",
     "Read-only MCP",
     "A constrained lens for agents to inspect evidence and relationships without gaining execution access.",
     "Optional chat is another read-only lens, not the product.",
     "Evidence first. Guarded action second.",
-    "No arbitrary shell crosses Team, API, MCP, or chat.",
+    "Team has no browser or ad-hoc shell.",
     "Choose where the graph needs to live.",
-    "One trusted network vantage point for the whole team, with history, audit logs, team access, browser UI, authenticated JSON API, and read-only MCP.",
+    "One trusted network vantage point for the whole team, with configurable JSONL audit logging, browser UI, authenticated JSON API, and read-only MCP.",
     "A complete standalone application for one person. It runs locally from your machine and does not provide a shared or always-on daemon.",
     "Give the incident one shared map.",
-    "Deploy a Team Daemon for a live graph that remains available to every authorized teammate and integration.",
+    "Deploy a Team Daemon to serve one live graph to authorized teammates and integrations from a trusted network vantage point.",
   ];
   for (const phrase of approved) {
     assert.ok(homepage.includes(phrase), `Homepage lost approved copy: ${phrase}`);
@@ -58,14 +58,14 @@ test("approved homepage copy remains intact", () => {
 });
 
 test("outcome messaging sells reduced ambiguity without numeric ROI claims", () => {
-  const outcomeCopy = [homepage, teamPage, read("README.md"), read("VALUE.md")].join("\n");
+  const outcomeCopy = [homepage, teamPage, read("README.md")].join("\n");
   for (const phrase of [
     "time to understand",
     "time to safe next action",
     "failed-deployment recovery time",
     "change-context latency",
     "operational handoff time",
-    "operational memory",
+    "operational context",
     "incident ambiguity",
   ]) {
     assert.match(outcomeCopy, new RegExp(phrase, "i"), `Outcome copy is missing ${phrase}`);
@@ -80,8 +80,48 @@ test("Team page contains exact pricing and an accessible comparison table", () =
   assert.match(teamPage, /<table class="comparison-table">/);
   assert.match(teamPage, /<th scope="col">Desktop<\/th>/);
   assert.match(teamPage, /<th scope="col">Team Daemon<\/th>/);
-  assert.match(teamPage, /<th scope="row">History<\/th>/);
-  assert.match(teamPage, /No arbitrary shell/i);
+  assert.match(teamPage, /<th scope="row">Audit logs<\/th>/);
+  assert.match(teamPage, /No Team shell/i);
+});
+
+test("custom command checks preserve the gated execution boundary", () => {
+  const architecture = [
+    homepage,
+    teamPage,
+    read("README.md"),
+    read("SECURITY.md"),
+    read("DAEMON.md"),
+    read("docs/daemon.md"),
+    read("docs/topology-reference.md"),
+    read("topology.yaml.example"),
+  ].join("\n");
+
+  for (const requirement of [
+    /--allow-custom-commands/,
+    /fixed[^.\n]{0,80}(?:probes|checks)[^.\n]{0,80}remain the default/i,
+    /enabled:\s*false/,
+    /editor (?:authorization|authorize|role)/i,
+    /restricted SSH principal|restricted remote principal/i,
+    /least-privileged (?:daemon|Reticle) OS account/i,
+    /no interactive or ad-hoc shell|No interactive\/ad-hoc shell/i,
+    /kind:\s*ssh\s+probe:\s*ssh\.command/,
+    /kind:\s*local\s+probe:\s*shell\.command/,
+  ]) {
+    assert.match(architecture, requirement);
+  }
+
+  assert.doesNotMatch(architecture, /custom (?:SSH )?(?:checks|commands)[^.\n]{0,80}(?:are|remain) (?:inherently )?read-only/i);
+});
+
+test("privileged mode is positioned as flexible operator power with read-only viewers", () => {
+  const readme = read("README.md");
+  assert.match(homepage, /one global privileged toggle can enable reviewed remote SSH commands, or local Bash on Unix hosts, as persisted checks or guarded named actions/i);
+  assert.match(homepage, /Desktop may also open a separately warned live shell/i);
+  assert.match(teamPage, /Viewers receive bounded results, never command text or execution controls/i);
+  assert.match(readme, /Safe by default, precise when you choose/i);
+  assert.match(readme, /Enable privileged mode/);
+  assert.match(readme, /active workspace for the current app session/i);
+  assert.match(readme, /JSON, MCP, and chat remain read-only/i);
 });
 
 test("Team structured data includes subscriptions and implementation service", () => {
@@ -89,7 +129,7 @@ test("Team structured data includes subscriptions and implementation service", (
   assert.ok(block, "Team page is missing JSON-LD");
   const data = JSON.parse(block[1]);
   const serialized = JSON.stringify(data);
-  for (const price of ['"price":"199"', '"price":"1999"', '"price":"3000"']) {
+  for (const price of ['"price":"199"', '"price":"1999"', '"lowPrice":"3000"']) {
     assert.ok(serialized.includes(price), `Team JSON-LD is missing ${price}`);
   }
   assert.ok(serialized.includes('"@type":"Service"'));

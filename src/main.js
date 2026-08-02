@@ -50,13 +50,17 @@ import { mountAccessGate } from "./app/AccessGate.js";
 import { mountRightPanel } from "./app/RightPanel.js";
 import { bus } from "./core/eventBus.js";
 import {
-  addNode, addEdge, select, setPanels, setLastAppliedKind, getSelectedIds,
+  addNode, addEdge, clearHistory, select, setPanels, setLastAppliedKind, getSelectedIds,
   getLastAppliedKind, removeNode, removeEdge, updateEdge,
   toggleSnapToGrid, isSnapToGrid, undo, redo, getState, toggleNaturalScroll,
   getTopology,
 } from "./core/store.js";
 import { kindMeta } from "./canvas/nodes/kinds.js";
 import api from "./core/api.js";
+import {
+  beginOperationsWorkspaceTransition, getOperationsState, nodeHasOperations,
+  removeEditableOperationsForNode,
+} from "./core/operations.js";
 
 window.addEventListener("DOMContentLoaded", async () => {
   // Apply saved theme + UI scale before anything renders.
@@ -70,7 +74,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   const paletteHost = document.getElementById("palette");
 
   const world = new World(host);
-  mountToolbar(toolbar, world);
   new Palette(paletteHost, world.camera);
   new NodeDrag(host, world.camera);
   new ResizeDrag(host, world.camera);
@@ -102,14 +105,37 @@ window.addEventListener("DOMContentLoaded", async () => {
   // Persistence: load config from disk, autosave on dirty,
   // reload on external edits.
   const persistence = new Persistence();
-  await persistence.load();
+  if (!await persistence.load()) {
+    mountAccessGate(document.getElementById("app"), "Could not load the operational graph. Reticle will not present an editable empty topology in its place.");
+    return;
+  }
 
   api.onConfigChanged((payload) => persistence.reloadFromDisk(payload));
+  bus.on("persistence:fatal", ({ error }) => mountAccessGate(document.getElementById("app"), error));
 
   // Workspace switching — reload the canvas from the new YAML path
-  bus.on("workspace:switched", async () => {
-    await persistence.load();
+  bus.on("workspace:switch-requested", async ({ path, name, complete }) => {
+    try {
+      if (!await persistence.prepareWorkspaceSwitch()) {
+        complete?.(false);
+        return;
+      }
+      await api.switchWorkspace(path);
+      bus.emit("workspace:backend-switched", {});
+      beginOperationsWorkspaceTransition();
+      if (!await persistence.load()) {
+        bus.emit("persistence:fatal", { error: "Could not load the selected workspace. Reticle will not keep the previous graph editable." });
+        complete?.(false);
+        return;
+      }
+      bus.emit("workspace:switched", { path, name });
+      complete?.(true);
+    } catch (error) {
+      bus.emit("workspace:switch-blocked", { error: String(error) });
+      complete?.(false);
+    }
   });
+  mountToolbar(toolbar, world);
 
   // Refresh through the canonical graph service. The UI never probes a host
   // directly or maintains a second health truth.
@@ -135,7 +161,12 @@ window.addEventListener("DOMContentLoaded", async () => {
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toastEl.classList.remove("is-visible"), 2600);
   }
-  bus.on("config:conflict", () => toast("Someone else saved first — reloaded their version"));
+  bus.on("config:conflict", ({ error }) => toast(error || "Topology changed elsewhere; your local edits are preserved"));
+  bus.on("persistence:load-error", () => toast("Save or load failed; local changes remain pending"));
+  bus.on("operations:error", ({ state }) => toast(state.error || "Could not save operations"));
+  bus.on("terminal:error", ({ error }) => toast(error || "Could not open shell"));
+  bus.on("workspace:switch-blocked", ({ error }) => toast(error || "Workspace switch is currently blocked"));
+  bus.on("operations:saved", () => checkAll());
 
   // Palette drag-and-drop → spawn a node of that kind at the drop world
   // coords, select it, and make it the "double-click empty" default.
@@ -161,6 +192,30 @@ window.addEventListener("DOMContentLoaded", async () => {
     if (!n) return; // read-only role
     select([n.id]);
   });
+
+  const emptyState = document.createElement("div");
+  emptyState.className = "canvas-empty-state";
+  const emptyTitle = document.createElement("h2");
+  emptyTitle.textContent = api.isViewer ? "No topology configured" : "Start your operational graph";
+  const emptyCopy = document.createElement("p");
+  emptyCopy.textContent = api.isViewer
+    ? "An editor has not added infrastructure to this shared graph yet."
+    : "Add a node, save its connection details, then attach checks and named actions from the Inspector.";
+  emptyState.append(emptyTitle, emptyCopy);
+  if (!api.isViewer) {
+    const addFirst = document.createElement("button");
+    addFirst.type = "button";
+    addFirst.className = "insp-btn";
+    addFirst.textContent = "Add first server";
+    addFirst.addEventListener("click", () => bus.emit("palette:click", { kind: "server" }));
+    emptyState.append(addFirst);
+  }
+  host.append(emptyState);
+  const updateEmptyState = () => {
+    emptyState.hidden = Object.keys(getTopology().nodes).length > 0;
+  };
+  bus.on("topology:changed", updateEmptyState);
+  updateEmptyState();
 
   // Connection: click port → click target node → creates edge (no label).
   // Click the edge later to set the label.
@@ -230,7 +285,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   window.addEventListener("focus", () => bus.emit("app:focus"));
 
   // Keyboard: Delete removes the current selection.
-  window.addEventListener("keydown", (e) => {
+  window.addEventListener("keydown", async (e) => {
     // Ignore typing in inputs / contenteditable (the inspector's later
     // spec editor will be contenteditable; defer to it there).
     const t = e.target;
@@ -242,7 +297,15 @@ window.addEventListener("DOMContentLoaded", async () => {
       const topo = getTopology();
       for (const id of ids) {
         if (topo.edges[id]) removeEdge(id);
-        else removeNode(id);
+        else {
+          const hasOperations = nodeHasOperations(id);
+          if (hasOperations && !window.confirm("This node has checks or named actions. Deleting it also removes those definitions and cannot be undone. Continue?")) continue;
+          if (hasOperations && getOperationsState().canManage) {
+            removeEditableOperationsForNode(id);
+          }
+          removeNode(id);
+          if (hasOperations) clearHistory();
+        }
       }
     } else if (e.key.toLowerCase() === "g" && !e.metaKey && !e.ctrlKey) {
       const on = toggleSnapToGrid();

@@ -15,6 +15,11 @@ import api from "../core/api.js";
 const shells = new Map(); // nodeId → { term, fitAddon, container, activate }
 
 export function createTerminalManager(bodyEl, addTab, removeTab, switchTab) {
+  function emitActiveShellCount() {
+    const count = [...shells.values()].filter((entry) => entry.connected).length;
+    bus.emit("terminal:changed", { count });
+  }
+
   function openShell(nodeId) {
     const node = getState().topology.nodes[nodeId];
     if (!node) return;
@@ -51,6 +56,7 @@ export function createTerminalManager(bodyEl, addTab, removeTab, switchTab) {
 
     const entry = {
       term, fitAddon, container,
+      connected: false,
       activate: () => setTimeout(() => fitAddon.fit(), 50),
     };
     shells.set(nodeId, entry);
@@ -66,10 +72,14 @@ export function createTerminalManager(bodyEl, addTab, removeTab, switchTab) {
     entry.ro = ro;
 
     term.onData((data) => {
-      if (api.ready) api.writeShell(nodeId, data);
+      if (api.ready && entry.connected) {
+        api.writeShell(nodeId, data).catch((error) => bus.emit("terminal:error", { error: String(error) }));
+      }
     });
     term.onResize(({ cols, rows }) => {
-      if (api.ready) api.resizeShell(nodeId, cols, rows);
+      if (api.ready && entry.connected) {
+        api.resizeShell(nodeId, cols, rows).catch((error) => bus.emit("terminal:error", { error: String(error) }));
+      }
     });
 
     // Connect
@@ -100,8 +110,16 @@ export function createTerminalManager(bodyEl, addTab, removeTab, switchTab) {
       if (e) e.unlisten = unlisten;
       const { cols, rows } = term;
       await api.openShell(nodeId, node.spec.host, node.spec.port ?? 22, node.spec.user ?? "", cols, rows);
+      if (e) {
+        e.connected = true;
+        emitActiveShellCount();
+      }
     } catch (err) {
+      const e = shells.get(nodeId);
+      e?.unlisten?.();
+      if (e) e.unlisten = null;
       term.write(`\r\n\x1b[31mFailed to connect: ${String(err)}\x1b[0m\r\n`);
+      bus.emit("terminal:error", { error: String(err) });
     }
   }
 
@@ -130,13 +148,14 @@ export function createTerminalManager(bodyEl, addTab, removeTab, switchTab) {
       pods.forEach((p, i) => term.writeln(`  \x1b[36m${i + 1}\x1b[0m  ${p}`));
       term.writeln("");
       let buffer = "";
+      let selectionInput;
       const onData = (data) => {
         buffer += data;
         term.write(data);
         if (data === "\r" || data === "\n") {
           term.writeln("");
           const idx = parseInt(buffer.trim(), 10) - 1;
-          term.offData(onData);
+          selectionInput.dispose();
           if (idx >= 0 && idx < pods.length) {
             execKubectl(nodeId, node, pods[idx], null, term);
           } else {
@@ -146,7 +165,7 @@ export function createTerminalManager(bodyEl, addTab, removeTab, switchTab) {
           buffer = "";
         }
       };
-      term.onData(onData);
+      selectionInput = term.onData(onData);
       term.write("Pod number: ");
     } catch (err) {
       term.write(`\r\n\x1b[31mFailed to list pods: ${String(err)}\x1b[0m\r\n`);
@@ -168,8 +187,16 @@ export function createTerminalManager(bodyEl, addTab, removeTab, switchTab) {
       if (e) e.unlisten = unlisten;
       const { cols, rows } = term;
       await api.openKubectlShell(nodeId, node.spec?.kubeContext, node.spec?.namespace, pod, container, cols, rows);
+      if (e) {
+        e.connected = true;
+        emitActiveShellCount();
+      }
     } catch (err) {
+      const e = shells.get(nodeId);
+      e?.unlisten?.();
+      if (e) e.unlisten = null;
       term.write(`\r\n\x1b[31mFailed to exec: ${String(err)}\x1b[0m\r\n`);
+      bus.emit("terminal:error", { error: String(err) });
     }
   }
 
@@ -181,6 +208,7 @@ export function createTerminalManager(bodyEl, addTab, removeTab, switchTab) {
     e.term.dispose();
     e.container.remove();
     shells.delete(nodeId);
+    emitActiveShellCount();
     if (api.ready) api.closeShell(nodeId).catch(() => {});
     removeTab("term-" + nodeId);
   }
@@ -189,6 +217,12 @@ export function createTerminalManager(bodyEl, addTab, removeTab, switchTab) {
   bus.on("theme:changed", ({ mode }) => {
     const t = terminalTheme(mode);
     for (const e of shells.values()) e.term.options.theme = t;
+  });
+  bus.on("workspace:backend-switched", () => {
+    for (const id of [...shells.keys()]) closeShell(id);
+  });
+  bus.on("terminal:close-all", () => {
+    for (const id of [...shells.keys()]) closeShell(id);
   });
 
   // Cleanup on unload

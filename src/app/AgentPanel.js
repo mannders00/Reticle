@@ -20,15 +20,19 @@ export function mountAgentContent(root) {
     type: "text",
     value: DEFAULT_MODELS.openai,
     placeholder: "Model name",
+    autocapitalize: "none",
+    autocorrect: "off",
     autocomplete: "off",
-    spellcheck: false,
+    spellcheck: "false",
   });
   const apiKey = h("input", {
     class: "agent-input",
     type: "password",
     placeholder: "sk-…",
+    autocapitalize: "none",
+    autocorrect: "off",
     autocomplete: "off",
-    spellcheck: false,
+    spellcheck: "false",
     "aria-label": "OpenAI API key",
   });
   const endpoint = h("input", {
@@ -36,8 +40,10 @@ export function mountAgentContent(root) {
     type: "url",
     value: "http://localhost:11434",
     placeholder: "http://localhost:11434",
+    autocapitalize: "none",
+    autocorrect: "off",
     autocomplete: "off",
-    spellcheck: false,
+    spellcheck: "false",
     "aria-label": "Ollama endpoint",
   });
   const openAiField = field("OpenAI API key", apiKey,

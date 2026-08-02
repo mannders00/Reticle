@@ -10,9 +10,11 @@ import { bus } from "../core/eventBus.js";
 import api from "../core/api.js";
 import { mountInspectorContent } from "./InspectorPanel.js";
 import { mountAgentContent } from "./AgentPanel.js";
+import { createTerminalManager } from "./TerminalDock.js";
 
 export function mountRightPanel(root) {
   const tabsEl = document.getElementById("panel-tabs");
+  tabsEl.setAttribute("role", "tablist");
   const bodyEl = document.getElementById("panel-body");
   const handle = document.getElementById("panel-resize-handle");
   const app = document.getElementById("app");
@@ -53,6 +55,8 @@ export function mountRightPanel(root) {
     activeTab = id;
     for (const [tid, t] of tabs) {
       t.tabBtn?.classList.toggle("is-active", tid === id);
+      t.tabBtn?.setAttribute("aria-selected", String(tid === id));
+      t.tabBtn.tabIndex = tid === id ? 0 : -1;
       t.el.style.display = tid === id ? "" : "none";
     }
     showPanel();
@@ -67,9 +71,36 @@ export function mountRightPanel(root) {
       return existing;
     }
     // Insert tab before the fullscreen button
-    const tabBtn = h("div", { class: "panel-tab", "data-tab": id },
+    const panelId = `panel-content-${id}`;
+    const tabBtn = h("div", {
+      class: "panel-tab",
+      "data-tab": id,
+      role: "tab",
+      tabindex: activeTab == null ? "0" : "-1",
+      "aria-controls": panelId,
+      "aria-selected": "false",
+    },
       h("span", { class: "panel-tab-label" }, label));
     tabBtn.addEventListener("click", () => switchTab(id));
+    tabBtn.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        switchTab(id);
+        return;
+      }
+      const order = [...tabs.keys()];
+      const index = order.indexOf(id);
+      let next = null;
+      if (event.key === "ArrowRight") next = order[(index + 1) % order.length];
+      if (event.key === "ArrowLeft") next = order[(index - 1 + order.length) % order.length];
+      if (event.key === "Home") next = order[0];
+      if (event.key === "End") next = order.at(-1);
+      if (next) {
+        event.preventDefault();
+        switchTab(next);
+        tabs.get(next)?.tabBtn.focus();
+      }
+    });
     if (opts.closeable) {
       const close = h("button", { class: "panel-tab-close", title: "Close" }, "×");
       close.addEventListener("click", (e) => {
@@ -80,6 +111,8 @@ export function mountRightPanel(root) {
     }
     // Insert before fullscreen button
     tabsEl.insertBefore(tabBtn, fsBtn);
+    el.id = panelId;
+    el.setAttribute("role", "tabpanel");
     el.style.display = "none";
     bodyEl.append(el);
     tabs.set(id, { id, label, el, tabBtn, ...opts });
@@ -112,6 +145,9 @@ export function mountRightPanel(root) {
       removeTab("agent");
     }
   });
+
+  const terminals = createTerminalManager(bodyEl, addTab, removeTab, switchTab);
+  bus.on("terminal:open", ({ nodeId }) => terminals.openShell(nodeId));
 
   // Selection changes do NOT open the panel — the inspector only appears
   // when the user explicitly asks (toolbar Inspector button / a shell

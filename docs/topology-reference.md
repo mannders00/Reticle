@@ -49,13 +49,26 @@ collectors:
     kind: ssh
     probe: host.uptime
     timeoutSeconds: 10
+  # WARNING: ssh.command is an arbitrary remote command, not a read-only probe.
+  # Team also requires --allow-custom-commands and editor authorization. Restrict
+  # the SSH principal or use a remote forced-command policy. The false values
+  # below intentionally override the UI defaults of true.
+  - id: web-release-check
+    nodeId: web-01
+    name: Verify deployed release
+    kind: ssh
+    probe: ssh.command
+    command: /usr/local/libexec/reticle-check release
+    enabled: false
+    publishOutput: false
+    timeoutSeconds: 10
 
 actions:
-  - id: reload-web
+  - id: diagnose-web
     nodeId: web-01
-    name: Reload nginx
-    kind: service.reload
-    service: nginx.service
+    name: Diagnose nginx
+    kind: ssh.command
+    command: curl -fsS http://127.0.0.1/health | jq -e '.status == "ok"'
     requiresSignal: web-http
     requiresState: err
     requiresApproval: true
@@ -103,7 +116,7 @@ Group kinds (`host`, `vpc`, `region`, `zone`, `subnet`, `security-group`,
 
 ### `spec`
 
-SSH collectors and guarded service actions resolve their target from the
+SSH collectors and guarded named actions resolve their target from the
 node's endpoint metadata:
 
 ```yaml
@@ -170,28 +183,95 @@ An SSH collector uses the referenced node's `spec.host`, `spec.port`, and
 Collector success produces `ok`; failure produces `err`. Nodes without a
 collector have no collector-derived health signal.
 
+### Custom command checks (gated)
+
+`ssh.command` and local `shell.command` are persisted custom collectors for cases
+the fixed probes cannot cover. New definitions created through the UI/API default
+to enabled and publish bounded output to viewers. On Team, the daemon operator
+must also pass `--allow-custom-commands`.
+Direct YAML writers are trusted operators; enabled definitions written to disk
+may execute while that flag is active. Desktop additionally requires
+one global privileged-mode toggle for all checks and actions in the active
+workspace; there is no per-check acknowledgment. Trust is session-scoped to the
+selected workspace. The process-wide
+`RETICLE_ALLOW_CUSTOM_COMMANDS=1` override is available for managed environments.
+Local Bash checks are available only when Reticle itself runs on a Unix host.
+
+```yaml
+# WARNING: This is an arbitrary remote command and is not guaranteed read-only.
+# Restrict the SSH principal or enforce an allowed command on the remote host.
+- id: api-release-check
+  nodeId: api
+  name: Verify deployed release
+  kind: ssh
+  probe: ssh.command
+  command: /usr/local/libexec/reticle-check release
+  enabled: false
+  publishOutput: false
+  timeoutSeconds: 10
+
+# WARNING: This runs on the Reticle host with its OS account and environment.
+- id: api-json-check
+  nodeId: api
+  name: Verify API JSON
+  kind: local
+  probe: shell.command
+  command: |
+    curl -fsS https://api.internal/healthz |
+      jq -e '.status == "ok"'
+  enabled: false
+  publishOutput: false
+  timeoutSeconds: 10
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `kind` | string | `ssh` executes remotely; `local` executes on the Reticle host. |
+| `probe` | string | `ssh.command` for remote login-shell execution; `shell.command` for local Bash. |
+| `command` | string | Required arbitrary command, up to 2048 bytes. Persisted in topology but omitted from graph responses and audit logs. |
+| `enabled` | boolean | Defaults to `true` in the UI; use `false` to retain a definition without running it. |
+| `publishOutput` | boolean | Defaults to `true` in the UI; use `false` to keep stdout/stderr out of published signal detail. |
+| `timeoutSeconds` | number | Required bounded timeout from 1 through 120 seconds. |
+
+The daemon validates the persisted definition before execution. `ssh.command`
+runs on the node's SSH target without PTY or stdin. `shell.command` runs through
+non-interactive Bash on the Reticle host with `pipefail`; this makes a pipeline
+such as `curl -fsS URL | jq -e PREDICATE` fail for an HTTP, transport, or JSON
+predicate error. One-off requests are not supported. Viewers cannot see command
+text, manage definitions, or run custom checks. No custom check is exposed
+through the viewer graph API, MCP, or chat. Restricted SSH principals and a
+dedicated, least-privileged Reticle OS account are the actual security boundaries.
+
 ## Guarded Actions
 
-`actions` is a top-level list of server-resolved named operations. The only
-supported kinds are `service.restart` and `service.reload`; each invokes the
-corresponding fixed systemd operation for a validated service name on the
-referenced node's SSH endpoint.
+`actions` is a top-level list of persisted named commands. `ssh.command` runs
+through the referenced node's SSH endpoint; `shell.command` runs through
+non-interactive Bash on the Reticle host. Team requires
+`--allow-custom-commands` before either kind can run.
 
 | Field | Type | Notes |
 |---|---|---|
 | `id` | string | Unique action ID submitted by clients. |
-| `nodeId` | string | Existing node whose SSH endpoint is used. |
+| `nodeId` | string | Existing node that owns the action; also supplies the SSH endpoint for `ssh.command`. |
 | `name` | string | Human-readable label. |
-| `kind` | string | `service.restart` or `service.reload`. |
-| `service` | string | Validated systemd unit name. |
+| `kind` | string | `ssh.command` or `shell.command`. |
+| `command` | string | Required persisted command, up to 2048 bytes. Omitted from graph responses and audit logs. |
 | `requiresSignal` | string | Optional collector signal precondition. |
 | `requiresState` | string | Optional required state: `unknown`, `ok`, `warn`, or `err`. Requires `requiresSignal`. |
 | `requiresApproval` | boolean | Defaults to `true`. |
 | `timeoutSeconds` | number | Defaults to 20; must be between 1 and 120. |
 
 When configured, signal preconditions are checked against a fresh graph before
-the action runs. Approval policy and daemon audit behavior are described in
+the action runs. Team invocation requests contain only the action ID, expected
+configuration revision, and approval decision, never command text. Approval
+policy and daemon audit behavior are described in
 [Operational graph](operational-graph.md).
+
+The timeout bounds how long Reticle waits and collects output. A command that
+deliberately detaches from its local process group or remote SSH session may
+outlive that wait; production actions should use restricted wrappers, cgroups,
+systemd scopes, containers, or equivalent server-side supervision when workload
+termination must be guaranteed.
 
 ## Edges
 

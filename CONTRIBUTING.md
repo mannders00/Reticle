@@ -47,12 +47,29 @@ DAEMON.md     daemon architecture and wire protocol
 - All backend access goes through `src/core/api.js`. The same UI runs
   under Tauri, under the daemon over WebSocket, and in a mock browser
   mode; changes must keep all three working.
-- Desktop remains standalone and local-only. Shared, always-on access, history,
-  team roles, and audit belong to Team Daemon.
+- Desktop remains standalone and local-only. Shared, always-on access, team
+  roles, and audit belong to Team Daemon.
 - JSON API, MCP, and optional chat must project the canonical graph rather than
   create parallel state. MCP and chat remain read-only.
-- Team Daemon exposes fixed probes and server-owned named actions, never an
-  arbitrary shell or caller-provided command.
+- Fixed HTTP checks and read-only SSH probes remain the default. UI-created custom
+  remote SSH and Unix-only local Bash checks default to enabled and viewer-visible,
+  use persisted definitions, validation, and bounded execution. Desktop has one
+  global privileged toggle for the active workspace and no per-check acknowledgment;
+  Team additionally requires daemon operator `--allow-custom-commands` and editor
+  authorization to manage definitions.
+- Custom checks are arbitrary commands and are not guaranteed read-only. Remote
+  commands run without PTY or stdin; local commands inherit the Reticle process's
+  OS permissions and environment. Restricted SSH principals and a dedicated,
+  least-privileged Reticle OS account are the actual security boundaries.
+- Viewers never see command text, manage definitions, or run custom checks.
+  Command text is not audit logged, and custom checks are never viewer graph API,
+  MCP, chat, or one-off ad-hoc tools.
+- Named actions are persisted secure-shell or local-shell commands. They retain bounded
+  execution, approval, preconditions, editor authorization, and command secrecy;
+  no invocation request submits command text. Team invocation requests include
+  the expected configuration revision.
+- The repository root MIT license covers the Desktop, core, and frontend. The
+  commercial `daemon/` directory is separately governed by `daemon/LICENSE`.
 - Colors and styles are semantic. Node categories and edge kinds map to
   fixed styles that match the PDF export legend.
 - Match the surrounding code style and comment density.

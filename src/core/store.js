@@ -118,6 +118,10 @@ export function redo() {
 
 export const canUndo = () => history.undo.length > 0;
 export const canRedo = () => history.redo.length > 0;
+export function clearHistory() {
+  history.undo.length = 0;
+  history.redo.length = 0;
+}
 /** Push a history checkpoint before a multi-step mutation (e.g. drag). */
 export { pushHistory };
 
@@ -254,6 +258,18 @@ export function setNodeSpec(id, spec) {
   const n = state.topology.nodes[id];
   if (!n) return;
   pushHistory();
+  n.spec = { ...n.spec, ...spec };
+  markDirty();
+  bus.emit("node:meta", { id });
+  bus.emit("topology:changed", { keys: ["nodes"] });
+}
+
+export function updateNodeDetails(id, patch, spec) {
+  if (readOnly()) return;
+  const n = state.topology.nodes[id];
+  if (!n) return;
+  pushHistory();
+  Object.assign(n, patch);
   n.spec = { ...n.spec, ...spec };
   markDirty();
   bus.emit("node:meta", { id });
