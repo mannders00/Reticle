@@ -24,7 +24,7 @@ test("homepage leads with an intentional infrastructure diagram", () => {
   }
 });
 
-test("homepage proves the intentional model immediately after the demo", () => {
+test("homepage proves the hand-authored model immediately after the demo", () => {
   const hero = homepage.indexOf('<section class="hero">');
   const demo = homepage.indexOf('<section id="live">');
   const intentional = homepage.indexOf('<section id="intentional">');
@@ -32,14 +32,14 @@ test("homepage proves the intentional model immediately after the demo", () => {
   assert.ok(hero < demo && demo < intentional && intentional < products);
   for (const phrase of [
     "A REAL DIAGRAM, KEPT LIVE",
-    "See an intentional architecture diagram connected to real systems.",
-    "It was deliberately modeled as an architecture diagram",
-    "INTENTIONAL BY DESIGN",
-    "Keep your architecture connected to the way the system operates.",
-    "Bring services, dependencies, boundaries, notes, checks, and known actions into one Git-tracked diagram.",
-    "Draw the operating model",
-    "Attach reality",
-    "Use the same context",
+    "See a hand-authored architecture diagram connected to real systems.",
+    "This is the map we use to understand the infrastructure serving reticle.live.",
+    "DIAGRAMMING FIRST",
+    "Draw the architecture as your team understands it. Then attach reality.",
+    "The best infrastructure diagrams are made intentionally",
+    "Make the diagram you'd make anyway",
+    "Express intent, not inventory",
+    "Connect it to reality",
   ]) {
     assert.ok(homepage.includes(phrase), `Homepage is missing: ${phrase}`);
   }

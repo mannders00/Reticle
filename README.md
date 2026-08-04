@@ -24,15 +24,21 @@ MIT-licensed Desktop · macOS / Linux / Windows
 
 </div>
 
-## What makes Reticle different
+## A diagramming tool first, with reality attached
 
-**Auto-discovery shows what is running. Reticle preserves what matters, how it
-fits together, and whether it is healthy.**
+**Reticle starts with the infrastructure diagram your team would make anyway.**
 
-- **Intentional architecture:** arrange the services, boundaries, dependencies,
-  notes, and known actions people use to understand the system.
-- **Connected to reality:** attach HTTP, fixed SSH, and explicitly enabled custom
-  checks. Health and observation times appear on the diagram.
+The useful map is an expression of intent, not a dump of runtime objects. Reticle
+is a purpose-built diagramming app for laying out the services, boundaries,
+relationships, and context that form your team's mental model. Then it connects
+that same hand-authored diagram to live systems.
+
+- **Diagramming that stands on its own:** arrange architecture freely, add the
+  context people need, and refine the model visually without surrendering the
+  canvas to generated inventory.
+- **Reality on the same canvas:** attach HTTP, fixed SSH, and explicitly enabled
+  custom checks. Health and observation times appear where your team already
+  looks to understand the system.
 - **One portable model:** edit visually or in YAML, keep it in Git, export it as
   PDF, or inspect the same graph through local JSON and read-only MCP.
 
