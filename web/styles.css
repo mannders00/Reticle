@@ -260,6 +260,7 @@ h3 { font-size: 17px; font-weight: 650; letter-spacing: -0.01em; }
 }
 .pill.accent { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); background: var(--accent-soft); }
 .hero-ctas { display: flex; gap: 12px; margin-top: 30px; flex-wrap: wrap; }
+.hero-support { max-width: 680px; margin: 18px auto 0; color: var(--text-1); font-size: 15px; }
 .hero-note { margin-top: 14px; font-size: 13px; color: var(--text-2); }
 .hero-note code { font-size: 12px; background: var(--bg-2); padding: 2px 6px; border-radius: 5px; }
 
@@ -660,8 +661,8 @@ footer {
   color: var(--text-2);
 }
 
-/* land the pricing cards below the sticky nav, with breathing room */
-#pricing { scroll-margin-top: 86px; }
+/* Land anchored sections below the sticky nav, with breathing room. */
+section[id] { scroll-margin-top: 86px; }
 
 /* the moments the shared map earns its keep — muted, concrete */
 .teams-moments {
@@ -694,40 +695,6 @@ footer {
 }
 .plan-summary { color: var(--text-1); font-size: 14.5px; }
 .team-hero { padding-bottom: 80px; }
-
-.architecture-flow {
-  margin-top: 40px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1.15fr) auto minmax(0, 1.2fr);
-  gap: 12px;
-  align-items: stretch;
-}
-.architecture-stage {
-  min-width: 0;
-  padding: 20px;
-  border: 1px solid var(--stroke);
-  border-radius: var(--radius);
-  background: var(--bg-1);
-  box-shadow: var(--shadow-1);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 8px;
-  color: var(--text-1);
-  font-size: 13px;
-}
-.architecture-stage > strong { color: var(--text-0); font-size: 15px; }
-.architecture-core { border-color: color-mix(in srgb, var(--accent) 55%, var(--stroke)); background: var(--accent-soft); }
-.architecture-label { color: var(--text-2); font: 700 10px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
-.architecture-arrow { align-self: center; color: var(--accent); font: 700 20px var(--font-mono); }
-.architecture-options { display: flex; flex-direction: column; gap: 6px; color: var(--text-2); }
-.architecture-choice { padding: 8px 10px; border: 1px solid var(--stroke); border-radius: 7px; background: var(--bg-2); display: flex; flex-direction: column; gap: 2px; }
-.architecture-choice strong { color: var(--text-0); font-size: 13px; }
-.architecture-choice span { font: 600 10px var(--font-mono); }
-.architecture-or { align-self: center; color: var(--text-2); font: 600 10px var(--font-mono); text-transform: uppercase; }
-.architecture-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.architecture-chips span { padding: 5px 7px; border: 1px solid var(--stroke); border-radius: 6px; background: var(--bg-2); color: var(--text-0); font: 600 10px var(--font-mono); }
-.architecture-deny { color: var(--err) !important; font: 700 10px var(--font-mono) !important; letter-spacing: 0.04em; text-transform: uppercase; }
 
 .table-scroll {
   overflow-x: auto;
@@ -798,8 +765,6 @@ footer {
 @media (max-width: 900px) {
   .pricing-grid { grid-template-columns: 1fr; }
   .team-hero { padding-bottom: 56px; }
-  .architecture-flow { grid-template-columns: 1fr; }
-  .architecture-arrow { transform: rotate(90deg); justify-self: center; }
 }
 @media (max-width: 640px) {
   .pricing-cta { align-items: stretch; flex-direction: column; }

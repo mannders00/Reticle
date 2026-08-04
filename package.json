@@ -2,6 +2,16 @@
   "name": "reticle",
   "private": true,
   "version": "1.2.1",
+  "description": "Local-first desktop app for drawing infrastructure diagrams and connecting them to live health",
+  "license": "MIT",
+  "homepage": "https://reticle.live/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mannders00/reticle.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mannders00/reticle/issues"
+  },
   "type": "module",
   "scripts": {
     "test": "node --test",

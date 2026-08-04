@@ -1,13 +1,14 @@
 # Operational graph
 
-Reticle is a human-first, live operational graph. During an incident, its job
-is to make the system legible: what exists, how it connects, what is unhealthy,
-when that was observed, and which tightly bounded actions are available.
+Reticle starts with an intentionally authored infrastructure diagram. The YAML
+defines the systems, relationships, notes, checks, and known actions that belong
+in the operating model. Current observations connect that model to real systems.
 
-Collectors produce the canonical graph. The canvas, JSON API, and MCP server
-are first-class lenses on the same snapshot; none defines a separate truth.
+The shared core assembles the configured topology and current observations into
+one graph snapshot. The canvas is the primary interface; JSON and read-only MCP
+provide machine-readable views of the same data.
 
-## MVP schema
+## Snapshot schema
 
 Every snapshot contains:
 
@@ -25,7 +26,7 @@ and `crons` are intentionally omitted.
 
 ## Configuration
 
-The first topology collector reads the local YAML file. The MVP supports HTTP
+The first topology collector reads the local YAML file. Reticle supports HTTP
 checks and two fixed, read-only SSH probes: `host.uptime` and
 `service.status`. SSH uses the local OpenSSH configuration and non-interactive
 authentication, but the remote account should still be restricted to the
@@ -153,14 +154,14 @@ are read-only and advertise:
 The daemon additionally provides `reticle_get_signal_history`. The desktop
 does not retain history because its lifecycle belongs to one local session.
 
-There is deliberately no MCP action tool. Agents and humans can inspect the
-same topology and signal truth, but action execution remains an explicit human
-workflow. Custom command checks are also never MCP tools.
+There is deliberately no MCP action tool. MCP can inspect topology and signals,
+but action execution remains an explicit human workflow. Custom command checks
+are never MCP tools.
 
 ## Optional chat lens
 
-The optional in-app chat panel is a read-only lens, not the product or source of
-truth. It supports OpenAI's official chat-completions endpoint and
+The optional in-app chat panel reads the current graph and cannot change it. It
+supports OpenAI's official chat-completions endpoint and
 Ollama on `localhost` or a literal loopback IP. Its only tools are
 `reticle_get_graph`, `reticle_get_node`, and, on the daemon,
 `reticle_get_signal_history`. It has no action, command, shell, save, or MCP
@@ -178,8 +179,8 @@ shell access.
 
 ## Current limits
 
-This is a narrow foundation, not autonomous operations. Topology is static and
-there is no infrastructure auto-discovery. Desktop checks run when its graph is
+Reticle does not automatically enumerate the environment or import every runtime
+resource, and it is not an autonomous remediation system. Desktop checks run when its graph is
 requested. The daemon collects immediately and every 30 seconds, keeps a
 bounded transient in-memory observation ring, and invalidates its cache after
 topology changes. Observations reset when the daemon restarts and are not durable

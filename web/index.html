@@ -3,21 +3,24 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Reticle: one live infrastructure graph for your team and its agents</title>
-  <meta name="description" content="Define topology once in Git-tracked YAML, add current health evidence, and serve the same operating picture to the visual map, JSON API, and read-only MCP." />
+  <title>Reticle: the infrastructure diagram you can operate</title>
+  <meta name="description" content="Draw the architecture that matters, keep it in Git-tracked YAML, and connect it to current health, guarded actions, JSON, and read-only MCP." />
   <link rel="canonical" href="https://reticle.live/" />
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="One live infrastructure graph for your team and its agents" />
-  <meta property="og:description" content="One Git-tracked operational model, served locally by Desktop or continuously by a customer-hosted Team Daemon." />
+  <meta property="og:title" content="The infrastructure diagram you can operate" />
+  <meta property="og:description" content="Draw the architecture that matters, keep it in Git-tracked YAML, and connect it to current health and guarded actions." />
   <meta property="og:url" content="https://reticle.live/" />
   <meta property="og:image" content="https://reticle.live/assets/og-card.jpg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:alt" content="A Reticle infrastructure diagram showing services, dependencies, notes, and current health evidence" />
   <meta property="og:site_name" content="Reticle" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="One live infrastructure graph for your team and its agents" />
-  <meta name="twitter:description" content="The same current operating picture for the visual map, JSON API, and read-only MCP." />
+  <meta name="twitter:title" content="The infrastructure diagram you can operate" />
+  <meta name="twitter:description" content="Human-defined, Git-tracked architecture connected to current health and guarded actions." />
   <meta name="twitter:image" content="https://reticle.live/assets/og-card.jpg" />
+  <meta name="twitter:image:alt" content="A Reticle infrastructure diagram showing services, dependencies, notes, and current health evidence" />
   <meta name="theme-color" content="#0b0e14" media="(prefers-color-scheme: dark)" />
   <meta name="theme-color" content="#f7f8fb" media="(prefers-color-scheme: light)" />
   <link rel="icon" href="favicon.ico" sizes="48x48" />
@@ -48,7 +51,7 @@
         "name": "Reticle Desktop",
         "operatingSystem": "macOS, Linux, Windows",
         "applicationCategory": "DeveloperApplication",
-        "description": "A free, local-first application for inspecting the live operational graph before taking action.",
+        "description": "A free, MIT-licensed desktop app for drawing intentional infrastructure diagrams and connecting them to current health evidence.",
         "url": "https://reticle.live/",
         "downloadUrl": "https://github.com/mannders00/reticle/releases/latest",
         "license": "https://opensource.org/licenses/MIT",
@@ -60,20 +63,20 @@
         "@type": "SoftwareApplication",
         "name": "Reticle Team Daemon",
         "applicationCategory": "DeveloperApplication",
-        "description": "Self-hosted software serving the live operational graph through a browser UI, JSON API, and read-only MCP.",
-        "url": "https://reticle.live/#pricing",
+        "description": "Customer-hosted software that keeps one intentionally defined infrastructure diagram live and shared for a team.",
+        "url": "https://reticle.live/team/",
         "offers": [
-          { "@type": "Offer", "name": "Monthly per running daemon", "price": "199", "priceCurrency": "USD", "url": "https://reticle.live/#pricing" },
-          { "@type": "Offer", "name": "Annual per running daemon", "price": "1999", "priceCurrency": "USD", "url": "https://reticle.live/#pricing" }
+          { "@type": "Offer", "name": "Monthly per running daemon", "price": "199", "priceCurrency": "USD", "url": "https://reticle.live/team/#pricing" },
+          { "@type": "Offer", "name": "Annual per running daemon", "price": "1999", "priceCurrency": "USD", "url": "https://reticle.live/team/#pricing" }
         ],
         "author": { "@id": "https://reticle.live/#organization" }
       },
       {
         "@type": "Service",
         "name": "Reticle white-glove installation and mapping",
-        "description": "Team Daemon deployment, least-privilege access, TLS, authentication, collectors, and initial operational mapping.",
+        "description": "Team Daemon deployment, TLS, access controls, collectors, and the first live topology built from existing diagrams, runbooks, and operator knowledge.",
         "provider": { "@id": "https://reticle.live/#organization" },
-        "offers": { "@type": "AggregateOffer", "lowPrice": "3000", "priceCurrency": "USD", "offerCount": "1", "url": "https://reticle.live/#pricing" }
+        "offers": { "@type": "AggregateOffer", "lowPrice": "3000", "priceCurrency": "USD", "offerCount": "1", "url": "https://reticle.live/team/#pricing" }
       }
     ]
   }
@@ -85,21 +88,22 @@
       <a class="brand" href="/"><img class="brand-mark" src="reticle.svg" alt="" width="22" height="22" />Reticle</a>
       <nav class="nav-links" aria-label="Primary navigation">
         <a href="#live">Live demo</a>
-        <a href="#products">Products</a>
-        <a href="#same-graph">One graph</a>
-        <a href="#context-control">Security</a>
-        <a href="#pricing">Pricing</a>
+        <a href="#intentional">Why Reticle</a>
+        <a href="#products">Desktop and Team</a>
+        <a href="#outcomes">Outcomes</a>
+        <a href="/team/">Team</a>
       </nav>
       <span class="nav-spacer"></span>
       <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark" aria-label="Toggle theme">☾</button>
-      <a class="btn btn-primary btn-small nav-cta" href="#pricing">See pricing</a>
+      <a class="btn btn-primary btn-small nav-cta" href="https://github.com/mannders00/reticle/releases/latest">Download Desktop</a>
       <button class="nav-menu-btn" id="nav-menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="nav-menu">☰</button>
       <nav class="nav-menu" id="nav-menu" aria-label="Mobile navigation" hidden>
         <a href="#live">Live demo</a>
-        <a href="#products">Products</a>
-        <a href="#same-graph">One graph</a>
-        <a href="#context-control">Security</a>
-        <a class="btn btn-primary btn-small" href="#pricing">See pricing</a>
+        <a href="#intentional">Why Reticle</a>
+        <a href="#products">Desktop and Team</a>
+        <a href="#outcomes">Outcomes</a>
+        <a href="/team/">Team</a>
+        <a class="btn btn-primary btn-small" href="https://github.com/mannders00/reticle/releases/latest">Download Desktop</a>
       </nav>
     </div>
   </header>
@@ -107,107 +111,86 @@
   <main>
     <section class="hero">
       <div class="wrap hero-solo">
-        <span class="kicker">CUSTOMER-HOSTED OPERATIONAL CONTEXT</span>
-        <h1>One live infrastructure graph for your team and its agents.</h1>
-        <p class="lede">Define your topology once in Git-tracked YAML. Reticle adds current health evidence, then serves the same operating picture to the visual map, JSON API, and read-only MCP, locally in the free desktop app or continuously from one Team Daemon inside your network.</p>
+        <span class="kicker">HUMAN-DEFINED. CONNECTED TO REALITY.</span>
+        <h1>The infrastructure diagram you can operate.</h1>
+        <p class="lede">Define the systems and relationships that matter. Reticle keeps that Git-tracked diagram connected to current health, notes, and guarded actions, locally in the free Desktop app or continuously from a customer-hosted Team Daemon.</p>
+        <p class="hero-support">The same read-only context is available to teammates, internal tools, and agents through the browser, JSON, and MCP.</p>
         <div class="hero-ctas">
-          <a class="btn btn-primary" href="#live">Explore the live Team demo</a>
+          <a class="btn btn-primary" href="#live">Explore the live diagram</a>
           <a class="btn btn-ghost" href="https://github.com/mannders00/reticle/releases/latest">Download free Desktop</a>
         </div>
-        <p class="hero-note">One YAML · One customer-hosted daemon · Unlimited teammates · No agent shell access</p>
+        <p class="hero-note">One YAML · Visual editing · Customer-hosted · No Reticle cloud required</p>
       </div>
     </section>
 
     <section id="live">
       <div class="wrap">
         <div class="section-head centered-head">
-          <span class="kicker">LIVE TEAM DAEMON</span>
-          <h2>See the graph humans operate.</h2>
-          <p class="lede">Explore the read-only graph behind reticle.live, served live from one shared daemon.</p>
+          <span class="kicker">A REAL DIAGRAM, KEPT LIVE</span>
+          <h2>See an intentional architecture diagram connected to real systems.</h2>
+          <p class="lede">This map describes the infrastructure serving reticle.live. It was deliberately modeled as an architecture diagram, then connected to continuous health evidence by the Team Daemon it describes.</p>
         </div>
         <div class="media-slot ar-video is-live" id="live-embed">
-          <iframe id="live-frame" src="https://demo.reticle.live/" title="Reticle live demo showing real infrastructure in read-only mode" loading="lazy"></iframe>
+          <iframe id="live-frame" src="https://demo.reticle.live/" title="An intentionally authored Reticle infrastructure diagram connected to current health evidence" loading="lazy"></iframe>
           <button class="live-gate" id="live-gate" type="button"><span class="live-gate-dot"></span>Click to explore the live map</button>
         </div>
-        <p class="media-caption">Pan, inspect, and export. This public view cannot edit or run actions. <a href="https://demo.reticle.live/" target="_blank" rel="noreferrer">Open full screen ↗</a></p>
+        <p class="media-caption">Pan, inspect, and export the map. The public view is read-only. <a href="https://demo.reticle.live/" target="_blank" rel="noreferrer">Open full screen ↗</a></p>
+      </div>
+    </section>
+
+    <section id="intentional">
+      <div class="wrap">
+        <div class="section-head"><span class="kicker">INTENTIONAL BY DESIGN</span><h2>Keep your architecture connected to the way the system operates.</h2><p class="lede">Bring services, dependencies, boundaries, notes, checks, and known actions into one Git-tracked diagram. Reticle keeps that diagram connected to current evidence.</p></div>
+        <div class="cards-3">
+          <article class="card"><span class="card-icon" aria-hidden="true">01</span><h3>Draw the operating model</h3><p>Arrange the services and relationships people use to understand the system. Edit visually or in one YAML file.</p></article>
+          <article class="card"><span class="card-icon" aria-hidden="true">02</span><h3>Attach reality</h3><p>Add current HTTP, SSH, and explicitly enabled custom checks. Health and observation times appear directly on the diagram.</p></article>
+          <article class="card"><span class="card-icon" aria-hidden="true">03</span><h3>Use the same context</h3><p>Inspect it locally, share it with the team, export it, or expose the read-only graph to internal tools and agents.</p></article>
+        </div>
       </div>
     </section>
 
     <section id="products">
       <div class="wrap">
-        <div class="section-head centered-head"><span class="kicker">START LOCAL. SHARE WHEN IT MATTERS.</span><h2>One model, two deployment paths.</h2></div>
+        <div class="section-head centered-head"><span class="kicker">DESKTOP AND TEAM</span><h2>Start local. Share when it matters.</h2></div>
         <div class="plans">
           <article class="plan">
-            <div><div class="plan-name">Free Desktop</div><div class="plan-price"><strong>Open source and local only</strong></div></div>
-            <p class="plan-summary">Map a homelab or environment in one YAML file. Keep it in Git, edit it visually or in your editor, and query it locally through JSON or read-only MCP. No account or Reticle cloud service required.</p>
+            <div><div class="plan-name">Start with the free Desktop app.</div><div class="plan-price"><strong>Free, MIT-licensed, and local-only</strong></div></div>
+            <p class="plan-summary">Map a homelab or production-shaped environment locally. Keep each diagram in Git, attach live checks, and export or query it without creating an account or sending topology to a Reticle service. Desktop supports multiple local workspaces.</p>
             <div class="plan-cta"><a class="btn btn-ghost" href="https://github.com/mannders00/reticle/releases/latest">Download Desktop</a></div>
           </article>
           <article class="plan featured">
             <span class="plan-tag">For organizations</span>
-            <div><div class="plan-name">Team Daemon</div><div class="plan-price"><strong>Customer-hosted and always on</strong></div></div>
-            <p class="plan-summary">Run one commercial daemon from a trusted host inside your network. It continuously updates the graph and serves authorized teammates, internal integrations, and read-only agents through the browser, JSON API, and MCP.</p>
-            <div class="plan-cta"><a class="btn btn-primary" href="#pricing">Explore Team</a></div>
+            <div><div class="plan-name">Keep the diagram live for the whole team.</div><div class="plan-price"><strong>Customer-hosted and always on</strong></div></div>
+            <p class="plan-summary">Run one daemon inside your environment. It continuously checks one shared topology and serves it to authorized browsers, internal integrations, and read-only agents. The diagram stays live when one operator closes a laptop.</p>
+            <div class="plan-cta"><a class="btn btn-primary" href="/team/">Explore Team</a></div>
           </article>
         </div>
-      </div>
-    </section>
-
-    <section id="same-graph">
-      <div class="wrap">
-        <div class="section-head">
-          <span class="kicker">ONE OPERATING PICTURE</span>
-          <h2>Your map, internal tools, and AI agents should not disagree.</h2>
-          <p class="lede">Reticle builds one canonical graph from configured topology and current health evidence. The canvas, JSON API, and read-only MCP all inspect that same snapshot. An operator looking at a failure and an agent investigating it receive the same nodes, relationships, health state, and observation times.</p>
-        </div>
-        <div class="cards-3 lens-cards">
-          <article class="card"><span class="card-icon" aria-hidden="true">◎</span><h3>Visual map</h3><p>Understand dependencies and current health at a glance.</p></article>
-          <article class="card"><span class="card-icon" aria-hidden="true">{ }</span><h3>JSON API</h3><p>Feed the graph into internal tools, incident workflows, and automation.</p></article>
-          <article class="card"><span class="card-icon" aria-hidden="true">M</span><h3>Read-only MCP</h3><p>Let agents inspect production context without granting shell or action access.</p></article>
-        </div>
-        <div class="architecture-flow" role="img" aria-label="Git-tracked YAML and health collectors feed the shared Reticle core and canonical graph. Run it through local-only Free Desktop or a customer-hosted, always-on Team Daemon. Both serve the visual UI, JSON API, and read-only MCP without shell or action access.">
-          <div class="architecture-stage"><span class="architecture-label">Configured input</span><strong>Git-tracked YAML</strong><span>+ health collectors</span></div>
-          <span class="architecture-arrow" aria-hidden="true">→</span>
-          <div class="architecture-stage architecture-core"><span class="architecture-label">Shared Reticle core</span><strong>Canonical graph</strong><span>current snapshot</span></div>
-          <span class="architecture-arrow" aria-hidden="true">→</span>
-          <div class="architecture-stage"><span class="architecture-label">Deployment</span><div class="architecture-options"><div class="architecture-choice"><strong>Free Desktop</strong><span>local only</span></div><span class="architecture-or">or</span><div class="architecture-choice"><strong>Team Daemon</strong><span>customer-hosted, always on</span></div></div></div>
-          <span class="architecture-arrow" aria-hidden="true">→</span>
-          <div class="architecture-stage"><span class="architecture-label">Shared consumers</span><div class="architecture-chips"><span>Visual UI</span><span>JSON API</span><span>Read-only MCP</span></div><strong class="architecture-deny">No MCP shell or actions</strong></div>
-        </div>
-        <p class="media-caption">Reticle complements your metrics and logs; it does not replace them.</p>
-      </div>
-    </section>
-
-    <section id="context-control">
-      <div class="wrap">
-        <div class="section-head"><span class="kicker">CONTEXT BEFORE CONTROL</span><h2>Let agents investigate production without letting them operate it.</h2><p class="lede">Reticle’s MCP server is intentionally read-only. Agents can inspect topology, dependencies, current signals, and bounded history, but they cannot open a shell, submit commands, or execute named actions. Human operators retain the execution boundary through server-configured actions, approvals, preconditions, and timeouts.</p></div>
       </div>
     </section>
 
     <section id="outcomes">
       <div class="wrap">
         <div class="section-head">
-          <span class="kicker">OPERATING OUTCOMES</span>
-          <h2>The expensive part isn't typing commands. It's knowing what's happening and what's safe.</h2>
-          <p class="lede">Reticle reduces operational ambiguity: understand the system, choose a safer next move, and preserve context through the incident.</p>
+          <span class="kicker">FOR DAILY WORK AND INCIDENTS</span>
+          <h2>Understand the system before changing it.</h2>
         </div>
         <div class="cards-3 outcome-cards">
-          <article class="card"><span class="outcome-metric">TIME TO UNDERSTAND</span><h3>Orient around one live model.</h3><p>See what exists, what is unhealthy, what depends on it, and how fresh the evidence is before changing anything.</p></article>
-          <article class="card"><span class="outcome-metric">TIME TO SAFE NEXT ACTION</span><h3>Shorten the path to response.</h3><p>Place current evidence beside preconfigured actions with approvals, timeouts, and optional preconditions.</p></article>
-          <article class="card"><span class="outcome-metric">HANDOFF AND CHANGE CONTEXT</span><h3>Preserve operational context.</h3><p>Keep topology, evidence, operating notes, and actions together to reduce change-context latency and operational handoff time.</p></article>
+          <article class="card"><span class="outcome-metric">FASTER INCIDENT UNDERSTANDING</span><h3>See the system around the failure.</h3><p>See the affected service, its dependencies, current evidence, notes, and freshness without reconstructing the architecture aloud.</p></article>
+          <article class="card"><span class="outcome-metric">LESS TRIBAL KNOWLEDGE</span><h3>Keep architecture outside one person's head.</h3><p>Give new operators and escalation paths the same system model instead of relying on the person who originally built it.</p></article>
+          <article class="card"><span class="outcome-metric">SAFER NEXT ACTIONS</span><h3>Put evidence beside the response.</h3><p>Keep current evidence beside bounded, preconfigured actions with approvals, timeouts, and optional preconditions.</p></article>
         </div>
       </div>
     </section>
 
-    <section id="product">
+    <section id="security">
       <div class="wrap">
-        <div class="flow-row">
-          <div class="flow-copy"><span class="kicker">MAP AND OPERATE</span><h3>Evidence first. Guarded action second.</h3><p>Start with fixed HTTP and read-only SSH checks. Deeper diagnostics require Desktop's global privileged toggle, or Team's daemon flag and editor authorization. Custom checks and guarded actions have bounded output and timeouts; actions require approval by default.</p><p>Desktop offers a warned operator shell. Team has no browser or ad-hoc shell. Viewers, JSON, MCP, and chat never receive command text or execution controls.</p></div>
-          <div class="media-slot is-shot"><img src="assets/demo-overview.webp" width="1800" height="1169" alt="Region, hosts, services, health states, and notes on the Reticle canvas" loading="lazy" /></div>
+        <div class="section-head"><span class="kicker">INSPECTION BEFORE EXECUTION</span><h2>Context for agents. Control for operators.</h2><p class="lede">The visual UI, JSON API, and MCP inspect the same current diagram. MCP remains read-only, Team exposes no browser shell, and guarded actions stay explicit human workflows.</p></div>
+        <div class="cards-3">
+          <article class="card"><h3>Read-only machine access</h3><p>MCP has no shell, mutation, command, or named-action tools. Optional chat is another read-only consumer, not the product.</p></article>
+          <article class="card"><h3>Explicit operations</h3><p>Named actions are persisted server-owned definitions with approvals, preconditions, and timeouts. Callers never submit command text.</p></article>
+          <article class="card"><h3>Deliberate trust</h3><p>Custom command checks are arbitrary commands and require privileged configuration. The OS identity and restricted SSH principal remain the execution boundary.</p></article>
         </div>
-        <div class="flow-row flip">
-          <div class="flow-copy"><span class="kicker">EXPORT THE WHOLE GRAPH</span><h3>Carry the operating context into the room.</h3><p>Export the entire graph, not just the viewport, as a one-page vector PDF for handoffs, postmortems, and reviews.</p><p>It is a presentation snapshot, not an audit log or durable evidence store.</p></div>
-          <div><div class="media-slot ar-doc is-doc"><img src="assets/demo-pdf-preview.webp" width="1800" height="1271" alt="A real Reticle vector PDF export showing the complete infrastructure graph" loading="lazy" /></div><p class="media-caption"><a href="assets/demo-pdf.pdf">Open the real PDF export ↗</a></p></div>
-        </div>
+        <p class="media-caption"><a href="https://arxiv.org/abs/2607.25995" target="_blank" rel="noreferrer">Topology context raised patch correctness from 11.1% to 78.0% in controlled Kubernetes trials ↗</a></p>
       </div>
     </section>
 
@@ -217,10 +200,10 @@
         <div class="pricing-grid">
           <article class="price-card"><span class="pill">Monthly</span><p class="price"><strong>$199</strong><span>/month</span></p><p>Per running Team Daemon, billed monthly.</p></article>
           <article class="price-card featured"><span class="plan-tag">Save $389</span><span class="pill accent">Annual</span><p class="price"><strong>$1,999</strong><span>/year</span></p><p>Per running Team Daemon, billed annually.</p></article>
-          <article class="price-card"><span class="pill">Implementation</span><p class="price service-price"><strong>$3,000</strong><span>one-time</span></p><p>White-glove deployment and initial operational mapping starts at $3,000.</p></article>
+          <article class="price-card"><span class="pill">Implementation</span><p class="price service-price"><strong>$3,000</strong><span>one-time</span></p><p>We deploy Team, establish TLS and access controls, and turn the agreed architecture from your diagrams, runbooks, and operator knowledge into the first live topology.</p></article>
         </div>
         <div class="pricing-cta"><a class="btn btn-primary" href="mailto:matt@masoftware.net?subject=Reticle%20Team%20Daemon">Start with Team</a><p>We reply within one business day. Card, ACH, or bank transfer.</p></div>
-        <div class="qualification"><h3>Deployment boundaries</h3><p>One daemon serves one topology. Access uses shared viewer and editor tokens; SSO and individual attribution are not included. Before production use, confirm TLS, token rotation, least-privilege access, audit-log handling, topology backups, support expectations, and any required SLA.</p></div>
+        <div class="qualification"><h3>Deployment boundaries</h3><p>One daemon serves one topology. Access uses shared viewer and editor bearer tokens; SSO, individual identity, per-user attribution, and a default SLA are not included. Audit logging is configurable, not automatic.</p></div>
       </div>
     </section>
   </main>

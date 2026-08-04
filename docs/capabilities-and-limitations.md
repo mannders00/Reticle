@@ -3,9 +3,14 @@
 This sheet describes shipped v1.2 behavior. It is not a roadmap or service-level
 commitment.
 
+Reticle treats the configured YAML topology as intentionally authoritative. It
+models the architecture people choose to reason about, then attaches current
+observations. Reticle does not automatically enumerate the environment or import
+every runtime resource.
+
 | Area | Current capability | Current limitation |
 |---|---|---|
-| Topology | Static YAML nodes, edges, notes, groups, and operational definitions | No infrastructure auto-discovery |
+| Topology | Intentional YAML nodes, edges, notes, groups, and operational definitions | Does not automatically enumerate or import every runtime resource |
 | Collection | HTTP status/JSON, `host.uptime`, `service.status`, and gated custom commands | Not a metrics, logs, or tracing store |
 | Custom checks | Persisted remote SSH and Unix-only local Bash; UI defaults enabled and viewer-visible | Arbitrary commands; not guaranteed read-only |
 | Desktop gate | One global privileged toggle for every custom check/action in the active workspace | Session-scoped; no centralized team policy |
@@ -13,8 +18,8 @@ commitment.
 | Actions | Persisted names, timeout, approval by default, optional fresh-signal precondition | No autonomous remediation loop |
 | Action request | Team sends action ID, expected config revision, and approval decision | No caller-provided command text or arguments |
 | Team shell | None | No browser terminal or ad-hoc command endpoint |
-| API and MCP | Canonical graph through JSON and read-only MCP | No MCP action or mutation tools |
-| Chat | Optional editor-only, read-only graph lens | Not a source of truth; no save, shell, or action tools |
+| API and MCP | Current graph snapshot through JSON and read-only MCP | No MCP shell, action, command, or mutation tools |
+| Chat | Optional editor-only, read-only graph lens | No save, shell, command, or action tools |
 | Identity | Shared Team viewer/editor bearer tokens | No SSO, individual identity, or per-user attribution |
 | Audit | Optional JSONL for connection lifecycle, selected privileged requests/refusals, save failures, and action outcomes | Not enabled by default; customer manages access, rotation, retention, and monitoring |
 | Observations | Bounded Team in-memory ring for short-term inspection | Resets on restart; not durable history |

@@ -1,9 +1,10 @@
 # Reticle Daemon Architecture
 
-[`reticle-daemon`](https://reticle.live/team/) is the paid shared runtime for
-Reticle's canonical operational graph. One daemon serves one topology to
-browsers, an authenticated JSON API, and read-only MCP. These are first-class
-lenses on the same graph. It is not a remote shell service.
+[`reticle-daemon`](https://reticle.live/team/) makes one intentionally defined
+infrastructure diagram always-on and shared. The customer-hosted daemon runs
+collection from one trusted network vantage point and serves authorized browsers.
+An authenticated JSON API and read-only MCP expose the same current graph to
+integrations. It is not a remote shell service.
 
 One licensed daemon serves one topology. Access is seat-unlimited through shared
 editor/viewer bearer tokens; SSO, individual identities, and per-user audit
@@ -86,7 +87,7 @@ Durable history and configurable retention remain commercial roadmap items.
 |---|---|---|
 | `GET /` | viewer | Embedded frontend |
 | `GET /ws` | viewer/editor | UI RPC and config events |
-| `GET /api/graph` | viewer | Current canonical graph |
+| `GET /api/graph` | viewer | Current graph snapshot |
 | `GET /api/history` | viewer | Bounded signal history |
 | `POST /mcp` | viewer | Read-only MCP tools |
 

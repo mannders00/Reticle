@@ -1,7 +1,7 @@
 [package]
 name = "reticle"
 version = "1.2.1"
-description = "A local-first infra operations canvas"
+description = "Local-first desktop app for drawing infrastructure diagrams and connecting them to live health"
 authors = ["Matt Anderson <matt@masoftware.net>"]
 edition = "2021"
 license = "MIT"

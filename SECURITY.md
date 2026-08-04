@@ -27,7 +27,7 @@ security reports.
   are never persisted or logged. OpenAI receives the question and any graph
   data returned through read-only tools at its fixed official API endpoint.
   Ollama endpoints must be HTTP(S) loopback addresses, with redirects disabled.
-  The agent has no action, shell, save, or MCP mutation tool.
+  Chat cannot save topology, invoke actions, open a shell, or mutate through MCP.
 - **SSH defaults**: fixed `host.uptime` and `service.status` probes remain the
   default. Named actions are persisted secure-shell or local-shell commands with bounded
   execution, optional preconditions, approval by default, and editor-only

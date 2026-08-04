@@ -1,9 +1,8 @@
 # Getting Started
 
-Reticle is a human-first live operational graph with a visual canvas. Static
-topology and guarded collectors produce one graph consumed by the UI, JSON API,
-and read-only MCP server as first-class lenses. The source remains a YAML file
-you can keep in git.
+Reticle is an infrastructure diagram you define intentionally. Draw the systems
+and relationships that matter, save the diagram as YAML, and attach live health
+checks. The YAML can stay in Git and remains the configured operating model.
 
 ## Install
 
@@ -39,11 +38,11 @@ bun run tauri dev     # development
 bun run tauri build   # release bundle
 ```
 
-To expose your desktop graph to local tools and agents during development, use
+To expose your Desktop diagram to local integrations during development, use
 `make desktop-api-dev`. This opts into the loopback-only JSON and read-only MCP
 server at `127.0.0.1:8786`; normal desktop startup leaves it disabled.
 
-## First map
+## Create the first diagram
 
 1. Open Reticle. The workspace switcher (top left) lists bundled
    samples, from a small homelab to a full AWS deployment. Opening a
@@ -54,7 +53,7 @@ server at `127.0.0.1:8786`; normal desktop startup leaves it disabled.
    `host`, `port`, and restricted probe `user`.
 4. Add an HTTP or fixed SSH collector using the example in
    [Operational graph](operational-graph.md). The resulting signal colors the
-   node from the same snapshot exposed to API and MCP consumers.
+   node and records when the health evidence was observed.
 5. If fixed probes cannot express the diagnostic you need, choose **Enable
    privileged mode** in the bottom status bar. This is Desktop's one global
    privileged control: it gates every custom check and action in the active

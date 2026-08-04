@@ -1,12 +1,15 @@
 # [Team Daemon](https://reticle.live/team/)
 
-[`reticle-daemon`](https://reticle.live/team/) is a single static binary with an
-embedded UI that serves one canonical operational graph to every browser
-on your network, the JSON API, and read-only MCP. It is the commercial
-counterpart to the free, standalone, local-only MIT desktop app; see the
-[Team page](https://reticle.live/team/) for licensing. This page documents how
-it operates, because the protocol and security model are part of the open design
-(see [DAEMON.md](../DAEMON.md) for the full architecture).
+[`reticle-daemon`](https://reticle.live/team/) turns the same intentionally
+defined infrastructure diagram used by Desktop into an always-on team resource.
+One customer-hosted binary runs collection continuously and serves authorized
+browsers from a trusted network vantage point. Authenticated JSON and read-only
+MCP expose the current graph to integrations.
+
+It is the commercial counterpart to the free, standalone, local-only MIT
+Desktop app. This page documents operations, protocol, and security. See the
+[Team page](https://reticle.live/team/) for licensing and
+[DAEMON.md](../DAEMON.md) for the full architecture.
 
 One licensed daemon serves one topology. Access is seat-unlimited through shared
 editor/viewer bearer tokens; SSO, individual identities, and per-user audit
@@ -80,7 +83,7 @@ example from a deploy pipeline or vim) broadcast the same way.
 
 ## Graph, JSON, and MCP
 
-`GET /api/graph` returns the canonical graph. `POST /mcp` exposes only
+`GET /api/graph` returns the current graph snapshot. `POST /mcp` exposes only
 read-only graph tools; MCP cannot execute actions. A single background owner
 collects immediately, every 30 seconds, and after accepted or external topology
 changes. API and browser clients read that cache instead of launching duplicate
@@ -92,14 +95,13 @@ observations with 4 KiB details and currently resets on daemon restart. MCP adds
 `reticle_get_signal_history` over the same data. See
 [Operational graph](operational-graph.md).
 
-The visual UI, authenticated JSON API, and read-only MCP are first-class lenses
-on this same graph. The observation ring is bounded, held only in memory, resets
+The observation ring is bounded, held only in memory, resets
 on restart, and must not be treated as durable history or a retention system.
 
 ## Optional chat lens
 
-Optional chat is a read-only lens, not the product or source of truth. It is
-editor-only because a model may receive operational graph data.
+Optional chat reads the current graph and cannot change topology or run actions.
+It is editor-only because a model may receive graph data.
 It exposes only graph, node, and bounded history inspection tools and cannot run
 actions or change topology. OpenAI API keys are carried with one browser request
 to the daemon and then to OpenAI's fixed official endpoint; use TLS between the

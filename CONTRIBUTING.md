@@ -3,9 +3,9 @@
 Thanks for your interest in Reticle. Issues and pull requests are
 welcome.
 
-Reticle is a human-first live operational graph. The visual UI, JSON API, and
-read-only MCP are first-class lenses on the same graph; optional chat remains a
-read-only lens rather than a source of truth.
+Reticle is an intentionally authored infrastructure diagram connected to current
+health evidence. The visual UI is primary. JSON, read-only MCP, and optional chat
+must inspect the graph snapshot produced by the shared core.
 
 ## How this repository works
 
@@ -49,8 +49,8 @@ DAEMON.md     daemon architecture and wire protocol
   mode; changes must keep all three working.
 - Desktop remains standalone and local-only. Shared, always-on access, team
   roles, and audit belong to Team Daemon.
-- JSON API, MCP, and optional chat must project the canonical graph rather than
-  create parallel state. MCP and chat remain read-only.
+- JSON API, MCP, and optional chat must use the graph snapshot produced by the
+  shared core rather than maintain parallel state. MCP and chat remain read-only.
 - Fixed HTTP checks and read-only SSH probes remain the default. UI-created custom
   remote SSH and Unix-only local Bash checks default to enabled and viewer-visible,
   use persisted definitions, validation, and bounded execution. Desktop has one

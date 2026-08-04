@@ -3,19 +3,24 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Reticle Team Daemon: one shared operational graph</title>
-  <meta name="description" content="Give the team one current operational picture to inspect during normal work and incidents, before anyone touches production." />
+  <title>Reticle Team Daemon: one infrastructure diagram that stays live</title>
+  <meta name="description" content="Run Reticle inside your network to keep one Git-tracked infrastructure diagram live and shared with authorized teammates and integrations." />
   <link rel="canonical" href="https://reticle.live/team/" />
   <meta property="og:type" content="product" />
-  <meta property="og:title" content="Reticle Team Daemon" />
-  <meta property="og:description" content="The live operational graph for the team to inspect before anyone touches production." />
+  <meta property="og:title" content="Give the whole team one infrastructure diagram that stays live" />
+  <meta property="og:description" content="Customer-hosted Team software for an always-on, intentionally defined infrastructure diagram." />
   <meta property="og:url" content="https://reticle.live/team/" />
   <meta property="og:image" content="https://reticle.live/assets/og-card.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:alt" content="A Reticle infrastructure diagram showing services, dependencies, notes, and current health evidence" />
   <meta property="og:site_name" content="Reticle" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Reticle Team Daemon" />
-  <meta name="twitter:description" content="One current operational picture for normal work and incidents, running on your infrastructure." />
+  <meta name="twitter:title" content="Give the whole team one infrastructure diagram that stays live" />
+  <meta name="twitter:description" content="One customer-hosted daemon keeps a Git-tracked operating map current and shared." />
   <meta name="twitter:image" content="https://reticle.live/assets/og-card.jpg" />
+  <meta name="twitter:image:alt" content="A Reticle infrastructure diagram showing services, dependencies, notes, and current health evidence" />
   <meta name="theme-color" content="#0b0e14" media="(prefers-color-scheme: dark)" />
   <meta name="theme-color" content="#f7f8fb" media="(prefers-color-scheme: light)" />
   <link rel="icon" href="../favicon.ico" sizes="48x48" />
@@ -33,7 +38,7 @@
         "@type": "SoftwareApplication",
         "name": "Reticle Team Daemon",
         "applicationCategory": "DeveloperApplication",
-        "description": "Self-hosted software serving the live operational graph through a browser UI, authenticated JSON API, and read-only MCP.",
+        "description": "Customer-hosted software that keeps one intentionally defined infrastructure diagram live and shared for a team.",
         "url": "https://reticle.live/team/",
         "offers": [
           { "@type": "Offer", "name": "Monthly per running daemon", "price": "199", "priceCurrency": "USD", "url": "https://reticle.live/team/#pricing" },
@@ -44,7 +49,7 @@
       {
         "@type": "Service",
         "name": "Reticle white-glove installation and mapping",
-        "description": "Team Daemon deployment, least-privilege access, TLS, authentication, collectors, and initial operational mapping.",
+        "description": "Team Daemon deployment, TLS, access controls, collectors, and the first live topology built from existing diagrams, runbooks, and operator knowledge.",
         "provider": { "@type": "Organization", "name": "MA Software LLC" },
         "offers": { "@type": "AggregateOffer", "lowPrice": "3000", "priceCurrency": "USD", "offerCount": "1", "url": "https://reticle.live/team/#pricing" }
       }
@@ -56,56 +61,55 @@
   <header class="nav">
     <div class="wrap nav-inner">
       <a class="brand" href="../"><img class="brand-mark" src="../reticle.svg" alt="" width="22" height="22" />Reticle</a>
-      <nav class="nav-links" aria-label="Primary navigation"><a href="#live">Live demo</a><a href="#capabilities">Capabilities</a><a href="#compare">Compare</a><a href="#security">Security</a><a href="#faq">FAQ</a></nav>
+      <nav class="nav-links" aria-label="Primary navigation"><a href="#live">Live demo</a><a href="#why-team">Why Team</a><a href="#compare">Compare</a><a href="#security">Security</a><a href="#pricing">Pricing</a></nav>
       <span class="nav-spacer"></span>
       <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark" aria-label="Toggle theme">☾</button>
       <a class="btn btn-primary btn-small nav-cta" href="#pricing">See pricing</a>
       <button class="nav-menu-btn" id="nav-menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="nav-menu">☰</button>
-      <nav class="nav-menu" id="nav-menu" aria-label="Mobile navigation" hidden><a href="#live">Live demo</a><a href="#capabilities">Capabilities</a><a href="#outcomes">Outcomes</a><a href="#compare">Compare</a><a href="#controlled-escalation">Custom checks</a><a href="#security">Security</a><a href="#faq">FAQ</a><a class="btn btn-primary btn-small" href="#pricing">See pricing</a></nav>
+      <nav class="nav-menu" id="nav-menu" aria-label="Mobile navigation" hidden><a href="#live">Live demo</a><a href="#why-team">Why Team</a><a href="#outcomes">Outcomes</a><a href="#compare">Compare</a><a href="#implementation">Implementation</a><a href="#security">Security</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a><a class="btn btn-primary btn-small" href="#pricing">See pricing</a></nav>
     </div>
   </header>
 
   <main>
     <section class="hero team-hero">
       <div class="wrap hero-solo">
-        <div class="hero-badges"><span class="pill accent">RETICLE TEAM DAEMON</span><span class="pill">Commercial</span></div>
-        <h1>The live operational graph for the whole team.</h1>
-        <p class="lede">Reticle keeps topology, health, dependencies, and freshness in one live picture for the team, before anyone touches production.</p>
-        <div class="hero-ctas"><a class="btn btn-primary" href="#pricing">Get Team</a><a class="btn btn-ghost" href="mailto:matt@masoftware.net?subject=Reticle%20Team%20Daemon">Discuss your deployment</a></div>
-        <p class="hero-note">Runs on your own infrastructure from a local YAML configuration. One daemon serves one topology with unlimited browser seats.</p>
+        <span class="kicker">RETICLE TEAM DAEMON</span>
+        <h1>Give the whole team one infrastructure diagram that stays live.</h1>
+        <p class="lede">Run one daemon inside your network. It keeps your Git-tracked operating map current and serves the same context to every authorized browser, internal tool, and read-only agent.</p>
+        <div class="hero-ctas"><a class="btn btn-primary" href="mailto:matt@masoftware.net?subject=Reticle%20Team%20Daemon">Discuss your Team deployment</a><a class="btn btn-ghost" href="#live">Explore the live Team demo</a></div>
+        <p class="hero-note">One topology · Unlimited teammates · One trusted network vantage point · Credentials stay on one host</p>
       </div>
     </section>
 
     <section id="live" aria-labelledby="team-view-heading">
       <div class="wrap">
-        <div class="section-head centered-head"><span class="kicker">LIVE TEAM DAEMON</span><h2 id="team-view-heading">Explore the graph without sharing control.</h2><p class="lede">This is the read-only daemon serving reticle.live. Viewers can inspect and export, but cannot edit topology, see command text, or run actions.</p></div>
+        <div class="section-head centered-head"><span class="kicker">A REAL TEAM DIAGRAM, KEPT LIVE</span><h2 id="team-view-heading">Explore the architecture serving reticle.live.</h2><p class="lede">This diagram was intentionally authored, then connected to current health evidence from the Team Daemon it describes. The public browser is read-only.</p></div>
         <div class="media-slot ar-video is-live" id="team-live-embed">
-          <iframe src="https://demo.reticle.live/" title="Live Reticle Team demo showing real infrastructure in read-only mode" loading="lazy"></iframe>
+          <iframe src="https://demo.reticle.live/" title="An intentionally authored Reticle Team infrastructure diagram connected to current health evidence" loading="lazy"></iframe>
           <button class="live-gate" id="team-live-gate" type="button"><span class="live-gate-dot"></span>Click to explore the live map</button>
         </div>
-        <p class="media-caption">Read-only access is enforced by the daemon, not just hidden in the browser. <a href="https://demo.reticle.live/" target="_blank" rel="noreferrer">Open full screen ↗</a></p>
+        <p class="media-caption">Pan, inspect, and export the diagram. Read-only access is enforced by the daemon. <a href="https://demo.reticle.live/" target="_blank" rel="noreferrer">Open full screen ↗</a></p>
       </div>
     </section>
 
-    <section id="capabilities">
+    <section id="why-team">
       <div class="wrap">
-        <div class="section-head"><span class="kicker">INSPECTION WITHOUT IMPLICIT ACCESS</span><h2>Read-only is a security feature.</h2><p class="lede">The browser, API, and agents can inspect current context without gaining shell or named-action access.</p></div>
-        <div class="cards-3 lens-cards">
-          <article class="card"><span class="card-icon" aria-hidden="true">◎</span><h3>Current picture</h3><p>Topology, dependencies, configured notes, health, and observation times stay together.</p></article>
-          <article class="card"><span class="card-icon" aria-hidden="true">{ }</span><h3>Controlled access</h3><p>The browser and JSON API use shared viewer and editor tokens, not individual identities.</p></article>
-          <article class="card"><span class="card-icon" aria-hidden="true">M</span><h3>Read-only MCP</h3><p>Agents inspect the graph with no command, shell, save, or named-action execution.</p></article>
+        <div class="section-head"><span class="kicker">WHY TEAMS UPGRADE</span><h2>Keep the diagram available beyond one laptop.</h2><p class="lede">Desktop and Team use the same intentionally defined model. Team keeps collection running and makes one current view available across the organization.</p></div>
+        <div class="cards-3">
+          <article class="card"><span class="card-icon" aria-hidden="true">◎</span><h3>Always available</h3><p>The operating diagram stays live independent of any one engineer's laptop.</p></article>
+          <article class="card"><span class="card-icon" aria-hidden="true">↔</span><h3>Shared understanding</h3><p>Teammates inspect the same topology, evidence, notes, and timestamps from a browser.</p></article>
+          <article class="card"><span class="card-icon" aria-hidden="true">⌁</span><h3>Centralized access</h3><p>Checks run from one managed host. Viewers and read-only integrations get context without receiving SSH credentials or shell access.</p></article>
         </div>
-        <p class="subordinate-note"><strong>Agents inspect; operators decide.</strong> Optional chat follows the same read-only boundary.</p>
       </div>
     </section>
 
     <section id="outcomes">
       <div class="wrap">
-        <div class="section-head"><span class="kicker">THE COST OF AMBIGUITY</span><h2>Reduce ambiguity before taking action.</h2><p class="lede">Keep topology, evidence, and action context together so responders form a shared picture sooner.</p></div>
+        <div class="section-head"><span class="kicker">TEAM OUTCOMES</span><h2>Give every responder the same architecture.</h2></div>
         <div class="cards-3 outcome-cards">
-          <article class="card"><span class="outcome-metric">TIME TO UNDERSTAND</span><h3>Build a shared incident model sooner.</h3><p>See what is connected, unhealthy, and stale without reconstructing the system during an incident.</p></article>
-          <article class="card"><span class="outcome-metric">SAFE ACTION AND RECOVERY</span><h3>Move from evidence to response.</h3><p>Keep evidence, preconditions, and named actions together to improve time to safe next action and failed-deployment recovery time.</p></article>
-          <article class="card"><span class="outcome-metric">AUDITABLE OPERATIONS</span><h3>Keep an activity record.</h3><p>Optionally record selected privileged activity and named-action outcomes as JSONL.</p></article>
+          <article class="card"><span class="outcome-metric">FASTER INCIDENT UNDERSTANDING</span><h3>See the system around the failure.</h3><p>Keep dependencies, current evidence, notes, and freshness in one shared browser view.</p></article>
+          <article class="card"><span class="outcome-metric">LESS TRIBAL KNOWLEDGE</span><h3>Share the model, not a verbal reconstruction.</h3><p>New operators and escalation paths can inspect the architecture without waiting for its original author.</p></article>
+          <article class="card"><span class="outcome-metric">SAFER NEXT ACTIONS</span><h3>Keep evidence beside the response.</h3><p>Persist bounded actions with approvals, timeouts, and optional fresh-signal preconditions.</p></article>
         </div>
       </div>
     </section>
@@ -133,6 +137,17 @@
       </div>
     </section>
 
+    <section id="implementation">
+      <div class="wrap">
+        <div class="section-head"><span class="kicker">WHITE-GLOVE IMPLEMENTATION</span><h2>Turn the architecture your team knows into the first live topology.</h2><p class="lede">Starting at $3,000 one-time, we deploy the Team Daemon, establish TLS and access controls, and map the agreed architecture from your existing diagrams, runbooks, and operator knowledge.</p></div>
+        <div class="cards-3">
+          <article class="card"><span class="gate-number">01</span><h3>Deploy</h3><p>Install the daemon on a trusted host inside your network and configure TLS.</p></article>
+          <article class="card"><span class="gate-number">02</span><h3>Constrain</h3><p>Set viewer and editor access, least-privilege OS permissions, and restricted SSH principals.</p></article>
+          <article class="card"><span class="gate-number">03</span><h3>Map</h3><p>Build the first agreed operating diagram and connect its initial health checks.</p></article>
+        </div>
+      </div>
+    </section>
+
     <section id="controlled-escalation">
       <div class="wrap">
         <div class="section-head"><span class="kicker">CONTROLLED ESCALATION</span><h2>Custom checks require explicit trust.</h2><p class="lede">Fixed HTTP and read-only SSH checks remain the default. Custom remote SSH or local Bash checks run only when the operator enables them.</p></div>
@@ -147,10 +162,10 @@
 
     <section id="security">
       <div class="wrap">
-        <div class="section-head"><span class="kicker">CONTROLLED BY DESIGN</span><h2>Least privilege is the deployment boundary.</h2><p class="lede">Reticle provides operational context, not a remote shell.</p></div>
+        <div class="section-head"><span class="kicker">CONTROLLED BY DESIGN</span><h2>Share the diagram without sharing shell access.</h2><p class="lede">Team serves authorized browsers, JSON clients, and read-only MCP. It exposes no browser terminal or ad-hoc shell.</p></div>
         <div class="cards-3">
           <article class="card"><span class="card-icon" aria-hidden="true">⊘</span><h3>Constrained access</h3><p>Limit the daemon account, filesystem, environment, network reach, and SSH principals to what checks require.</p></article>
-          <article class="card"><span class="card-icon" aria-hidden="true">⛨</span><h3>Server-owned actions</h3><p>Clients invoke persisted actions by ID, revision, and approval decision, never by supplying command text.</p></article>
+          <article class="card"><span class="card-icon" aria-hidden="true">⛨</span><h3>Server-owned actions</h3><p>Clients invoke persisted actions by ID, revision, and approval decision. They never supply command text.</p></article>
           <article class="card"><span class="card-icon" aria-hidden="true">≠</span><h3>No Team shell</h3><p>The browser, JSON API, MCP, and chat expose no interactive or ad-hoc command interface.</p></article>
         </div>
         <div class="qualification"><h3>Configurable audit logging</h3><p>Optional JSONL logging records selected connection, privileged-request, save-failure, and named-action events. It omits command text and output; records may include addresses, IDs, revisions, decisions, and errors. Protect and rotate the log.</p></div>
@@ -163,10 +178,10 @@
         <div class="pricing-grid">
           <article class="price-card"><span class="pill">Monthly</span><p class="price"><strong>$199</strong><span>/month</span></p><p>Per running Team Daemon, billed monthly.</p></article>
           <article class="price-card featured"><span class="plan-tag">Save $389</span><span class="pill accent">Annual</span><p class="price"><strong>$1,999</strong><span>/year</span></p><p>Per running Team Daemon, billed annually.</p></article>
-          <article class="price-card"><span class="pill">Implementation</span><p class="price service-price"><strong>$3,000</strong><span>one-time</span></p><p>White-glove install and mapping starts at $3,000 one-time, scoped to your environment.</p></article>
+          <article class="price-card"><span class="pill">Implementation</span><p class="price service-price"><strong>$3,000</strong><span>one-time</span></p><p>Deployment, access controls, and initial mapping starts at $3,000 one-time.</p></article>
         </div>
         <div class="pricing-cta"><a class="btn btn-primary" href="mailto:matt@masoftware.net?subject=Reticle%20Team%20Daemon">Start with Team</a><p>We reply within one business day. Card, ACH, or bank transfer.</p></div>
-        <div class="qualification"><h3>Enterprise evaluation checklist</h3><p>Before production use, confirm TLS, token rotation, least-privilege access, audit-log handling, topology backups, support expectations, and any required SLA.</p></div>
+        <div class="qualification"><h3>Current boundaries</h3><p>One daemon serves one topology. Team uses shared viewer and editor bearer tokens; SSO, individual identity, per-user attribution, built-in high availability, and a default SLA are not included. Audit logging is configurable, not automatic.</p></div>
       </div>
     </section>
 
@@ -174,6 +189,8 @@
       <div class="wrap">
         <div class="section-head"><span class="kicker">FAQ</span><h2>Deployment and product questions</h2></div>
         <div class="faq">
+          <details><summary>Does Reticle replace monitoring or observability?</summary><p>No. It places selected health evidence on the architecture people use to understand the system. Metrics, logs, traces, alerting, and durable history remain in their existing tools.</p></details>
+          <details><summary>Why use Team instead of sharing the YAML?</summary><p>Team keeps collection always on, serves one current view to every browser, centralizes credentials on one host, and exposes authenticated JSON and read-only MCP.</p></details>
           <details><summary>What does white-glove install and mapping include?</summary><p>Starting at $3,000, we help deploy the daemon, configure TLS and authentication, establish least-privilege access, and map the agreed initial production scope.</p></details>
           <details><summary>Is an SLA included?</summary><p>No default SLA is published. Support, updates, security review, and SLA requirements must be agreed before production adoption.</p></details>
           <details><summary>Is Team Daemon MIT-licensed?</summary><p>No. Desktop is free and MIT-licensed; Team Daemon is commercial subscription software.</p></details>
